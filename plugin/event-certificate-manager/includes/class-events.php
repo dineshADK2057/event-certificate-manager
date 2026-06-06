@@ -528,7 +528,7 @@ private function tab_overview($event) {
             </div>
 
             <div class="ecm-tab-actions">
-                <button type="button" class="button button-primary">
+                <button type="button" class="button button-primary ecm-open-participant-modal">
                     + Add Participant
                 </button>
 
@@ -546,6 +546,7 @@ private function tab_overview($event) {
 
         <?php $this->render_participant_toolbar($event); ?>
         <?php $this->render_participant_list_section($event); ?>
+        <?php $this->render_add_participant_modal($event); ?>
         <?php
     }
 
@@ -1118,5 +1119,59 @@ public function handle_add_participant() {
         </div>
         <?php
     }
+
+    private function render_add_participant_modal($event) {
+    $fields = $this->get_event_fields($event->id);
+
+    if (empty($fields)) {
+        return;
+    }
+    ?>
+    <div id="ecm-add-participant-modal" class="ecm-modal" style="display:none;">
+        <div class="ecm-modal-content">
+            <div class="ecm-modal-header">
+                <h2>Add Participant</h2>
+                <button type="button" class="ecm-modal-close">&times;</button>
+            </div>
+
+            <form method="post">
+                <?php wp_nonce_field('ecm_add_participant', 'ecm_add_participant_nonce'); ?>
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+
+                <div class="ecm-modal-body">
+                    <?php foreach ($fields as $field) : ?>
+                        <p>
+                            <label for="ecm_modal_field_<?php echo esc_attr($field->field_key); ?>">
+                                <strong><?php echo esc_html($field->field_label); ?></strong>
+                                <?php if ((int) $field->is_required === 1) : ?>
+                                    <span class="description">(required)</span>
+                                <?php endif; ?>
+                            </label>
+
+                            <input
+                                type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
+                                id="ecm_modal_field_<?php echo esc_attr($field->field_key); ?>"
+                                name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
+                                class="widefat"
+                                <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>
+                            >
+                        </p>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="ecm-modal-footer">
+                    <button type="submit" name="ecm_add_participant_submit" class="button button-primary">
+                        Save Participant
+                    </button>
+
+                    <button type="button" class="button ecm-modal-cancel">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php
+}
 
 }

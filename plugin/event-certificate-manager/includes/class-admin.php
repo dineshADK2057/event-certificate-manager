@@ -94,6 +94,14 @@ class ECM_Admin {
             return;
         }
 
+        wp_enqueue_script(
+            'ecm-admin',
+            ECM_PLUGIN_URL . 'admin/js/ecm-admin.js',
+            ['jquery'],
+            ECM_VERSION,
+            true
+        );
+
         wp_enqueue_style(
             'ecm-admin',
             ECM_PLUGIN_URL . 'admin/css/ecm-admin.css',
