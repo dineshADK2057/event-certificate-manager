@@ -12,6 +12,7 @@ class ECM_Events {
         add_action('admin_init', [$this, 'handle_add_default_fields']);
         add_action('admin_init', [$this, 'handle_add_custom_field']);
         add_action('admin_init', [$this, 'handle_add_participant']);
+        add_action('admin_init', [$this, 'handle_delete_participant']);
     }
 
     public function events_page() {
@@ -543,6 +544,11 @@ private function tab_overview($event) {
                 <p><strong>Participant added successfully.</strong></p>
             </div>
         <?php endif; ?>
+        <?php if (isset($_GET['participant_deleted'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Participant deleted successfully.</strong></p>
+            </div>
+        <?php endif; ?>
 
         <?php $this->render_participant_toolbar($event); ?>
         <?php $this->render_participant_list_section($event); ?>
@@ -598,16 +604,16 @@ private function tab_logs($event) {
     }
 
     private function render_participant_fields_section($event) {
-    global $wpdb;
+        global $wpdb;
 
-    $fields_table = $wpdb->prefix . 'ecm_event_fields';
+        $fields_table = $wpdb->prefix . 'ecm_event_fields';
 
-    $fields = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM $fields_table WHERE event_id = %d ORDER BY field_order ASC, id ASC",
-            $event->id
-        )
-    );
+        $fields = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $fields_table WHERE event_id = %d ORDER BY field_order ASC, id ASC",
+                $event->id
+            )
+        );
 
     ?>
     <div class="ecm-panel ecm-panel-full">
@@ -955,6 +961,7 @@ private function render_participant_list_section($event) {
                             <th><?php echo esc_html($field->field_label); ?></th>
                         <?php endforeach; ?>
                         <th>Created</th>
+                        <th width="120">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -982,6 +989,23 @@ private function render_participant_list_section($event) {
                                 <td><?php echo esc_html($value); ?></td>
                             <?php endforeach; ?>
                             <td><?php echo esc_html($participant->created_at); ?></td>
+                            <?php
+                                $delete_url = wp_nonce_url(
+                                    admin_url(
+                                        'admin.php?page=ecm-events&action=delete_participant&event_id=' . absint($event->id) . '&participant_id=' . absint($participant->id)
+                                    ),
+                                    'ecm_delete_participant_' . absint($participant->id)
+                                );
+                                ?>
+                                <td>
+                                    <a href="#" class="ecm-muted-link">Edit</a>
+                                    |
+                                    <a href="<?php echo esc_url($delete_url); ?>"
+                                    onclick="return confirm('Are you sure you want to delete this participant?');"
+                                    class="ecm-danger-link">
+                                        Delete
+                                    </a>
+                                </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -1172,6 +1196,65 @@ public function handle_add_participant() {
         </div>
     </div>
     <?php
-}
+    }
+
+    public function handle_delete_participant() {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id'], $_GET['participant_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'delete_participant'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id = absint($_GET['event_id']);
+        $participant_id = absint($_GET['participant_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_delete_participant_' . $participant_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        global $wpdb;
+
+        $participants_table = $wpdb->prefix . 'ecm_participants';
+        $meta_table = $wpdb->prefix . 'ecm_participant_meta';
+
+        $participant = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $participants_table WHERE id = %d AND event_id = %d",
+                $participant_id,
+                $event_id
+            )
+        );
+
+        if (!$participant) {
+            wp_die('Participant not found.');
+        }
+
+        $wpdb->delete(
+            $meta_table,
+            ['participant_id' => $participant_id],
+            ['%d']
+        );
+
+        $wpdb->delete(
+            $participants_table,
+            ['id' => $participant_id],
+            ['%d']
+        );
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&participant_deleted=1')
+        );
+        exit;
+    }
+
 
 }
