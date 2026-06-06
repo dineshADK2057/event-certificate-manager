@@ -123,3 +123,49 @@
 .ecm-form-header {
     margin-bottom: 16px;
 }
+
+.ecm-event-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+}
+
+.ecm-event-heading h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+}
+
+.ecm-event-heading p {
+    margin: 0;
+    color: #646970;
+}
+
+.ecm-tabs {
+    margin-bottom: 0;
+}
+
+.ecm-tab-content {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin-top: 0;
+}
+
+.ecm-details-table th {
+    width: 180px;
+}
+
+@media (max-width: 700px) {
+    .ecm-event-heading {
+        display: block;
+    }
+
+    .ecm-event-heading .button {
+        margin-top: 14px;
+    }
+}
