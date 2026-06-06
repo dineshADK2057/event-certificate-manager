@@ -8,6 +8,7 @@ class ECM_Events {
 
     public function __construct() {
         add_action('admin_init', [$this, 'handle_event_save']);
+        add_action('admin_init', [$this, 'handle_event_delete']);
     }
 
     public function events_page() {
@@ -28,7 +29,10 @@ class ECM_Events {
             $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
 
             if ($action === 'add') {
-                $this->add_event_form();
+                $this->event_form();
+            } elseif ($action === 'edit') {
+                $event_id = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+                $this->event_form($event_id);
             } else {
                 $this->events_list();
             }
@@ -56,6 +60,7 @@ class ECM_Events {
         global $wpdb;
         $table = $wpdb->prefix . 'ecm_events';
 
+        $event_id   = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
         $event_name = sanitize_text_field($_POST['event_name'] ?? '');
         $event_type = sanitize_text_field($_POST['event_type'] ?? '');
         $venue      = sanitize_text_field($_POST['venue'] ?? '');
@@ -72,20 +77,42 @@ class ECM_Events {
             $status = 'draft';
         }
 
+        $data = [
+            'event_name' => $event_name,
+            'event_type' => $event_type,
+            'venue'      => $venue,
+            'start_date' => $start_date ?: null,
+            'end_date'   => $end_date ?: null,
+            'status'     => $status,
+            'updated_at' => current_time('mysql'),
+        ];
+
+        $formats = ['%s', '%s', '%s', '%s', '%s', '%s', '%s'];
+
+        if ($event_id > 0) {
+            $updated = $wpdb->update(
+                $table,
+                $data,
+                ['id' => $event_id],
+                $formats,
+                ['%d']
+            );
+
+            if ($updated === false) {
+                wp_die('Failed to update event.');
+            }
+
+            wp_safe_redirect(admin_url('admin.php?page=ecm-events&updated=1'));
+            exit;
+        }
+
         $event_code = $this->generate_event_code($event_name);
+        $data['event_code'] = $event_code;
 
         $inserted = $wpdb->insert(
             $table,
-            [
-                'event_code' => $event_code,
-                'event_name' => $event_name,
-                'event_type' => $event_type,
-                'venue'      => $venue,
-                'start_date' => $start_date ?: null,
-                'end_date'   => $end_date ?: null,
-                'status'     => $status,
-            ],
-            ['%s', '%s', '%s', '%s', '%s', '%s', '%s']
+            $data,
+            array_merge($formats, ['%s'])
         );
 
         if (!$inserted) {
@@ -93,6 +120,45 @@ class ECM_Events {
         }
 
         wp_safe_redirect(admin_url('admin.php?page=ecm-events&created=1'));
+        exit;
+    }
+
+    public function handle_event_delete() {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'delete'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id = absint($_GET['event_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_delete_event_' . $event_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'ecm_events';
+
+        $deleted = $wpdb->delete(
+            $table,
+            ['id' => $event_id],
+            ['%d']
+        );
+
+        if ($deleted === false) {
+            wp_die('Failed to delete event.');
+        }
+
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&deleted=1'));
         exit;
     }
 
@@ -127,7 +193,19 @@ class ECM_Events {
             </div>
         <?php endif; ?>
 
-        <div class="ecm-panel">
+        <?php if (isset($_GET['updated'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Event updated successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['deleted'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Event deleted successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <div class="ecm-panel ecm-panel-full">
             <h2>Event List</h2>
 
             <?php if (empty($events)) : ?>
@@ -146,10 +224,19 @@ class ECM_Events {
                             <th>Venue</th>
                             <th>Start Date</th>
                             <th>Status</th>
+                            <th width="160">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($events as $event) : ?>
+                            <?php
+                            $edit_url = admin_url('admin.php?page=ecm-events&action=edit&event_id=' . absint($event->id));
+
+                            $delete_url = wp_nonce_url(
+                                admin_url('admin.php?page=ecm-events&action=delete&event_id=' . absint($event->id)),
+                                'ecm_delete_event_' . absint($event->id)
+                            );
+                            ?>
                             <tr>
                                 <td><strong><?php echo esc_html($event->event_code); ?></strong></td>
                                 <td><?php echo esc_html($event->event_name); ?></td>
@@ -161,6 +248,11 @@ class ECM_Events {
                                         <?php echo esc_html(ucfirst($event->status)); ?>
                                     </span>
                                 </td>
+                                <td>
+                                    <a href="<?php echo esc_url($edit_url); ?>">Edit</a>
+                                    |
+                                    <a href="<?php echo esc_url($delete_url); ?>" onclick="return confirm('Are you sure you want to delete this event?');" class="ecm-danger-link">Delete</a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -171,13 +263,43 @@ class ECM_Events {
         <?php
     }
 
-    private function add_event_form() {
+    private function event_form($event_id = 0) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ecm_events';
+
+        $event = null;
+
+        if ($event_id > 0) {
+            $event = $wpdb->get_row(
+                $wpdb->prepare("SELECT * FROM $table WHERE id = %d", $event_id)
+            );
+
+            if (!$event) {
+                echo '<div class="notice notice-error"><p>Event not found.</p></div>';
+                return;
+            }
+        }
+
+        $is_edit = $event_id > 0;
         ?>
+        <div class="ecm-form-header">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">
+                ← Back to Event List
+            </a>
+        </div>
+
         <div class="ecm-panel">
-            <h2>Add New Event</h2>
+            <h2><?php echo $is_edit ? 'Edit Event' : 'Add New Event'; ?></h2>
+
+            <?php if ($is_edit) : ?>
+                <p><strong>Event Code:</strong> <?php echo esc_html($event->event_code); ?></p>
+            <?php endif; ?>
 
             <form method="post">
                 <?php wp_nonce_field('ecm_save_event', 'ecm_event_nonce'); ?>
+
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event_id); ?>">
 
                 <table class="form-table">
                     <tr>
@@ -185,8 +307,8 @@ class ECM_Events {
                             <label for="event_name">Event Name</label>
                         </th>
                         <td>
-                            <input type="text" id="event_name" name="event_name" class="regular-text" required>
-                            <p class="description">Event code will be generated automatically.</p>
+                            <input type="text" id="event_name" name="event_name" class="regular-text" required value="<?php echo esc_attr($event->event_name ?? ''); ?>">
+                            <p class="description">Event code is generated automatically and cannot be edited.</p>
                         </td>
                     </tr>
 
@@ -195,7 +317,7 @@ class ECM_Events {
                             <label for="event_type">Event Type</label>
                         </th>
                         <td>
-                            <input type="text" id="event_type" name="event_type" class="regular-text">
+                            <input type="text" id="event_type" name="event_type" class="regular-text" value="<?php echo esc_attr($event->event_type ?? ''); ?>">
                             <p class="description">Example: Convention, Training, Forum, Seminar.</p>
                         </td>
                     </tr>
@@ -205,7 +327,7 @@ class ECM_Events {
                             <label for="venue">Venue</label>
                         </th>
                         <td>
-                            <input type="text" id="venue" name="venue" class="regular-text">
+                            <input type="text" id="venue" name="venue" class="regular-text" value="<?php echo esc_attr($event->venue ?? ''); ?>">
                         </td>
                     </tr>
 
@@ -214,7 +336,7 @@ class ECM_Events {
                             <label for="start_date">Start Date</label>
                         </th>
                         <td>
-                            <input type="date" id="start_date" name="start_date">
+                            <input type="date" id="start_date" name="start_date" value="<?php echo esc_attr($event->start_date ?? ''); ?>">
                         </td>
                     </tr>
 
@@ -223,7 +345,7 @@ class ECM_Events {
                             <label for="end_date">End Date</label>
                         </th>
                         <td>
-                            <input type="date" id="end_date" name="end_date">
+                            <input type="date" id="end_date" name="end_date" value="<?php echo esc_attr($event->end_date ?? ''); ?>">
                         </td>
                     </tr>
 
@@ -232,17 +354,20 @@ class ECM_Events {
                             <label for="status">Status</label>
                         </th>
                         <td>
+                            <?php $selected_status = $event->status ?? 'draft'; ?>
                             <select id="status" name="status">
-                                <option value="draft">Draft</option>
-                                <option value="active">Active</option>
-                                <option value="closed">Closed</option>
+                                <option value="draft" <?php selected($selected_status, 'draft'); ?>>Draft</option>
+                                <option value="active" <?php selected($selected_status, 'active'); ?>>Active</option>
+                                <option value="closed" <?php selected($selected_status, 'closed'); ?>>Closed</option>
                             </select>
                         </td>
                     </tr>
                 </table>
 
                 <p>
-                    <button type="submit" name="ecm_save_event_submit" class="button button-primary">Save Event</button>
+                    <button type="submit" name="ecm_save_event_submit" class="button button-primary">
+                        <?php echo $is_edit ? 'Update Event' : 'Save Event'; ?>
+                    </button>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">Cancel</a>
                 </p>
             </form>

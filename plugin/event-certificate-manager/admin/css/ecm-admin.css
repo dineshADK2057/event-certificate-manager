@@ -106,3 +106,20 @@
     background: #f8d7da;
     color: #842029;
 }
+
+.ecm-danger-link {
+    color: #b32d2e;
+}
+
+.ecm-danger-link:hover {
+    color: #8a2424;
+}
+
+.ecm-panel-full {
+    max-width: none;
+    width: 100%;
+}
+
+.ecm-form-header {
+    margin-bottom: 16px;
+}
