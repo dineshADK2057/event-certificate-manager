@@ -169,3 +169,63 @@
         margin-top: 14px;
     }
 }
+
+.ecm-tab-header {
+    margin-bottom: 18px;
+}
+
+.ecm-fields-table code {
+    background: #f0f0f1;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.ecm-inline-form {
+    max-width: 560px;
+}
+
+.ecm-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.ecm-tab-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.ecm-list-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 14px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.ecm-list-toolbar-left,
+.ecm-list-toolbar-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+@media (max-width: 800px) {
+    .ecm-tab-header,
+    .ecm-list-toolbar {
+        display: block;
+    }
+
+    .ecm-tab-actions,
+    .ecm-list-toolbar-left,
+    .ecm-list-toolbar-right {
+        margin-top: 10px;
+    }
+}
