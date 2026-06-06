@@ -1,3 +1,4 @@
+
 <?php
 
 if (!defined('ABSPATH')) {
@@ -5,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once ECM_PLUGIN_PATH . 'includes/class-admin.php';
+require_once ECM_PLUGIN_PATH . 'includes/class-events.php';
 
 class ECM_Loader {
 

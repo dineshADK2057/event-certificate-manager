@@ -61,3 +61,25 @@
         grid-template-columns: 1fr;
     }
 }
+
+.ecm-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.ecm-page-header h1 {
+    margin-bottom: 4px;
+}
+
+@media (max-width: 700px) {
+    .ecm-page-header {
+        display: block;
+    }
+
+    .ecm-page-header .button {
+        margin-top: 12px;
+    }
+}

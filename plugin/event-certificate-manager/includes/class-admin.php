@@ -32,13 +32,15 @@ class ECM_Admin {
             [$this, 'dashboard_page']
         );
 
+        $events = new ECM_Events();
+
         add_submenu_page(
             'ecm-dashboard',
             'Events',
             'Events',
             'manage_options',
             'ecm-events',
-            [$this, 'placeholder_page']
+            [$events, 'events_page']
         );
 
         add_submenu_page(
