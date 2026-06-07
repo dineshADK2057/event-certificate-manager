@@ -954,12 +954,35 @@ private function render_participant_list_section($event) {
         return;
     }
 
-    $participants = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM $participants_table WHERE event_id = %d ORDER BY id DESC",
-            $event->id
-        )
-    );
+    $search = isset($_GET['participant_search']) ? sanitize_text_field($_GET['participant_search']) : '';
+
+    if (!empty($search)) {
+        $like = '%' . $wpdb->esc_like($search) . '%';
+
+        $participants = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DISTINCT p.*
+                FROM $participants_table p
+                LEFT JOIN $meta_table m ON p.id = m.participant_id
+                WHERE p.event_id = %d
+                AND (
+                    p.member_id LIKE %s
+                    OR m.meta_value LIKE %s
+                )
+                ORDER BY p.id DESC",
+                $event->id,
+                $like,
+                $like
+            )
+        );
+    } else {
+        $participants = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $participants_table WHERE event_id = %d ORDER BY id DESC",
+                $event->id
+            )
+        );
+    }
     ?>
     <div class="ecm-panel ecm-panel-full">
         <h3>Participant List</h3>
@@ -1154,10 +1177,16 @@ public function handle_add_participant() {
 }
 
     private function render_participant_toolbar($event) {
+        $search = isset($_GET['participant_search']) ? sanitize_text_field($_GET['participant_search']) : '';
         ?>
-        <div class="ecm-list-toolbar">
+        <form method="get" class="ecm-list-toolbar">
+            <input type="hidden" name="page" value="ecm-events">
+            <input type="hidden" name="action" value="manage">
+            <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+            <input type="hidden" name="tab" value="participants">
+
             <div class="ecm-list-toolbar-left">
-                <select>
+                <select name="bulk_action">
                     <option value="">Bulk actions</option>
                     <option value="delete">Delete</option>
                     <option value="export">Export</option>
@@ -1167,10 +1196,23 @@ public function handle_add_participant() {
             </div>
 
             <div class="ecm-list-toolbar-right">
-                <input type="search" placeholder="Search participants..." class="regular-text">
-                <button type="button" class="button">Search</button>
+                <input
+                    type="search"
+                    name="participant_search"
+                    value="<?php echo esc_attr($search); ?>"
+                    placeholder="Search participants..."
+                    class="regular-text"
+                >
+
+                <button type="submit" class="button">Search</button>
+
+                <?php if (!empty($search)) : ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=participants')); ?>" class="button">
+                        Clear
+                    </a>
+                <?php endif; ?>
             </div>
-        </div>
+        </form>
         <?php
     }
 
