@@ -18,6 +18,7 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_delete_participant']);
         add_action('admin_init', [$this, 'handle_bulk_participant_action']);
         add_action('admin_init', [$this, 'handle_csv_import']);
+        add_action('admin_init', [$this, 'handle_download_sample_csv']);
     }
 
     public function events_page()
@@ -556,6 +557,14 @@ class ECM_Events
                 <button type="button" class="button ecm-open-csv-modal">
                     Upload CSV
                 </button>
+                <a href="<?php echo esc_url(
+                                wp_nonce_url(
+                                    admin_url('admin.php?page=ecm-events&action=download_sample_csv&event_id=' . absint($event->id)),
+                                    'ecm_download_sample_csv_' . absint($event->id)
+                                )
+                            ); ?>" class="button">
+                    Download Sample CSV
+                </a>
             </div>
         </div>
 
@@ -1781,50 +1790,99 @@ class ECM_Events
         exit;
     }
 
-    public function handle_bulk_participant_action() {
-    if (!isset($_POST['ecm_bulk_participant_submit'])) {
-        return;
-    }
+    public function handle_bulk_participant_action()
+    {
+        if (!isset($_POST['ecm_bulk_participant_submit'])) {
+            return;
+        }
 
-    if (
-        !isset($_POST['ecm_bulk_participant_nonce']) ||
-        !wp_verify_nonce($_POST['ecm_bulk_participant_nonce'], 'ecm_bulk_participant_action')
-    ) {
-        wp_die('Security check failed.');
-    }
+        if (
+            !isset($_POST['ecm_bulk_participant_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_bulk_participant_nonce'], 'ecm_bulk_participant_action')
+        ) {
+            wp_die('Security check failed.');
+        }
 
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have permission to perform this action.');
-    }
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
 
-    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-    $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
-    $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
-        ? array_map('absint', $_POST['participant_ids'])
-        : [];
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
+        $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
+            ? array_map('absint', $_POST['participant_ids'])
+            : [];
 
-    if (!$event_id || empty($bulk_action) || empty($participant_ids)) {
-        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+        if (!$event_id || empty($bulk_action) || empty($participant_ids)) {
+            wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+            exit;
+        }
+
+        if ($bulk_action !== 'delete') {
+            wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+            exit;
+        }
+
+        global $wpdb;
+
+        $participants_table = $wpdb->prefix . 'ecm_participants';
+        $meta_table = $wpdb->prefix . 'ecm_participant_meta';
+
+        foreach ($participant_ids as $participant_id) {
+            $wpdb->delete($meta_table, ['participant_id' => $participant_id], ['%d']);
+            $wpdb->delete($participants_table, ['id' => $participant_id, 'event_id' => $event_id], ['%d', '%d']);
+        }
+
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_deleted=1'));
         exit;
     }
 
-    if ($bulk_action !== 'delete') {
-        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+
+    public function handle_download_sample_csv()
+    {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'download_sample_csv'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id = absint($_GET['event_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_download_sample_csv_' . $event_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        $fields = $this->get_event_fields($event_id);
+
+        if (empty($fields)) {
+            wp_die('Participant fields are not configured for this event.');
+        }
+
+        $headers = [];
+
+        foreach ($fields as $field) {
+            $headers[] = $field->field_key;
+        }
+
+        $filename = 'ecm-sample-participants-event-' . $event_id . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        fputcsv($output, $headers);
+
+        fclose($output);
         exit;
     }
-
-    global $wpdb;
-
-    $participants_table = $wpdb->prefix . 'ecm_participants';
-    $meta_table = $wpdb->prefix . 'ecm_participant_meta';
-
-    foreach ($participant_ids as $participant_id) {
-        $wpdb->delete($meta_table, ['participant_id' => $participant_id], ['%d']);
-        $wpdb->delete($participants_table, ['id' => $participant_id, 'event_id' => $event_id], ['%d', '%d']);
-    }
-
-    wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_deleted=1'));
-    exit;
 }
-
-    }
