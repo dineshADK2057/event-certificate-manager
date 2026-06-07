@@ -61,6 +61,9 @@
                 closeParticipantModal();
             }
         });
+        $('#ecm-select-all-participants').on('change', function () {
+            $('.ecm-participant-checkbox').prop('checked', $(this).is(':checked'));
+        });
     });
 
 })(jQuery);
