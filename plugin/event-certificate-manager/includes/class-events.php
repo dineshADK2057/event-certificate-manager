@@ -19,6 +19,7 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_bulk_participant_action']);
         add_action('admin_init', [$this, 'handle_csv_import']);
         add_action('admin_init', [$this, 'handle_download_sample_csv']);
+        add_action('admin_init', [$this, 'handle_export_participants_csv']);
     }
 
     public function events_page()
@@ -564,6 +565,14 @@ class ECM_Events
                                 )
                             ); ?>" class="button">
                     Download Sample CSV
+                </a>
+                <a href="<?php echo esc_url(
+                                wp_nonce_url(
+                                    admin_url('admin.php?page=ecm-events&action=export_participants_csv&event_id=' . absint($event->id)),
+                                    'ecm_export_participants_csv_' . absint($event->id)
+                                )
+                            ); ?>" class="button">
+                    Export CSV
                 </a>
             </div>
         </div>
@@ -1881,6 +1890,96 @@ class ECM_Events
         $output = fopen('php://output', 'w');
 
         fputcsv($output, $headers);
+
+        fclose($output);
+        exit;
+    }
+
+    public function handle_export_participants_csv()
+    {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'export_participants_csv'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id = absint($_GET['event_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_export_participants_csv_' . $event_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        $fields = $this->get_event_fields($event_id);
+
+        if (empty($fields)) {
+            wp_die('Participant fields are not configured for this event.');
+        }
+
+        global $wpdb;
+
+        $participants_table = $wpdb->prefix . 'ecm_participants';
+        $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
+
+        $participants = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $participants_table WHERE event_id = %d ORDER BY id ASC",
+                $event_id
+            )
+        );
+
+        $headers = [];
+
+        foreach ($fields as $field) {
+            $headers[] = $field->field_key;
+        }
+
+        $filename = 'ecm-participants-event-' . $event_id . '.csv';
+
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+
+        fputcsv($output, $headers);
+
+        foreach ($participants as $participant) {
+            $meta_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
+                    $participant->id
+                ),
+                OBJECT_K
+            );
+
+            $row = [];
+
+            foreach ($fields as $field) {
+                if ($field->field_key === 'member_id') {
+                    $row[] = $participant->member_id;
+                } else {
+                    $row[] = isset($meta_rows[$field->field_key])
+                        ? $meta_rows[$field->field_key]->meta_value
+                        : '';
+                }
+            }
+
+            fputcsv($output, $row);
+        }
 
         fclose($output);
         exit;
