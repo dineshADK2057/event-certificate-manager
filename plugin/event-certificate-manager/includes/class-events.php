@@ -11,18 +11,28 @@ class ECM_Events
     {
         add_action('admin_init', [$this, 'handle_event_save']);
         add_action('admin_init', [$this, 'handle_event_delete']);
+
         add_action('admin_init', [$this, 'handle_add_default_fields']);
         add_action('admin_init', [$this, 'handle_add_custom_field']);
+
         add_action('admin_init', [$this, 'handle_add_participant']);
         add_action('admin_init', [$this, 'handle_update_participant']);
         add_action('admin_init', [$this, 'handle_delete_participant']);
         add_action('admin_init', [$this, 'handle_bulk_participant_action']);
+
         add_action('admin_init', [$this, 'handle_csv_import']);
         add_action('admin_init', [$this, 'handle_download_sample_csv']);
         add_action('admin_init', [$this, 'handle_export_participants_csv']);
+
         add_action('admin_init', [$this, 'handle_add_session']);
         add_action('admin_init', [$this, 'handle_update_session']);
         add_action('admin_init', [$this, 'handle_delete_session']);
+        add_action('admin_init', [$this, 'handle_add_session_participants']);
+
+        add_action('wp_ajax_ecm_search_session_available_participants', [$this, 'ajax_search_session_available_participants']);
+        add_action('wp_ajax_ecm_add_session_participants_ajax', [$this, 'ajax_add_session_participants']);
+
+        add_action('admin_init', [$this, 'handle_remove_session_participant']);
     }
 
     public function events_page()
@@ -2186,7 +2196,7 @@ class ECM_Events
                 </form>
             </div>
         </div>
-<?php
+    <?php
     }
 
     public function handle_add_session()
@@ -2388,60 +2398,658 @@ class ECM_Events
         );
         exit;
     }
-    private function render_session_participants_page($event, $session_id) {
-    global $wpdb;
+    private function render_session_participants_page($event, $session_id)
+    {
+        global $wpdb;
 
-    $sessions_table = $wpdb->prefix . 'ecm_sessions';
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
 
-    $session = $wpdb->get_row(
-        $wpdb->prepare(
-            "SELECT * FROM $sessions_table WHERE id = %d AND event_id = %d",
-            $session_id,
-            $event->id
-        )
-    );
+        $session = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $sessions_table WHERE id = %d AND event_id = %d",
+                $session_id,
+                $event->id
+            )
+        );
 
-    if (!$session) {
-        echo '<div class="notice notice-error"><p>Session not found.</p></div>';
-        return;
-    }
+        if (!$session) {
+            echo '<div class="notice notice-error"><p>Session not found.</p></div>';
+            return;
+        }
 
-    $back_url = admin_url(
-        'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=sessions'
-    );
+        $back_url = admin_url(
+            'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=sessions'
+        );
     ?>
 
-    <div class="ecm-form-header">
-        <a href="<?php echo esc_url($back_url); ?>" class="button">
-            ← Back to Sessions
-        </a>
-    </div>
-
-    <div class="ecm-event-heading">
-        <div>
-            <h2><?php echo esc_html($session->session_name); ?></h2>
-            <p>
-                <strong>Session Code:</strong> <?php echo esc_html($session->session_code); ?>
-                &nbsp; | &nbsp;
-                <strong>Tutor / Speaker:</strong> <?php echo esc_html($session->tutor_name); ?>
-                &nbsp; | &nbsp;
-                <strong>Status:</strong>
-                <span class="ecm-status ecm-status-<?php echo esc_attr($session->status); ?>">
-                    <?php echo esc_html(ucfirst($session->status)); ?>
-                </span>
-            </p>
+        <div class="ecm-form-header">
+            <a href="<?php echo esc_url($back_url); ?>" class="button">
+                ← Back to Sessions
+            </a>
         </div>
-    </div>
 
-    <div class="ecm-panel ecm-panel-full">
-        <h3>Session Participants</h3>
-        <p>This is where we will assign event participants to this session.</p>
-
-        <div class="notice notice-info inline">
-            <p>Next step: add participant assignment system for this session.</p>
+        <div class="ecm-event-heading">
+            <div>
+                <h2><?php echo esc_html($session->session_name); ?></h2>
+                <p>
+                    <strong>Session Code:</strong> <?php echo esc_html($session->session_code); ?>
+                    &nbsp; | &nbsp;
+                    <strong>Tutor / Speaker:</strong> <?php echo esc_html($session->tutor_name); ?>
+                    &nbsp; | &nbsp;
+                    <strong>Status:</strong>
+                    <span class="ecm-status ecm-status-<?php echo esc_attr($session->status); ?>">
+                        <?php echo esc_html(ucfirst($session->status)); ?>
+                    </span>
+                </p>
+            </div>
         </div>
-    </div>
+
+        <?php if (isset($_GET['session_participants_added'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Selected participants added to session.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['session_participant_removed'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Participant removed from session.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php $this->render_assigned_session_participants($event, $session); ?>
+        <?php $this->render_session_participant_modal($event, $session); ?>
 
     <?php
-}
+    }
+
+    private function render_assigned_session_participants($event, $session)
+    {
+        global $wpdb;
+
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $meta_table                 = $wpdb->prefix . 'ecm_participant_meta';
+
+        $assigned = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT p.*
+             FROM $participants_table p
+             INNER JOIN $session_participants_table sp ON p.id = sp.participant_id
+             WHERE sp.session_id = %d
+             AND p.event_id = %d
+             ORDER BY p.id DESC",
+                $session->id,
+                $event->id
+            )
+        );
+
+        $fields = $this->get_event_fields($event->id);
+    ?>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Assigned Participants</h3>
+            <p>
+                <button type="button"
+                    class="button button-primary ecm-open-session-participants-modal"
+                    data-event-id="<?php echo esc_attr($event->id); ?>"
+                    data-session-id="<?php echo esc_attr($session->id); ?>">
+                    + Add Participants
+                </button>
+            </p>
+
+            <?php if (empty($assigned)) : ?>
+                <p>No participants assigned to this session yet.</p>
+            <?php else : ?>
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <?php foreach ($fields as $field) : ?>
+                                <th><?php echo esc_html($field->field_label); ?></th>
+                            <?php endforeach; ?>
+                            <th width="100">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($assigned as $participant) : ?>
+                            <?php
+                            $meta_rows = $wpdb->get_results(
+                                $wpdb->prepare(
+                                    "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
+                                    $participant->id
+                                ),
+                                OBJECT_K
+                            );
+                            ?>
+                            <tr>
+                                <?php foreach ($fields as $field) : ?>
+                                    <?php
+                                    if ($field->field_key === 'member_id') {
+                                        $value = $participant->member_id;
+                                    } else {
+                                        $value = isset($meta_rows[$field->field_key])
+                                            ? $meta_rows[$field->field_key]->meta_value
+                                            : '';
+                                    }
+                                    ?>
+                                    <td><?php echo esc_html($value); ?></td>
+                                <?php endforeach; ?>
+                                <?php
+                                $remove_url = wp_nonce_url(
+                                    admin_url(
+                                        'admin.php?page=ecm-events&action=remove_session_participant&event_id=' . absint($event->id) .
+                                            '&tab=sessions&session_action=participants&session_id=' . absint($session->id) .
+                                            '&participant_id=' . absint($participant->id)
+                                    ),
+                                    'ecm_remove_session_participant_' . absint($session->id) . '_' . absint($participant->id)
+                                );
+                                ?>
+                                <td>
+                                    <a href="<?php echo esc_url($remove_url); ?>"
+                                        onclick="return confirm('Remove this participant from this session?');"
+                                        class="ecm-danger-link">
+                                        Remove
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    <?php
+    }
+
+    private function render_available_session_participants($event, $session)
+    {
+        global $wpdb;
+
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+        $meta_table                 = $wpdb->prefix . 'ecm_participant_meta';
+
+        $available = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT p.*
+             FROM $participants_table p
+             WHERE p.event_id = %d
+             AND p.id NOT IN (
+                SELECT participant_id
+                FROM $session_participants_table
+                WHERE session_id = %d
+             )
+             ORDER BY p.id DESC",
+                $event->id,
+                $session->id
+            )
+        );
+
+        $fields = $this->get_event_fields($event->id);
+    ?>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Available Event Participants</h3>
+            <p>Select participants to add to this session.</p>
+
+            <?php if (empty($available)) : ?>
+                <p>No available participants found. All participants may already be assigned to this session.</p>
+            <?php else : ?>
+                <form method="post">
+                    <?php wp_nonce_field('ecm_add_session_participants', 'ecm_add_session_participants_nonce'); ?>
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+                    <input type="hidden" name="session_id" value="<?php echo esc_attr($session->id); ?>">
+
+                    <p>
+                        <button type="submit" name="ecm_add_session_participants_submit" class="button button-primary">
+                            Add Selected to Session
+                        </button>
+                    </p>
+
+                    <table class="widefat striped">
+                        <thead>
+                            <tr>
+                                <th width="35">
+                                    <input type="checkbox" id="ecm-select-all-session-available">
+                                </th>
+                                <?php foreach ($fields as $field) : ?>
+                                    <th><?php echo esc_html($field->field_label); ?></th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($available as $participant) : ?>
+                                <?php
+                                $meta_rows = $wpdb->get_results(
+                                    $wpdb->prepare(
+                                        "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
+                                        $participant->id
+                                    ),
+                                    OBJECT_K
+                                );
+                                ?>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox"
+                                            name="participant_ids[]"
+                                            value="<?php echo esc_attr($participant->id); ?>"
+                                            class="ecm-session-available-checkbox">
+                                    </td>
+
+                                    <?php foreach ($fields as $field) : ?>
+                                        <?php
+                                        if ($field->field_key === 'member_id') {
+                                            $value = $participant->member_id;
+                                        } else {
+                                            $value = isset($meta_rows[$field->field_key])
+                                                ? $meta_rows[$field->field_key]->meta_value
+                                                : '';
+                                        }
+                                        ?>
+                                        <td><?php echo esc_html($value); ?></td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </form>
+            <?php endif; ?>
+        </div>
+    <?php
+    }
+
+    public function handle_add_session_participants()
+    {
+        if (!isset($_POST['ecm_add_session_participants_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_add_session_participants_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_add_session_participants_nonce'], 'ecm_add_session_participants')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id   = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $session_id = isset($_POST['session_id']) ? absint($_POST['session_id']) : 0;
+
+        $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
+            ? array_map('absint', $_POST['participant_ids'])
+            : [];
+
+        if (!$event_id || !$session_id) {
+            wp_die('Invalid session.');
+        }
+
+        if (empty($participant_ids)) {
+            wp_safe_redirect(
+                admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_action=participants&session_id=' . $session_id . '&no_participants_selected=1')
+            );
+            exit;
+        }
+
+        global $wpdb;
+
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+        foreach ($participant_ids as $participant_id) {
+            $participant_exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $participants_table WHERE id = %d AND event_id = %d",
+                    $participant_id,
+                    $event_id
+                )
+            );
+
+            if (!$participant_exists) {
+                continue;
+            }
+
+            $already_assigned = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $session_participants_table WHERE session_id = %d AND participant_id = %d",
+                    $session_id,
+                    $participant_id
+                )
+            );
+
+            if ($already_assigned) {
+                continue;
+            }
+
+            $wpdb->insert(
+                $session_participants_table,
+                [
+                    'session_id'     => $session_id,
+                    'participant_id' => $participant_id,
+                ],
+                ['%d', '%d']
+            );
+        }
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_action=participants&session_id=' . $session_id . '&session_participants_added=1')
+        );
+        exit;
+    }
+
+    private function render_session_participant_modal($event, $session)
+    {
+    ?>
+        <div id="ecm-session-participants-modal" class="ecm-modal" style="display:none;">
+            <div class="ecm-modal-content ecm-modal-large">
+                <div class="ecm-modal-header">
+                    <h2>Add Participants to Session</h2>
+                    <button type="button" class="ecm-modal-close">&times;</button>
+                </div>
+
+                <div class="ecm-modal-body">
+                    <?php wp_nonce_field('ecm_session_participant_ajax', 'ecm_session_participant_ajax_nonce'); ?>
+
+                    <input type="hidden" id="ecm_session_modal_event_id" value="<?php echo esc_attr($event->id); ?>">
+                    <input type="hidden" id="ecm_session_modal_session_id" value="<?php echo esc_attr($session->id); ?>">
+
+                    <div class="ecm-session-search-bar">
+                        <input type="search"
+                            id="ecm-session-participant-search"
+                            class="regular-text"
+                            placeholder="Search by member ID, name, club...">
+
+                        <button type="button" class="button" id="ecm-session-participant-search-btn">
+                            Search
+                        </button>
+                    </div>
+
+                    <p>
+                        Selected:
+                        <strong id="ecm-session-selected-count">0</strong>
+                    </p>
+
+                    <div id="ecm-session-participant-results">
+                        <p class="description">Search participants to add them to this session.</p>
+                    </div>
+                </div>
+
+                <div class="ecm-modal-footer">
+                    <button type="button" class="button button-primary" id="ecm-add-selected-session-participants">
+                        Add Selected to Session
+                    </button>
+
+                    <button type="button" class="button ecm-modal-cancel">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    public function ajax_search_session_available_participants()
+    {
+        check_ajax_referer('ecm_session_participant_ajax', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied.');
+        }
+
+        $event_id   = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $session_id = isset($_POST['session_id']) ? absint($_POST['session_id']) : 0;
+        $search     = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+
+        if (!$event_id || !$session_id) {
+            wp_send_json_error('Invalid event or session.');
+        }
+
+        global $wpdb;
+
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $meta_table                 = $wpdb->prefix . 'ecm_participant_meta';
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+        $fields = $this->get_event_fields($event_id);
+
+        if (empty($fields)) {
+            wp_send_json_error('Participant fields not configured.');
+        }
+
+        $like = '%' . $wpdb->esc_like($search) . '%';
+
+        if (!empty($search)) {
+            $participants = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT DISTINCT p.*
+                 FROM $participants_table p
+                 LEFT JOIN $meta_table m ON p.id = m.participant_id
+                 WHERE p.event_id = %d
+                 AND p.id NOT IN (
+                    SELECT participant_id
+                    FROM $session_participants_table
+                    WHERE session_id = %d
+                 )
+                 AND (
+                    p.member_id LIKE %s
+                    OR m.meta_value LIKE %s
+                 )
+                 ORDER BY p.id DESC
+                 LIMIT 50",
+                    $event_id,
+                    $session_id,
+                    $like,
+                    $like
+                )
+            );
+        } else {
+            $participants = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT p.*
+                 FROM $participants_table p
+                 WHERE p.event_id = %d
+                 AND p.id NOT IN (
+                    SELECT participant_id
+                    FROM $session_participants_table
+                    WHERE session_id = %d
+                 )
+                 ORDER BY p.id DESC
+                 LIMIT 50",
+                    $event_id,
+                    $session_id
+                )
+            );
+        }
+
+        ob_start();
+
+        if (empty($participants)) {
+            echo '<p>No available participants found.</p>';
+        } else {
+        ?>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th width="35"></th>
+                        <?php foreach ($fields as $field) : ?>
+                            <th><?php echo esc_html($field->field_label); ?></th>
+                        <?php endforeach; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($participants as $participant) : ?>
+                        <?php
+                        $meta_rows = $wpdb->get_results(
+                            $wpdb->prepare(
+                                "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
+                                $participant->id
+                            ),
+                            OBJECT_K
+                        );
+                        ?>
+                        <tr>
+                            <td>
+                                <input type="checkbox"
+                                    class="ecm-session-participant-select"
+                                    value="<?php echo esc_attr($participant->id); ?>">
+                            </td>
+
+                            <?php foreach ($fields as $field) : ?>
+                                <?php
+                                if ($field->field_key === 'member_id') {
+                                    $value = $participant->member_id;
+                                } else {
+                                    $value = isset($meta_rows[$field->field_key])
+                                        ? $meta_rows[$field->field_key]->meta_value
+                                        : '';
+                                }
+                                ?>
+                                <td><?php echo esc_html($value); ?></td>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+<?php
+        }
+
+        $html = ob_get_clean();
+
+        wp_send_json_success([
+            'html' => $html,
+        ]);
+    }
+
+    public function ajax_add_session_participants()
+    {
+        check_ajax_referer('ecm_session_participant_ajax', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied.');
+        }
+
+        $event_id   = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $session_id = isset($_POST['session_id']) ? absint($_POST['session_id']) : 0;
+
+        $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
+            ? array_map('absint', $_POST['participant_ids'])
+            : [];
+
+        if (!$event_id || !$session_id || empty($participant_ids)) {
+            wp_send_json_error('Please select at least one participant.');
+        }
+
+        global $wpdb;
+
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+        $inserted = 0;
+
+        foreach ($participant_ids as $participant_id) {
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $participants_table WHERE id = %d AND event_id = %d",
+                    $participant_id,
+                    $event_id
+                )
+            );
+
+            if (!$exists) {
+                continue;
+            }
+
+            $already = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $session_participants_table WHERE session_id = %d AND participant_id = %d",
+                    $session_id,
+                    $participant_id
+                )
+            );
+
+            if ($already) {
+                continue;
+            }
+
+            $result = $wpdb->insert(
+                $session_participants_table,
+                [
+                    'session_id'     => $session_id,
+                    'participant_id' => $participant_id,
+                ],
+                ['%d', '%d']
+            );
+
+            if ($result) {
+                $inserted++;
+            }
+        }
+
+        wp_send_json_success([
+            'message'  => $inserted . ' participant(s) added to session.',
+            'inserted' => $inserted,
+        ]);
+    }
+
+    public function handle_remove_session_participant()
+    {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id'], $_GET['session_id'], $_GET['participant_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'remove_session_participant'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id       = absint($_GET['event_id']);
+        $session_id     = absint($_GET['session_id']);
+        $participant_id = absint($_GET['participant_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce(
+                $_GET['_wpnonce'],
+                'ecm_remove_session_participant_' . $session_id . '_' . $participant_id
+            )
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        global $wpdb;
+
+        $participants_table         = $wpdb->prefix . 'ecm_participants';
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+        $participant_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM $participants_table WHERE id = %d AND event_id = %d",
+                $participant_id,
+                $event_id
+            )
+        );
+
+        if (!$participant_exists) {
+            wp_die('Participant not found for this event.');
+        }
+
+        $wpdb->delete(
+            $session_participants_table,
+            [
+                'session_id'     => $session_id,
+                'participant_id' => $participant_id,
+            ],
+            ['%d', '%d']
+        );
+
+        wp_safe_redirect(
+            admin_url(
+                'admin.php?page=ecm-events&action=manage&event_id=' . $event_id .
+                    '&tab=sessions&session_action=participants&session_id=' . $session_id .
+                    '&session_participant_removed=1'
+            )
+        );
+        exit;
+    }
 }

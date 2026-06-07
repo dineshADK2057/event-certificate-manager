@@ -107,6 +107,108 @@
 
             $('#ecm-add-session-modal').fadeIn(150);
         });
+        $('#ecm-select-all-session-available').on('change', function () {
+            $('.ecm-session-available-checkbox').prop('checked', $(this).is(':checked'));
+        });
+
+        let ecmSelectedSessionParticipants = [];
+
+function ecmUpdateSelectedCount() {
+    $('#ecm-session-selected-count').text(ecmSelectedSessionParticipants.length);
+}
+
+function ecmLoadSessionParticipants() {
+    let eventId = $('#ecm_session_modal_event_id').val();
+    let sessionId = $('#ecm_session_modal_session_id').val();
+    let search = $('#ecm-session-participant-search').val();
+    let nonce = $('#ecm_session_participant_ajax_nonce').val();
+
+    $('#ecm-session-participant-results').html('<p>Loading participants...</p>');
+
+    $.post(ajaxurl, {
+        action: 'ecm_search_session_available_participants',
+        nonce: nonce,
+        event_id: eventId,
+        session_id: sessionId,
+        search: search
+    }, function (response) {
+        if (response.success) {
+            $('#ecm-session-participant-results').html(response.data.html);
+
+            $('.ecm-session-participant-select').each(function () {
+                let id = String($(this).val());
+
+                if (ecmSelectedSessionParticipants.includes(id)) {
+                    $(this).prop('checked', true);
+                }
+            });
+        } else {
+            $('#ecm-session-participant-results').html('<p>' + response.data + '</p>');
+        }
+    });
+}
+
+$('.ecm-open-session-participants-modal').on('click', function () {
+    ecmSelectedSessionParticipants = [];
+    ecmUpdateSelectedCount();
+
+    $('#ecm-session-participant-search').val('');
+    $('#ecm-session-participants-modal').fadeIn(150);
+
+    ecmLoadSessionParticipants();
+});
+
+$('#ecm-session-participant-search-btn').on('click', function () {
+    ecmLoadSessionParticipants();
+});
+
+$('#ecm-session-participant-search').on('keypress', function (e) {
+    if (e.which === 13) {
+        e.preventDefault();
+        ecmLoadSessionParticipants();
+    }
+});
+
+$(document).on('change', '.ecm-session-participant-select', function () {
+    let id = String($(this).val());
+
+    if ($(this).is(':checked')) {
+        if (!ecmSelectedSessionParticipants.includes(id)) {
+            ecmSelectedSessionParticipants.push(id);
+        }
+    } else {
+        ecmSelectedSessionParticipants = ecmSelectedSessionParticipants.filter(function (item) {
+            return item !== id;
+        });
+    }
+
+    ecmUpdateSelectedCount();
+});
+
+$('#ecm-add-selected-session-participants').on('click', function () {
+    let eventId = $('#ecm_session_modal_event_id').val();
+    let sessionId = $('#ecm_session_modal_session_id').val();
+    let nonce = $('#ecm_session_participant_ajax_nonce').val();
+
+    if (ecmSelectedSessionParticipants.length === 0) {
+        alert('Please select at least one participant.');
+        return;
+    }
+
+    $.post(ajaxurl, {
+        action: 'ecm_add_session_participants_ajax',
+        nonce: nonce,
+        event_id: eventId,
+        session_id: sessionId,
+        participant_ids: ecmSelectedSessionParticipants
+    }, function (response) {
+        if (response.success) {
+            window.location.reload();
+        } else {
+            alert(response.data);
+        }
+    });
+});
     });
 
 })(jQuery);

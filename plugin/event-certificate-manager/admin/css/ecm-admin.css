@@ -298,3 +298,17 @@
     border-radius: 6px;
     overflow-x: auto;
 }
+
+.ecm-modal-large {
+    width: 900px;
+}
+
+.ecm-session-search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.ecm-session-search-bar input {
+    flex: 1;
+}
