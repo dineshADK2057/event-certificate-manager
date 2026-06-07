@@ -20,6 +20,7 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_csv_import']);
         add_action('admin_init', [$this, 'handle_download_sample_csv']);
         add_action('admin_init', [$this, 'handle_export_participants_csv']);
+        add_action('admin_init', [$this, 'handle_add_session']);
     }
 
     public function events_page()
@@ -634,8 +635,27 @@ class ECM_Events
     private function tab_sessions($event)
     {
     ?>
-        <h2>Sessions</h2>
-        <p>Sessions and session-specific participant lists will be built here.</p>
+        <div class="ecm-tab-header">
+            <div>
+                <h2>Sessions</h2>
+                <p>Create and manage sessions under this event.</p>
+            </div>
+
+            <div class="ecm-tab-actions">
+                <button type="button" class="button button-primary ecm-open-session-modal">
+                    + Add Session
+                </button>
+            </div>
+        </div>
+
+        <?php if (isset($_GET['session_added'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Session added successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php $this->render_sessions_list_section($event); ?>
+        <?php $this->render_add_session_modal($event); ?>
     <?php
     }
 
@@ -1632,7 +1652,7 @@ class ECM_Events
                 </form>
             </div>
         </div>
-<?php
+    <?php
     }
     public function handle_csv_import()
     {
@@ -1984,4 +2004,199 @@ class ECM_Events
         fclose($output);
         exit;
     }
+
+    private function render_sessions_list_section($event)
+    {
+        global $wpdb;
+
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+        $sessions = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $sessions_table WHERE event_id = %d ORDER BY id DESC",
+                $event->id
+            )
+        );
+    ?>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Session List</h3>
+
+            <?php if (empty($sessions)) : ?>
+                <p>No sessions created yet.</p>
+            <?php else : ?>
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Session Code</th>
+                            <th>Session Name</th>
+                            <th>Tutor / Speaker</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($sessions as $session) : ?>
+                            <tr>
+                                <td><strong><?php echo esc_html($session->session_code); ?></strong></td>
+                                <td><?php echo esc_html($session->session_name); ?></td>
+                                <td><?php echo esc_html($session->tutor_name); ?></td>
+                                <td><?php echo esc_html($session->session_date); ?></td>
+                                <td>
+                                    <span class="ecm-status ecm-status-<?php echo esc_attr($session->status); ?>">
+                                        <?php echo esc_html(ucfirst($session->status)); ?>
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    <?php
+    }
+
+    private function render_add_session_modal($event)
+    {
+    ?>
+        <div id="ecm-add-session-modal" class="ecm-modal" style="display:none;">
+            <div class="ecm-modal-content">
+                <div class="ecm-modal-header">
+                    <h2>Add Session</h2>
+                    <button type="button" class="ecm-modal-close">&times;</button>
+                </div>
+
+                <form method="post">
+                    <?php wp_nonce_field('ecm_add_session', 'ecm_add_session_nonce'); ?>
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+
+                    <div class="ecm-modal-body">
+                        <p>
+                            <label for="session_name">
+                                <strong>Session Name</strong>
+                            </label>
+                            <input type="text" id="session_name" name="session_name" class="widefat" required>
+                        </p>
+
+                        <p>
+                            <label for="tutor_name">
+                                <strong>Tutor / Speaker</strong>
+                            </label>
+                            <input type="text" id="tutor_name" name="tutor_name" class="widefat">
+                        </p>
+
+                        <p>
+                            <label for="session_date">
+                                <strong>Session Date</strong>
+                            </label>
+                            <input type="date" id="session_date" name="session_date" class="widefat">
+                        </p>
+
+                        <p>
+                            <label for="session_status">
+                                <strong>Status</strong>
+                            </label>
+                            <select id="session_status" name="status" class="widefat">
+                                <option value="active">Active</option>
+                                <option value="draft">Draft</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </p>
+                    </div>
+
+                    <div class="ecm-modal-footer">
+                        <button type="submit" name="ecm_add_session_submit" class="button button-primary">
+                            Save Session
+                        </button>
+
+                        <button type="button" class="button ecm-modal-cancel">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+<?php
+    }
+
+    public function handle_add_session() {
+    if (!isset($_POST['ecm_add_session_submit'])) {
+        return;
+    }
+
+    if (
+        !isset($_POST['ecm_add_session_nonce']) ||
+        !wp_verify_nonce($_POST['ecm_add_session_nonce'], 'ecm_add_session')
+    ) {
+        wp_die('Security check failed.');
+    }
+
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have permission to perform this action.');
+    }
+
+    $event_id     = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+    $session_name = sanitize_text_field($_POST['session_name'] ?? '');
+    $tutor_name   = sanitize_text_field($_POST['tutor_name'] ?? '');
+    $session_date = sanitize_text_field($_POST['session_date'] ?? '');
+    $status       = sanitize_text_field($_POST['status'] ?? 'active');
+
+    if (!$event_id) {
+        wp_die('Invalid event.');
+    }
+
+    if (empty($session_name)) {
+        wp_die('Session name is required.');
+    }
+
+    $allowed_statuses = ['draft', 'active', 'closed'];
+
+    if (!in_array($status, $allowed_statuses, true)) {
+        $status = 'active';
+    }
+
+    global $wpdb;
+
+    $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+    $session_code = $this->generate_session_code($event_id);
+
+    $inserted = $wpdb->insert(
+        $sessions_table,
+        [
+            'event_id'     => $event_id,
+            'session_code' => $session_code,
+            'session_name' => $session_name,
+            'tutor_name'   => $tutor_name,
+            'session_date' => $session_date ?: null,
+            'status'       => $status,
+        ],
+        ['%d', '%s', '%s', '%s', '%s', '%s']
+    );
+
+    if (!$inserted) {
+        wp_die('Failed to add session.');
+    }
+
+    wp_safe_redirect(
+        admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_added=1')
+    );
+    exit;
+}
+
+private function generate_session_code($event_id) {
+    global $wpdb;
+
+    $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+    $count = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM $sessions_table WHERE event_id = %d",
+            $event_id
+        )
+    );
+
+    $number = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+    return 'SES-' . $number;
+}
 }

@@ -73,6 +73,9 @@
         $('.ecm-open-csv-modal').on('click', function () {
             $('#ecm-csv-upload-modal').fadeIn(150);
         });
+        $('.ecm-open-session-modal').on('click', function () {
+            $('#ecm-add-session-modal').fadeIn(150);
+        });
     });
 
 })(jQuery);
