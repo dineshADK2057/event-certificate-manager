@@ -636,7 +636,15 @@ class ECM_Events
 
     private function tab_sessions($event)
     {
+        $session_action = isset($_GET['session_action']) ? sanitize_text_field($_GET['session_action']) : '';
+        $session_id     = isset($_GET['session_id']) ? absint($_GET['session_id']) : 0;
+
+        if ($session_action === 'participants' && $session_id > 0) {
+            $this->render_session_participants_page($event, $session_id);
+            return;
+        }
     ?>
+
         <div class="ecm-tab-header">
             <div>
                 <h2>Sessions</h2>
@@ -2069,7 +2077,23 @@ class ECM_Events
                                     'ecm_delete_session_' . absint($session->id)
                                 );
                                 ?>
+                                <?php
+                                $participants_url = admin_url(
+                                    'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) .
+                                        '&tab=sessions&session_action=participants&session_id=' . absint($session->id)
+                                );
+
+                                $delete_url = wp_nonce_url(
+                                    admin_url(
+                                        'admin.php?page=ecm-events&action=delete_session&event_id=' . absint($event->id) . '&session_id=' . absint($session->id)
+                                    ),
+                                    'ecm_delete_session_' . absint($session->id)
+                                );
+                                ?>
+
                                 <td>
+                                    <a href="<?php echo esc_url($participants_url); ?>">Participants</a>
+                                    |
                                     <a href="#"
                                         class="ecm-edit-session"
                                         data-session-id="<?php echo esc_attr($session->id); ?>"
@@ -2364,4 +2388,60 @@ class ECM_Events
         );
         exit;
     }
+    private function render_session_participants_page($event, $session_id) {
+    global $wpdb;
+
+    $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+    $session = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT * FROM $sessions_table WHERE id = %d AND event_id = %d",
+            $session_id,
+            $event->id
+        )
+    );
+
+    if (!$session) {
+        echo '<div class="notice notice-error"><p>Session not found.</p></div>';
+        return;
+    }
+
+    $back_url = admin_url(
+        'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=sessions'
+    );
+    ?>
+
+    <div class="ecm-form-header">
+        <a href="<?php echo esc_url($back_url); ?>" class="button">
+            ← Back to Sessions
+        </a>
+    </div>
+
+    <div class="ecm-event-heading">
+        <div>
+            <h2><?php echo esc_html($session->session_name); ?></h2>
+            <p>
+                <strong>Session Code:</strong> <?php echo esc_html($session->session_code); ?>
+                &nbsp; | &nbsp;
+                <strong>Tutor / Speaker:</strong> <?php echo esc_html($session->tutor_name); ?>
+                &nbsp; | &nbsp;
+                <strong>Status:</strong>
+                <span class="ecm-status ecm-status-<?php echo esc_attr($session->status); ?>">
+                    <?php echo esc_html(ucfirst($session->status)); ?>
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <div class="ecm-panel ecm-panel-full">
+        <h3>Session Participants</h3>
+        <p>This is where we will assign event participants to this session.</p>
+
+        <div class="notice notice-info inline">
+            <p>Next step: add participant assignment system for this session.</p>
+        </div>
+    </div>
+
+    <?php
+}
 }
