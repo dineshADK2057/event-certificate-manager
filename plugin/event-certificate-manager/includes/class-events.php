@@ -21,6 +21,8 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_download_sample_csv']);
         add_action('admin_init', [$this, 'handle_export_participants_csv']);
         add_action('admin_init', [$this, 'handle_add_session']);
+        add_action('admin_init', [$this, 'handle_update_session']);
+        add_action('admin_init', [$this, 'handle_delete_session']);
     }
 
     public function events_page()
@@ -651,6 +653,18 @@ class ECM_Events
         <?php if (isset($_GET['session_added'])) : ?>
             <div class="notice notice-success is-dismissible">
                 <p><strong>Session added successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['session_updated'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Session updated successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['session_deleted'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Session deleted successfully.</strong></p>
             </div>
         <?php endif; ?>
 
@@ -2032,6 +2046,7 @@ class ECM_Events
                             <th>Tutor / Speaker</th>
                             <th>Date</th>
                             <th>Status</th>
+                            <th width="130">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2045,6 +2060,31 @@ class ECM_Events
                                     <span class="ecm-status ecm-status-<?php echo esc_attr($session->status); ?>">
                                         <?php echo esc_html(ucfirst($session->status)); ?>
                                     </span>
+                                </td>
+                                <?php
+                                $delete_url = wp_nonce_url(
+                                    admin_url(
+                                        'admin.php?page=ecm-events&action=delete_session&event_id=' . absint($event->id) . '&session_id=' . absint($session->id)
+                                    ),
+                                    'ecm_delete_session_' . absint($session->id)
+                                );
+                                ?>
+                                <td>
+                                    <a href="#"
+                                        class="ecm-edit-session"
+                                        data-session-id="<?php echo esc_attr($session->id); ?>"
+                                        data-session-name="<?php echo esc_attr($session->session_name); ?>"
+                                        data-tutor-name="<?php echo esc_attr($session->tutor_name); ?>"
+                                        data-session-date="<?php echo esc_attr($session->session_date); ?>"
+                                        data-status="<?php echo esc_attr($session->status); ?>">
+                                        Edit
+                                    </a>
+                                    |
+                                    <a href="<?php echo esc_url($delete_url); ?>"
+                                        onclick="return confirm('Are you sure you want to delete this session?');"
+                                        class="ecm-danger-link">
+                                        Delete
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -2061,13 +2101,16 @@ class ECM_Events
         <div id="ecm-add-session-modal" class="ecm-modal" style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
-                    <h2>Add Session</h2>
+                    <h2 id="ecm-session-modal-title">Add Session</h2>
                     <button type="button" class="ecm-modal-close">&times;</button>
                 </div>
 
                 <form method="post">
                     <?php wp_nonce_field('ecm_add_session', 'ecm_add_session_nonce'); ?>
+                    <?php wp_nonce_field('ecm_update_session', 'ecm_update_session_nonce'); ?>
+
                     <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+                    <input type="hidden" name="session_id" id="ecm_session_id" value="">
 
                     <div class="ecm-modal-body">
                         <p>
@@ -2104,8 +2147,12 @@ class ECM_Events
                     </div>
 
                     <div class="ecm-modal-footer">
-                        <button type="submit" name="ecm_add_session_submit" class="button button-primary">
+                        <button type="submit" name="ecm_add_session_submit" id="ecm_add_session_submit" class="button button-primary">
                             Save Session
+                        </button>
+
+                        <button type="submit" name="ecm_update_session_submit" id="ecm_update_session_submit" class="button button-primary" style="display:none;">
+                            Update Session
                         </button>
 
                         <button type="button" class="button ecm-modal-cancel">
@@ -2118,85 +2165,203 @@ class ECM_Events
 <?php
     }
 
-    public function handle_add_session() {
-    if (!isset($_POST['ecm_add_session_submit'])) {
-        return;
+    public function handle_add_session()
+    {
+        if (isset($_POST['ecm_update_session_submit'])) {
+            return;
+        }
+
+        if (!isset($_POST['ecm_add_session_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_add_session_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_add_session_nonce'], 'ecm_add_session')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id     = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $session_name = sanitize_text_field($_POST['session_name'] ?? '');
+        $tutor_name   = sanitize_text_field($_POST['tutor_name'] ?? '');
+        $session_date = sanitize_text_field($_POST['session_date'] ?? '');
+        $status       = sanitize_text_field($_POST['status'] ?? 'active');
+
+        if (!$event_id) {
+            wp_die('Invalid event.');
+        }
+
+        if (empty($session_name)) {
+            wp_die('Session name is required.');
+        }
+
+        $allowed_statuses = ['draft', 'active', 'closed'];
+
+        if (!in_array($status, $allowed_statuses, true)) {
+            $status = 'active';
+        }
+
+        global $wpdb;
+
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+        $session_code = $this->generate_session_code($event_id);
+
+        $inserted = $wpdb->insert(
+            $sessions_table,
+            [
+                'event_id'     => $event_id,
+                'session_code' => $session_code,
+                'session_name' => $session_name,
+                'tutor_name'   => $tutor_name,
+                'session_date' => $session_date ?: null,
+                'status'       => $status,
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%s']
+        );
+
+        if (!$inserted) {
+            wp_die('Failed to add session.');
+        }
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_added=1')
+        );
+        exit;
     }
 
-    if (
-        !isset($_POST['ecm_add_session_nonce']) ||
-        !wp_verify_nonce($_POST['ecm_add_session_nonce'], 'ecm_add_session')
-    ) {
-        wp_die('Security check failed.');
+    private function generate_session_code($event_id)
+    {
+        global $wpdb;
+
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+        $count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $sessions_table WHERE event_id = %d",
+                $event_id
+            )
+        );
+
+        $number = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return 'SES-' . $number;
     }
 
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have permission to perform this action.');
+    public function handle_update_session()
+    {
+        if (!isset($_POST['ecm_update_session_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_update_session_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_update_session_nonce'], 'ecm_update_session')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id     = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $session_id   = isset($_POST['session_id']) ? absint($_POST['session_id']) : 0;
+        $session_name = sanitize_text_field($_POST['session_name'] ?? '');
+        $tutor_name   = sanitize_text_field($_POST['tutor_name'] ?? '');
+        $session_date = sanitize_text_field($_POST['session_date'] ?? '');
+        $status       = sanitize_text_field($_POST['status'] ?? 'active');
+
+        if (!$event_id || !$session_id) {
+            wp_die('Invalid session.');
+        }
+
+        if (empty($session_name)) {
+            wp_die('Session name is required.');
+        }
+
+        $allowed_statuses = ['draft', 'active', 'closed'];
+
+        if (!in_array($status, $allowed_statuses, true)) {
+            $status = 'active';
+        }
+
+        global $wpdb;
+
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+        $updated = $wpdb->update(
+            $sessions_table,
+            [
+                'session_name' => $session_name,
+                'tutor_name'   => $tutor_name,
+                'session_date' => $session_date ?: null,
+                'status'       => $status,
+                'updated_at'   => current_time('mysql'),
+            ],
+            [
+                'id'       => $session_id,
+                'event_id' => $event_id,
+            ],
+            ['%s', '%s', '%s', '%s', '%s'],
+            ['%d', '%d']
+        );
+
+        if ($updated === false) {
+            wp_die('Failed to update session.');
+        }
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_updated=1')
+        );
+        exit;
     }
 
-    $event_id     = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-    $session_name = sanitize_text_field($_POST['session_name'] ?? '');
-    $tutor_name   = sanitize_text_field($_POST['tutor_name'] ?? '');
-    $session_date = sanitize_text_field($_POST['session_date'] ?? '');
-    $status       = sanitize_text_field($_POST['status'] ?? 'active');
+    public function handle_delete_session()
+    {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id'], $_GET['session_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'delete_session'
+        ) {
+            return;
+        }
 
-    if (!$event_id) {
-        wp_die('Invalid event.');
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id   = absint($_GET['event_id']);
+        $session_id = absint($_GET['session_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_delete_session_' . $session_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        global $wpdb;
+
+        $sessions_table = $wpdb->prefix . 'ecm_sessions';
+
+        $wpdb->delete(
+            $sessions_table,
+            [
+                'id'       => $session_id,
+                'event_id' => $event_id,
+            ],
+            ['%d', '%d']
+        );
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_deleted=1')
+        );
+        exit;
     }
-
-    if (empty($session_name)) {
-        wp_die('Session name is required.');
-    }
-
-    $allowed_statuses = ['draft', 'active', 'closed'];
-
-    if (!in_array($status, $allowed_statuses, true)) {
-        $status = 'active';
-    }
-
-    global $wpdb;
-
-    $sessions_table = $wpdb->prefix . 'ecm_sessions';
-
-    $session_code = $this->generate_session_code($event_id);
-
-    $inserted = $wpdb->insert(
-        $sessions_table,
-        [
-            'event_id'     => $event_id,
-            'session_code' => $session_code,
-            'session_name' => $session_name,
-            'tutor_name'   => $tutor_name,
-            'session_date' => $session_date ?: null,
-            'status'       => $status,
-        ],
-        ['%d', '%s', '%s', '%s', '%s', '%s']
-    );
-
-    if (!$inserted) {
-        wp_die('Failed to add session.');
-    }
-
-    wp_safe_redirect(
-        admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_added=1')
-    );
-    exit;
-}
-
-private function generate_session_code($event_id) {
-    global $wpdb;
-
-    $sessions_table = $wpdb->prefix . 'ecm_sessions';
-
-    $count = (int) $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT COUNT(*) FROM $sessions_table WHERE event_id = %d",
-            $event_id
-        )
-    );
-
-    $number = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-
-    return 'SES-' . $number;
-}
 }

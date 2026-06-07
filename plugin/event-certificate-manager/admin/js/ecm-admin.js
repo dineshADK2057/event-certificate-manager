@@ -76,6 +76,37 @@
         $('.ecm-open-session-modal').on('click', function () {
             $('#ecm-add-session-modal').fadeIn(150);
         });
+        $('.ecm-edit-session').on('click', function (e) {
+            e.preventDefault();
+
+            let button = $(this);
+
+            $('#ecm-session-modal-title').text('Edit Session');
+            $('#ecm_session_id').val(button.data('session-id'));
+            $('#session_name').val(button.data('session-name'));
+            $('#tutor_name').val(button.data('tutor-name'));
+            $('#session_date').val(button.data('session-date'));
+            $('#session_status').val(button.data('status'));
+
+            $('#ecm_add_session_submit').hide();
+            $('#ecm_update_session_submit').show();
+
+            $('#ecm-add-session-modal').fadeIn(150);
+        });
+
+        $('.ecm-open-session-modal').on('click', function () {
+            $('#ecm-session-modal-title').text('Add Session');
+            $('#ecm_session_id').val('');
+            $('#session_name').val('');
+            $('#tutor_name').val('');
+            $('#session_date').val('');
+            $('#session_status').val('active');
+
+            $('#ecm_add_session_submit').show();
+            $('#ecm_update_session_submit').hide();
+
+            $('#ecm-add-session-modal').fadeIn(150);
+        });
     });
 
 })(jQuery);
