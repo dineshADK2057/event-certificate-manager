@@ -407,6 +407,7 @@ class ECM_Events {
         'participants' => 'Participants',
         'sessions'     => 'Sessions',
         'templates'    => 'Templates',
+        'certificates' => 'Certificates',
         'logs'         => 'Logs',
         'settings'     => 'Settings',
     ];
@@ -465,9 +466,13 @@ private function render_event_tab($tab, $event) {
         case 'sessions':
             $this->tab_sessions($event);
             break;
-
+        
         case 'templates':
             $this->tab_templates($event);
+            break;
+
+        case 'certificates':
+            $this->tab_certificates($event);
             break;
 
         case 'logs':
@@ -1420,5 +1425,24 @@ public function handle_add_participant() {
     );
     exit;
 }
+
+    private function tab_certificates($event) {
+        ?>
+        <h2>Certificates</h2>
+        <p>This module will manage generated certificates, downloads, email sending, QR verification, and resend actions.</p>
+
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Certificate Engine</h3>
+            <p>Coming soon:</p>
+            <ul class="ul-disc">
+                <li>Generated certificate list</li>
+                <li>Certificate ID management</li>
+                <li>Download certificate PDF</li>
+                <li>Resend email</li>
+                <li>QR verification status</li>
+            </ul>
+        </div>
+        <?php
+    }
 
 }
