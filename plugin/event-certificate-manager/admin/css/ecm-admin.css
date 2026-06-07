@@ -290,3 +290,11 @@
     display: block;
     margin-bottom: 6px;
 }
+
+.ecm-code-preview {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+}

@@ -4,9 +4,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class ECM_Events {
+class ECM_Events
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         add_action('admin_init', [$this, 'handle_event_save']);
         add_action('admin_init', [$this, 'handle_event_delete']);
         add_action('admin_init', [$this, 'handle_add_default_fields']);
@@ -15,10 +17,12 @@ class ECM_Events {
         add_action('admin_init', [$this, 'handle_update_participant']);
         add_action('admin_init', [$this, 'handle_delete_participant']);
         add_action('admin_init', [$this, 'handle_bulk_participant_action']);
+        add_action('admin_init', [$this, 'handle_csv_import']);
     }
 
-    public function events_page() {
-        ?>
+    public function events_page()
+    {
+?>
         <div class="wrap ecm-wrap">
             <div class="ecm-page-header">
                 <div>
@@ -47,10 +51,11 @@ class ECM_Events {
             }
             ?>
         </div>
-        <?php
+    <?php
     }
 
-    public function handle_event_save() {
+    public function handle_event_save()
+    {
         if (!isset($_POST['ecm_save_event_submit'])) {
             return;
         }
@@ -132,7 +137,8 @@ class ECM_Events {
         exit;
     }
 
-    public function handle_event_delete() {
+    public function handle_event_delete()
+    {
         if (
             !isset($_GET['page'], $_GET['action'], $_GET['event_id']) ||
             $_GET['page'] !== 'ecm-events' ||
@@ -171,7 +177,8 @@ class ECM_Events {
         exit;
     }
 
-    private function generate_event_code($event_name) {
+    private function generate_event_code($event_name)
+    {
         global $wpdb;
 
         $table = $wpdb->prefix . 'ecm_events';
@@ -188,13 +195,14 @@ class ECM_Events {
         return $prefix . '-' . $number;
     }
 
-    private function events_list() {
+    private function events_list()
+    {
         global $wpdb;
 
         $table = $wpdb->prefix . 'ecm_events';
 
         $events = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC");
-        ?>
+    ?>
 
         <?php if (isset($_GET['created'])) : ?>
             <div class="notice notice-success is-dismissible">
@@ -272,10 +280,11 @@ class ECM_Events {
 
             <?php endif; ?>
         </div>
-        <?php
+    <?php
     }
 
-    private function event_form($event_id = 0) {
+    private function event_form($event_id = 0)
+    {
         global $wpdb;
 
         $table = $wpdb->prefix . 'ecm_events';
@@ -294,7 +303,7 @@ class ECM_Events {
         }
 
         $is_edit = $event_id > 0;
-        ?>
+    ?>
         <div class="ecm-form-header">
             <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">
                 ← Back to Event List
@@ -384,151 +393,155 @@ class ECM_Events {
                 </p>
             </form>
         </div>
-        <?php
+    <?php
     }
 
-    private function manage_event_page($event_id) {
-    global $wpdb;
+    private function manage_event_page($event_id)
+    {
+        global $wpdb;
 
-    $table = $wpdb->prefix . 'ecm_events';
+        $table = $wpdb->prefix . 'ecm_events';
 
-    $event = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM $table WHERE id = %d", $event_id)
-    );
+        $event = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM $table WHERE id = %d", $event_id)
+        );
 
-    if (!$event) {
-        echo '<div class="notice notice-error"><p>Event not found.</p></div>';
-        return;
-    }
+        if (!$event) {
+            echo '<div class="notice notice-error"><p>Event not found.</p></div>';
+            return;
+        }
 
-    $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'overview';
+        $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'overview';
 
-    $tabs = [
-        'overview'     => 'Overview',
-        'participants' => 'Participants',
-        'sessions'     => 'Sessions',
-        'templates'    => 'Templates',
-        'certificates' => 'Certificates',
-        'logs'         => 'Logs',
-        'settings'     => 'Settings',
-    ];
+        $tabs = [
+            'overview'     => 'Overview',
+            'participants' => 'Participants',
+            'sessions'     => 'Sessions',
+            'templates'    => 'Templates',
+            'certificates' => 'Certificates',
+            'logs'         => 'Logs',
+            'settings'     => 'Settings',
+        ];
 
     ?>
-    <div class="ecm-form-header">
-        <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">
-            ← Back to Event List
-        </a>
-    </div>
-
-    <div class="ecm-event-heading">
-        <div>
-            <h2><?php echo esc_html($event->event_name); ?></h2>
-            <p>
-                <strong>Event Code:</strong> <?php echo esc_html($event->event_code); ?>
-                &nbsp; | &nbsp;
-                <strong>Status:</strong>
-                <span class="ecm-status ecm-status-<?php echo esc_attr($event->status); ?>">
-                    <?php echo esc_html(ucfirst($event->status)); ?>
-                </span>
-            </p>
+        <div class="ecm-form-header">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">
+                ← Back to Event List
+            </a>
         </div>
 
-        <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events&action=edit&event_id=' . absint($event->id))); ?>" class="button">
-            Edit Event
-        </a>
-    </div>
+        <div class="ecm-event-heading">
+            <div>
+                <h2><?php echo esc_html($event->event_name); ?></h2>
+                <p>
+                    <strong>Event Code:</strong> <?php echo esc_html($event->event_code); ?>
+                    &nbsp; | &nbsp;
+                    <strong>Status:</strong>
+                    <span class="ecm-status ecm-status-<?php echo esc_attr($event->status); ?>">
+                        <?php echo esc_html(ucfirst($event->status)); ?>
+                    </span>
+                </p>
+            </div>
 
-    <nav class="nav-tab-wrapper ecm-tabs">
-        <?php foreach ($tabs as $tab_key => $tab_label) : ?>
-            <?php
-            $tab_url = admin_url(
-                'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=' . $tab_key
-            );
-            ?>
-            <a href="<?php echo esc_url($tab_url); ?>"
-               class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
-                <?php echo esc_html($tab_label); ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events&action=edit&event_id=' . absint($event->id))); ?>" class="button">
+                Edit Event
             </a>
-        <?php endforeach; ?>
-    </nav>
+        </div>
 
-    <div class="ecm-panel ecm-panel-full ecm-tab-content">
-        <?php $this->render_event_tab($current_tab, $event); ?>
-    </div>
+        <nav class="nav-tab-wrapper ecm-tabs">
+            <?php foreach ($tabs as $tab_key => $tab_label) : ?>
+                <?php
+                $tab_url = admin_url(
+                    'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=' . $tab_key
+                );
+                ?>
+                <a href="<?php echo esc_url($tab_url); ?>"
+                    class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
+                    <?php echo esc_html($tab_label); ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
+
+        <div class="ecm-panel ecm-panel-full ecm-tab-content">
+            <?php $this->render_event_tab($current_tab, $event); ?>
+        </div>
     <?php
-}
-
-private function render_event_tab($tab, $event) {
-    switch ($tab) {
-        case 'participants':
-            $this->tab_participants($event);
-            break;
-
-        case 'sessions':
-            $this->tab_sessions($event);
-            break;
-        
-        case 'templates':
-            $this->tab_templates($event);
-            break;
-
-        case 'certificates':
-            $this->tab_certificates($event);
-            break;
-
-        case 'logs':
-            $this->tab_logs($event);
-            break;
-
-        case 'settings':
-            $this->tab_settings($event);
-            break;
-
-        case 'overview':
-        default:
-            $this->tab_overview($event);
-            break;
     }
-}
 
-private function tab_overview($event) {
+    private function render_event_tab($tab, $event)
+    {
+        switch ($tab) {
+            case 'participants':
+                $this->tab_participants($event);
+                break;
+
+            case 'sessions':
+                $this->tab_sessions($event);
+                break;
+
+            case 'templates':
+                $this->tab_templates($event);
+                break;
+
+            case 'certificates':
+                $this->tab_certificates($event);
+                break;
+
+            case 'logs':
+                $this->tab_logs($event);
+                break;
+
+            case 'settings':
+                $this->tab_settings($event);
+                break;
+
+            case 'overview':
+            default:
+                $this->tab_overview($event);
+                break;
+        }
+    }
+
+    private function tab_overview($event)
+    {
     ?>
-    <h2>Overview</h2>
-    <p>This is the main control center for this event.</p>
+        <h2>Overview</h2>
+        <p>This is the main control center for this event.</p>
 
-    <table class="widefat striped ecm-details-table">
-        <tbody>
-            <tr>
-                <th>Event Name</th>
-                <td><?php echo esc_html($event->event_name); ?></td>
-            </tr>
-            <tr>
-                <th>Event Code</th>
-                <td><?php echo esc_html($event->event_code); ?></td>
-            </tr>
-            <tr>
-                <th>Type</th>
-                <td><?php echo esc_html($event->event_type); ?></td>
-            </tr>
-            <tr>
-                <th>Venue</th>
-                <td><?php echo esc_html($event->venue); ?></td>
-            </tr>
-            <tr>
-                <th>Start Date</th>
-                <td><?php echo esc_html($event->start_date); ?></td>
-            </tr>
-            <tr>
-                <th>End Date</th>
-                <td><?php echo esc_html($event->end_date); ?></td>
-            </tr>
-        </tbody>
-    </table>
+        <table class="widefat striped ecm-details-table">
+            <tbody>
+                <tr>
+                    <th>Event Name</th>
+                    <td><?php echo esc_html($event->event_name); ?></td>
+                </tr>
+                <tr>
+                    <th>Event Code</th>
+                    <td><?php echo esc_html($event->event_code); ?></td>
+                </tr>
+                <tr>
+                    <th>Type</th>
+                    <td><?php echo esc_html($event->event_type); ?></td>
+                </tr>
+                <tr>
+                    <th>Venue</th>
+                    <td><?php echo esc_html($event->venue); ?></td>
+                </tr>
+                <tr>
+                    <th>Start Date</th>
+                    <td><?php echo esc_html($event->start_date); ?></td>
+                </tr>
+                <tr>
+                    <th>End Date</th>
+                    <td><?php echo esc_html($event->end_date); ?></td>
+                </tr>
+            </tbody>
+        </table>
     <?php
-}
+    }
 
-    private function tab_participants($event) {
-        ?>
+    private function tab_participants($event)
+    {
+    ?>
         <div class="ecm-tab-header">
             <div>
                 <h2>Participants</h2>
@@ -540,7 +553,7 @@ private function tab_overview($event) {
                     + Add Participant
                 </button>
 
-                <button type="button" class="button">
+                <button type="button" class="button ecm-open-csv-modal">
                     Upload CSV
                 </button>
             </div>
@@ -582,36 +595,51 @@ private function tab_overview($event) {
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_GET['csv_imported'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p>
+                    <strong>CSV import completed.</strong>
+                    Inserted: <?php echo esc_html(absint($_GET['inserted'] ?? 0)); ?>,
+                    Skipped: <?php echo esc_html(absint($_GET['skipped'] ?? 0)); ?>.
+                </p>
+            </div>
+        <?php endif; ?>
+
         <?php $this->render_participant_toolbar($event); ?>
         <?php $this->render_participant_list_section($event); ?>
         <?php $this->render_add_participant_modal($event); ?>
-        <?php
+        <?php $this->render_csv_upload_modal($event); ?>
+    <?php
     }
 
 
-private function tab_sessions($event) {
+    private function tab_sessions($event)
+    {
     ?>
-    <h2>Sessions</h2>
-    <p>Sessions and session-specific participant lists will be built here.</p>
+        <h2>Sessions</h2>
+        <p>Sessions and session-specific participant lists will be built here.</p>
     <?php
-}
+    }
 
-private function tab_templates($event) {
+    private function tab_templates($event)
+    {
     ?>
-    <h2>Templates</h2>
-    <p>Certificate template upload and placeholder positioning will be built here.</p>
+        <h2>Templates</h2>
+        <p>Certificate template upload and placeholder positioning will be built here.</p>
     <?php
-}
+    }
 
-private function tab_logs($event) {
+    private function tab_logs($event)
+    {
     ?>
-    <h2>Certificate Logs</h2>
-    <p>Generated certificate history, email status, downloads, and resend actions will be built here.</p>
+        <h2>Certificate Logs</h2>
+        <p>Generated certificate history, email status, downloads, and resend actions will be built here.</p>
     <?php
-}
+    }
 
-    private function tab_settings($event) {
-        ?>
+    private function tab_settings($event)
+    {
+    ?>
         <div class="ecm-tab-header">
             <div>
                 <h2>Event Settings</h2>
@@ -632,10 +660,11 @@ private function tab_logs($event) {
         <?php endif; ?>
 
         <?php $this->render_participant_fields_section($event); ?>
-        <?php
+    <?php
     }
 
-    private function render_participant_fields_section($event) {
+    private function render_participant_fields_section($event)
+    {
         global $wpdb;
 
         $fields_table = $wpdb->prefix . 'ecm_event_fields';
@@ -648,339 +677,344 @@ private function tab_logs($event) {
         );
 
     ?>
-    <div class="ecm-panel ecm-panel-full">
-        <h3>Participant Fields</h3>
-        <p class="description">
-            These fields define what participant data this event requires. They will be used for manual entry, CSV import, and certificate placeholders.
-        </p>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Participant Fields</h3>
+            <p class="description">
+                These fields define what participant data this event requires. They will be used for manual entry, CSV import, and certificate placeholders.
+            </p>
 
-        <?php if (empty($fields)) : ?>
-            <div class="notice notice-info inline">
-                <p>No participant fields found. Add the default fields first.</p>
-            </div>
+            <?php if (empty($fields)) : ?>
+                <div class="notice notice-info inline">
+                    <p>No participant fields found. Add the default fields first.</p>
+                </div>
 
-            <form method="post">
-                <?php wp_nonce_field('ecm_add_default_fields', 'ecm_default_fields_nonce'); ?>
-                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-                <button type="submit" name="ecm_add_default_fields_submit" class="button button-primary">
-                    Add Default Fields
-                </button>
-            </form>
-        <?php else : ?>
+                <form method="post">
+                    <?php wp_nonce_field('ecm_add_default_fields', 'ecm_default_fields_nonce'); ?>
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+                    <button type="submit" name="ecm_add_default_fields_submit" class="button button-primary">
+                        Add Default Fields
+                    </button>
+                </form>
+            <?php else : ?>
 
-            <table class="widefat striped ecm-fields-table">
-                <thead>
-                    <tr>
-                        <th>Label</th>
-                        <th>Key</th>
-                        <th>Type</th>
-                        <th>Required</th>
-                        <th>Order</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($fields as $field) : ?>
+                <table class="widefat striped ecm-fields-table">
+                    <thead>
                         <tr>
-                            <td><strong><?php echo esc_html($field->field_label); ?></strong></td>
-                            <td><code><?php echo esc_html($field->field_key); ?></code></td>
-                            <td><?php echo esc_html($field->field_type); ?></td>
-                            <td><?php echo $field->is_required ? 'Yes' : 'No'; ?></td>
-                            <td><?php echo esc_html($field->field_order); ?></td>
+                            <th>Label</th>
+                            <th>Key</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Order</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($fields as $field) : ?>
+                            <tr>
+                                <td><strong><?php echo esc_html($field->field_label); ?></strong></td>
+                                <td><code><?php echo esc_html($field->field_key); ?></code></td>
+                                <td><?php echo esc_html($field->field_type); ?></td>
+                                <td><?php echo $field->is_required ? 'Yes' : 'No'; ?></td>
+                                <td><?php echo esc_html($field->field_order); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
 
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <hr>
+            <hr>
 
-        <h3>Add Custom Field</h3>
+            <h3>Add Custom Field</h3>
 
-        <form method="post" class="ecm-inline-form">
-            <?php wp_nonce_field('ecm_add_custom_field', 'ecm_custom_field_nonce'); ?>
-            <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+            <form method="post" class="ecm-inline-form">
+                <?php wp_nonce_field('ecm_add_custom_field', 'ecm_custom_field_nonce'); ?>
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
 
-            <p>
-                <label>
-                    Field Label<br>
-                    <input type="text" name="field_label" class="regular-text" placeholder="Example: Cluster, District, Country">
-                </label>
-            </p>
+                <p>
+                    <label>
+                        Field Label<br>
+                        <input type="text" name="field_label" class="regular-text" placeholder="Example: Cluster, District, Country">
+                    </label>
+                </p>
 
-            <p>
-                <label>
-                    Field Type<br>
-                    <select name="field_type">
-                        <option value="text">Text</option>
-                        <option value="number">Number</option>
-                        <option value="email">Email</option>
-                        <option value="select">Select</option>
-                    </select>
-                </label>
-            </p>
+                <p>
+                    <label>
+                        Field Type<br>
+                        <select name="field_type">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="email">Email</option>
+                            <option value="select">Select</option>
+                        </select>
+                    </label>
+                </p>
 
-            <p>
-                <label>
-                    <input type="checkbox" name="is_required" value="1">
-                    Required field
-                </label>
-            </p>
+                <p>
+                    <label>
+                        <input type="checkbox" name="is_required" value="1">
+                        Required field
+                    </label>
+                </p>
 
-            <p>
-                <button type="submit" name="ecm_add_custom_field_submit" class="button button-primary">
-                    Add Field
-                </button>
-            </p>
-        </form>
-    </div>
+                <p>
+                    <button type="submit" name="ecm_add_custom_field_submit" class="button button-primary">
+                        Add Field
+                    </button>
+                </p>
+            </form>
+        </div>
     <?php
-}
-
-private function create_field_key($label) {
-    $key = strtolower($label);
-    $key = preg_replace('/[^a-z0-9]+/', '_', $key);
-    $key = trim($key, '_');
-
-    return $key ?: 'custom_field';
-}
-
-public function handle_add_default_fields() {
-    if (!isset($_POST['ecm_add_default_fields_submit'])) {
-        return;
     }
 
-    if (
-        !isset($_POST['ecm_default_fields_nonce']) ||
-        !wp_verify_nonce($_POST['ecm_default_fields_nonce'], 'ecm_add_default_fields')
-    ) {
-        wp_die('Security check failed.');
+    private function create_field_key($label)
+    {
+        $key = strtolower($label);
+        $key = preg_replace('/[^a-z0-9]+/', '_', $key);
+        $key = trim($key, '_');
+
+        return $key ?: 'custom_field';
     }
 
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have permission to perform this action.');
+    public function handle_add_default_fields()
+    {
+        if (!isset($_POST['ecm_add_default_fields_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_default_fields_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_default_fields_nonce'], 'ecm_add_default_fields')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+
+        if (!$event_id) {
+            wp_die('Invalid event.');
+        }
+
+        global $wpdb;
+        $fields_table = $wpdb->prefix . 'ecm_event_fields';
+
+        $defaults = [
+            [
+                'field_key'   => 'member_id',
+                'field_label' => 'Member ID',
+                'field_type'  => 'number',
+                'is_required' => 1,
+                'field_order' => 1,
+            ],
+            [
+                'field_key'   => 'member_name',
+                'field_label' => 'Member Name',
+                'field_type'  => 'text',
+                'is_required' => 1,
+                'field_order' => 2,
+            ],
+            [
+                'field_key'   => 'home_club',
+                'field_label' => 'Home Club',
+                'field_type'  => 'text',
+                'is_required' => 1,
+                'field_order' => 3,
+            ],
+        ];
+
+        foreach ($defaults as $field) {
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $fields_table WHERE event_id = %d AND field_key = %s",
+                    $event_id,
+                    $field['field_key']
+                )
+            );
+
+            if ($exists) {
+                continue;
+            }
+
+            $wpdb->insert(
+                $fields_table,
+                [
+                    'event_id'    => $event_id,
+                    'field_key'   => $field['field_key'],
+                    'field_label' => $field['field_label'],
+                    'field_type'  => $field['field_type'],
+                    'is_required' => $field['is_required'],
+                    'field_order' => $field['field_order'],
+                ],
+                ['%d', '%s', '%s', '%s', '%d', '%d']
+            );
+        }
+
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=settings&fields_added=1'));
+        exit;
     }
 
-    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+    public function handle_add_custom_field()
+    {
+        if (!isset($_POST['ecm_add_custom_field_submit'])) {
+            return;
+        }
 
-    if (!$event_id) {
-        wp_die('Invalid event.');
-    }
+        if (
+            !isset($_POST['ecm_custom_field_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_custom_field_nonce'], 'ecm_add_custom_field')
+        ) {
+            wp_die('Security check failed.');
+        }
 
-    global $wpdb;
-    $fields_table = $wpdb->prefix . 'ecm_event_fields';
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
 
-    $defaults = [
-        [
-            'field_key'   => 'member_id',
-            'field_label' => 'Member ID',
-            'field_type'  => 'number',
-            'is_required' => 1,
-            'field_order' => 1,
-        ],
-        [
-            'field_key'   => 'member_name',
-            'field_label' => 'Member Name',
-            'field_type'  => 'text',
-            'is_required' => 1,
-            'field_order' => 2,
-        ],
-        [
-            'field_key'   => 'home_club',
-            'field_label' => 'Home Club',
-            'field_type'  => 'text',
-            'is_required' => 1,
-            'field_order' => 3,
-        ],
-    ];
+        $event_id    = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $field_label = sanitize_text_field($_POST['field_label'] ?? '');
+        $field_type  = sanitize_text_field($_POST['field_type'] ?? 'text');
+        $is_required = isset($_POST['is_required']) ? 1 : 0;
 
-    foreach ($defaults as $field) {
-        $exists = $wpdb->get_var(
+        if (!$event_id || empty($field_label)) {
+            wp_die('Field label is required.');
+        }
+
+        $allowed_types = ['text', 'number', 'email', 'select'];
+
+        if (!in_array($field_type, $allowed_types, true)) {
+            $field_type = 'text';
+        }
+
+        global $wpdb;
+        $fields_table = $wpdb->prefix . 'ecm_event_fields';
+
+        $field_key = $this->create_field_key($field_label);
+
+        $original_key = $field_key;
+        $counter = 2;
+
+        while ($wpdb->get_var(
             $wpdb->prepare(
                 "SELECT id FROM $fields_table WHERE event_id = %d AND field_key = %s",
                 $event_id,
-                $field['field_key']
+                $field_key
+            )
+        )) {
+            $field_key = $original_key . '_' . $counter;
+            $counter++;
+        }
+
+        $max_order = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT MAX(field_order) FROM $fields_table WHERE event_id = %d",
+                $event_id
             )
         );
-
-        if ($exists) {
-            continue;
-        }
 
         $wpdb->insert(
             $fields_table,
             [
                 'event_id'    => $event_id,
-                'field_key'   => $field['field_key'],
-                'field_label' => $field['field_label'],
-                'field_type'  => $field['field_type'],
-                'is_required' => $field['is_required'],
-                'field_order' => $field['field_order'],
+                'field_key'   => $field_key,
+                'field_label' => $field_label,
+                'field_type'  => $field_type,
+                'is_required' => $is_required,
+                'field_order' => $max_order + 1,
             ],
             ['%d', '%s', '%s', '%s', '%d', '%d']
         );
+
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=settings&field_added=1'));
+        exit;
     }
 
-    wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=settings&fields_added=1'));
-    exit;
-}
+    private function get_event_fields($event_id)
+    {
+        global $wpdb;
 
-public function handle_add_custom_field() {
-    if (!isset($_POST['ecm_add_custom_field_submit'])) {
-        return;
-    }
+        $fields_table = $wpdb->prefix . 'ecm_event_fields';
 
-    if (
-        !isset($_POST['ecm_custom_field_nonce']) ||
-        !wp_verify_nonce($_POST['ecm_custom_field_nonce'], 'ecm_add_custom_field')
-    ) {
-        wp_die('Security check failed.');
-    }
-
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have permission to perform this action.');
-    }
-
-    $event_id    = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-    $field_label = sanitize_text_field($_POST['field_label'] ?? '');
-    $field_type  = sanitize_text_field($_POST['field_type'] ?? 'text');
-    $is_required = isset($_POST['is_required']) ? 1 : 0;
-
-    if (!$event_id || empty($field_label)) {
-        wp_die('Field label is required.');
-    }
-
-    $allowed_types = ['text', 'number', 'email', 'select'];
-
-    if (!in_array($field_type, $allowed_types, true)) {
-        $field_type = 'text';
-    }
-
-    global $wpdb;
-    $fields_table = $wpdb->prefix . 'ecm_event_fields';
-
-    $field_key = $this->create_field_key($field_label);
-
-    $original_key = $field_key;
-    $counter = 2;
-
-    while ($wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT id FROM $fields_table WHERE event_id = %d AND field_key = %s",
-            $event_id,
-            $field_key
-        )
-    )) {
-        $field_key = $original_key . '_' . $counter;
-        $counter++;
-    }
-
-    $max_order = (int) $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT MAX(field_order) FROM $fields_table WHERE event_id = %d",
-            $event_id
-        )
-    );
-
-    $wpdb->insert(
-        $fields_table,
-        [
-            'event_id'    => $event_id,
-            'field_key'   => $field_key,
-            'field_label' => $field_label,
-            'field_type'  => $field_type,
-            'is_required' => $is_required,
-            'field_order' => $max_order + 1,
-        ],
-        ['%d', '%s', '%s', '%s', '%d', '%d']
-    );
-
-    wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=settings&field_added=1'));
-    exit;
-}
-
-private function get_event_fields($event_id) {
-    global $wpdb;
-
-    $fields_table = $wpdb->prefix . 'ecm_event_fields';
-
-    return $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM $fields_table WHERE event_id = %d ORDER BY field_order ASC, id ASC",
-            $event_id
-        )
-    );
-}
-
-private function render_add_participant_section($event) {
-    $fields = $this->get_event_fields($event->id);
-
-    if (empty($fields)) {
-        return;
-    }
-    ?>
-    <div class="ecm-panel ecm-panel-full">
-        <h3>Add Participant</h3>
-        <p class="description">Add one participant manually using this event's fields.</p>
-
-        <form method="post">
-            <?php wp_nonce_field('ecm_add_participant', 'ecm_add_participant_nonce'); ?>
-            <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-
-            <table class="form-table">
-                <?php foreach ($fields as $field) : ?>
-                    <tr>
-                        <th scope="row">
-                            <label for="ecm_field_<?php echo esc_attr($field->field_key); ?>">
-                                <?php echo esc_html($field->field_label); ?>
-                                <?php if ((int) $field->is_required === 1) : ?>
-                                    <span class="description">(required)</span>
-                                <?php endif; ?>
-                            </label>
-                        </th>
-                        <td>
-                            <input
-                                type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
-                                id="ecm_field_<?php echo esc_attr($field->field_key); ?>"
-                                name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
-                                class="regular-text"
-                                <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>
-                            >
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
-
-            <p>
-                <button type="submit" name="ecm_add_participant_submit" class="button button-primary">
-                    Add Participant
-                </button>
-            </p>
-        </form>
-    </div>
-    <?php
-}
-
-private function render_participant_list_section($event) {
-    global $wpdb;
-
-    $participants_table = $wpdb->prefix . 'ecm_participants';
-    $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
-
-    $fields = $this->get_event_fields($event->id);
-
-    if (empty($fields)) {
-        return;
-    }
-
-    $search = isset($_GET['participant_search']) ? sanitize_text_field($_GET['participant_search']) : '';
-
-    if (!empty($search)) {
-        $like = '%' . $wpdb->esc_like($search) . '%';
-
-        $participants = $wpdb->get_results(
+        return $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT DISTINCT p.*
+                "SELECT * FROM $fields_table WHERE event_id = %d ORDER BY field_order ASC, id ASC",
+                $event_id
+            )
+        );
+    }
+
+    private function render_add_participant_section($event)
+    {
+        $fields = $this->get_event_fields($event->id);
+
+        if (empty($fields)) {
+            return;
+        }
+    ?>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Add Participant</h3>
+            <p class="description">Add one participant manually using this event's fields.</p>
+
+            <form method="post">
+                <?php wp_nonce_field('ecm_add_participant', 'ecm_add_participant_nonce'); ?>
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+
+                <table class="form-table">
+                    <?php foreach ($fields as $field) : ?>
+                        <tr>
+                            <th scope="row">
+                                <label for="ecm_field_<?php echo esc_attr($field->field_key); ?>">
+                                    <?php echo esc_html($field->field_label); ?>
+                                    <?php if ((int) $field->is_required === 1) : ?>
+                                        <span class="description">(required)</span>
+                                    <?php endif; ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input
+                                    type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
+                                    id="ecm_field_<?php echo esc_attr($field->field_key); ?>"
+                                    name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
+                                    class="regular-text"
+                                    <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+
+                <p>
+                    <button type="submit" name="ecm_add_participant_submit" class="button button-primary">
+                        Add Participant
+                    </button>
+                </p>
+            </form>
+        </div>
+    <?php
+    }
+
+    private function render_participant_list_section($event)
+    {
+        global $wpdb;
+
+        $participants_table = $wpdb->prefix . 'ecm_participants';
+        $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
+
+        $fields = $this->get_event_fields($event->id);
+
+        if (empty($fields)) {
+            return;
+        }
+
+        $search = isset($_GET['participant_search']) ? sanitize_text_field($_GET['participant_search']) : '';
+
+        if (!empty($search)) {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+
+            $participants = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT DISTINCT p.*
                 FROM $participants_table p
                 LEFT JOIN $meta_table m ON p.id = m.participant_id
                 WHERE p.event_id = %d
@@ -989,73 +1023,73 @@ private function render_participant_list_section($event) {
                     OR m.meta_value LIKE %s
                 )
                 ORDER BY p.id DESC",
-                $event->id,
-                $like,
-                $like
-            )
-        );
-    } else {
-        $participants = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $participants_table WHERE event_id = %d ORDER BY id DESC",
-                $event->id
-            )
-        );
-    }
+                    $event->id,
+                    $like,
+                    $like
+                )
+            );
+        } else {
+            $participants = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM $participants_table WHERE event_id = %d ORDER BY id DESC",
+                    $event->id
+                )
+            );
+        }
     ?>
-    <div class="ecm-panel ecm-panel-full">
-        <h3>Participant List</h3>
+        <div class="ecm-panel ecm-panel-full">
+            <h3>Participant List</h3>
 
-        <?php if (empty($participants)) : ?>
-            <p>No participants added yet.</p>
-        <?php else : ?>
-            <table class="widefat striped">
-                <thead>
-                    <tr>
-                        <th width="35">
-                            <input type="checkbox" id="ecm-select-all-participants">
-                        </th>
-                        <?php foreach ($fields as $field) : ?>
-                            <th><?php echo esc_html($field->field_label); ?></th>
-                        <?php endforeach; ?>
-                        <th>Created</th>
-                        <th width="120">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($participants as $participant) : ?>
-                        <?php
-                        $meta_rows = $wpdb->get_results(
-                            $wpdb->prepare(
-                                "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
-                                $participant->id
-                            ),
-                            OBJECT_K
-                        );
-                        ?>
+            <?php if (empty($participants)) : ?>
+                <p>No participants added yet.</p>
+            <?php else : ?>
+                <table class="widefat striped">
+                    <thead>
                         <tr>
-                            <td>
-                                <input type="checkbox"
-                                    name="participant_ids[]"
-                                    value="<?php echo esc_attr($participant->id); ?>"
-                                    class="ecm-participant-checkbox"
-                                    form="ecm-bulk-participant-form">
-                            </td>
+                            <th width="35">
+                                <input type="checkbox" id="ecm-select-all-participants">
+                            </th>
                             <?php foreach ($fields as $field) : ?>
-                                <?php
-                                if ($field->field_key === 'member_id') {
-                                    $value = $participant->member_id;
-                                } else {
-                                    $value = isset($meta_rows[$field->field_key])
-                                        ? $meta_rows[$field->field_key]->meta_value
-                                        : '';
-                                }
-                                ?>
-                                <td><?php echo esc_html($value); ?></td>
+                                <th><?php echo esc_html($field->field_label); ?></th>
                             <?php endforeach; ?>
-                            
-                            <td><?php echo esc_html($participant->created_at); ?></td>
+                            <th>Created</th>
+                            <th width="120">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($participants as $participant) : ?>
                             <?php
+                            $meta_rows = $wpdb->get_results(
+                                $wpdb->prepare(
+                                    "SELECT meta_key, meta_value FROM $meta_table WHERE participant_id = %d",
+                                    $participant->id
+                                ),
+                                OBJECT_K
+                            );
+                            ?>
+                            <tr>
+                                <td>
+                                    <input type="checkbox"
+                                        name="participant_ids[]"
+                                        value="<?php echo esc_attr($participant->id); ?>"
+                                        class="ecm-participant-checkbox"
+                                        form="ecm-bulk-participant-form">
+                                </td>
+                                <?php foreach ($fields as $field) : ?>
+                                    <?php
+                                    if ($field->field_key === 'member_id') {
+                                        $value = $participant->member_id;
+                                    } else {
+                                        $value = isset($meta_rows[$field->field_key])
+                                            ? $meta_rows[$field->field_key]->meta_value
+                                            : '';
+                                    }
+                                    ?>
+                                    <td><?php echo esc_html($value); ?></td>
+                                <?php endforeach; ?>
+
+                                <td><?php echo esc_html($participant->created_at); ?></td>
+                                <?php
                                 $delete_url = wp_nonce_url(
                                     admin_url(
                                         'admin.php?page=ecm-events&action=delete_participant&event_id=' . absint($event->id) . '&participant_id=' . absint($participant->id)
@@ -1068,7 +1102,7 @@ private function render_participant_list_section($event) {
                                         class="ecm-edit-participant"
                                         data-participant-id="<?php echo esc_attr($participant->id); ?>"
                                         <?php foreach ($fields as $field) : ?>
-                                            <?php
+                                        <?php
                                             if ($field->field_key === 'member_id') {
                                                 $data_value = $participant->member_id;
                                             } else {
@@ -1076,162 +1110,169 @@ private function render_participant_list_section($event) {
                                                     ? $meta_rows[$field->field_key]->meta_value
                                                     : '';
                                             }
-                                            ?>
-                                            data-<?php echo esc_attr($field->field_key); ?>="<?php echo esc_attr($data_value); ?>"
-                                        <?php endforeach; ?>
-                                        >
-                                         Edit
+                                        ?>
+                                        data-<?php echo esc_attr($field->field_key); ?>="<?php echo esc_attr($data_value); ?>"
+                                        <?php endforeach; ?>>
+                                        Edit
                                     </a>
                                     |
                                     <a href="<?php echo esc_url($delete_url); ?>"
-                                    onclick="return confirm('Are you sure you want to delete this participant?');"
-                                    class="ecm-danger-link">
+                                        onclick="return confirm('Are you sure you want to delete this participant?');"
+                                        class="ecm-danger-link">
                                         Delete
                                     </a>
                                 </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-    </div>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
     <?php
-}
-
-public function handle_add_participant() {
-    if (!isset($_POST['ecm_add_participant_submit'])) {
-        return;
     }
 
-    if (
-        !isset($_POST['ecm_add_participant_nonce']) ||
-        !wp_verify_nonce($_POST['ecm_add_participant_nonce'], 'ecm_add_participant')
-    ) {
-        wp_die('Security check failed.');
-    }
-
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have permission to perform this action.');
-    }
-
-    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-    $submitted_fields = isset($_POST['participant_fields']) && is_array($_POST['participant_fields'])
-        ? wp_unslash($_POST['participant_fields'])
-        : [];
-
-    if (!$event_id) {
-        wp_die('Invalid event.');
-    }
-
-    $fields = $this->get_event_fields($event_id);
-
-    if (empty($fields)) {
-        wp_die('Participant fields are not configured for this event.');
-    }
-
-    $clean_data = [];
-
-    foreach ($fields as $field) {
-        $key = $field->field_key;
-        $value = isset($submitted_fields[$key])
-            ? sanitize_text_field($submitted_fields[$key])
-            : '';
-
-        if ((int) $field->is_required === 1 && $value === '') {
-            wp_die(esc_html($field->field_label) . ' is required.');
+    public function handle_add_participant()
+    {
+        if (!isset($_POST['ecm_add_participant_submit'])) {
+            return;
         }
 
-        if ($field->field_type === 'number' && $value !== '' && !ctype_digit($value)) {
-            wp_die(esc_html($field->field_label) . ' must contain numbers only.');
+        if (
+            !isset($_POST['ecm_add_participant_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_add_participant_nonce'], 'ecm_add_participant')
+        ) {
+            wp_die('Security check failed.');
         }
 
-        $clean_data[$key] = $value;
-    }
-
-    if (empty($clean_data['member_id'])) {
-        wp_die('Member ID is required.');
-    }
-
-    global $wpdb;
-
-    $participants_table = $wpdb->prefix . 'ecm_participants';
-    $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
-
-    $exists = $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT id FROM $participants_table WHERE event_id = %d AND member_id = %s",
-            $event_id,
-            $clean_data['member_id']
-        )
-    );
-
-    if ($exists) {
-        wp_die('This Member ID already exists for this event.');
-    }
-
-    $inserted = $wpdb->insert(
-        $participants_table,
-        [
-            'event_id'  => $event_id,
-            'member_id' => $clean_data['member_id'],
-        ],
-        ['%d', '%s']
-    );
-
-    if (!$inserted) {
-        wp_die('Failed to add participant.');
-    }
-
-    $participant_id = (int) $wpdb->insert_id;
-
-    foreach ($clean_data as $key => $value) {
-        if ($key === 'member_id') {
-            continue;
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
         }
 
-        $wpdb->insert(
-            $meta_table,
-            [
-                'participant_id' => $participant_id,
-                'meta_key'       => $key,
-                'meta_value'     => $value,
-            ],
-            ['%d', '%s', '%s']
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $submitted_fields = isset($_POST['participant_fields']) && is_array($_POST['participant_fields'])
+            ? wp_unslash($_POST['participant_fields'])
+            : [];
+
+        if (!$event_id) {
+            wp_die('Invalid event.');
+        }
+
+        $fields = $this->get_event_fields($event_id);
+
+        if (empty($fields)) {
+            wp_die('Participant fields are not configured for this event.');
+        }
+
+        $clean_data = [];
+
+        foreach ($fields as $field) {
+            $key = $field->field_key;
+            $value = isset($submitted_fields[$key])
+                ? sanitize_text_field($submitted_fields[$key])
+                : '';
+
+            if ((int) $field->is_required === 1 && $value === '') {
+                wp_die(esc_html($field->field_label) . ' is required.');
+            }
+
+            if ($field->field_type === 'number' && $value !== '' && !ctype_digit($value)) {
+                wp_die(esc_html($field->field_label) . ' must contain numbers only.');
+            }
+
+            $clean_data[$key] = $value;
+        }
+
+        if (empty($clean_data['member_id'])) {
+            wp_die('Member ID is required.');
+        }
+
+        global $wpdb;
+
+        $participants_table = $wpdb->prefix . 'ecm_participants';
+        $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
+
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM $participants_table WHERE event_id = %d AND member_id = %s",
+                $event_id,
+                $clean_data['member_id']
+            )
         );
+
+        if ($exists) {
+            wp_die('This Member ID already exists for this event.');
+        }
+
+        $inserted = $wpdb->insert(
+            $participants_table,
+            [
+                'event_id'  => $event_id,
+                'member_id' => $clean_data['member_id'],
+            ],
+            ['%d', '%s']
+        );
+
+        if (!$inserted) {
+            wp_die('Failed to add participant.');
+        }
+
+        $participant_id = (int) $wpdb->insert_id;
+
+        foreach ($clean_data as $key => $value) {
+            if ($key === 'member_id') {
+                continue;
+            }
+
+            $wpdb->insert(
+                $meta_table,
+                [
+                    'participant_id' => $participant_id,
+                    'meta_key'       => $key,
+                    'meta_value'     => $value,
+                ],
+                ['%d', '%s', '%s']
+            );
+        }
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&participant_added=1')
+        );
+        exit;
     }
 
-    wp_safe_redirect(
-        admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&participant_added=1')
-    );
-    exit;
-}
-
-    private function render_participant_toolbar($event) {
+    private function render_participant_toolbar($event)
+    {
         $search = isset($_GET['participant_search']) ? sanitize_text_field($_GET['participant_search']) : '';
-        ?>
-        <form method="post" class="ecm-list-toolbar" id="ecm-bulk-participant-form">
-            <?php wp_nonce_field('ecm_bulk_participant_action', 'ecm_bulk_participant_nonce'); ?>
-            <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-            <input type="hidden" name="participant_search" value="<?php echo esc_attr($search); ?>">
+    ?>
+        <div class="ecm-list-toolbar">
 
-            <div class="ecm-list-toolbar-left">
+            <form method="post" class="ecm-list-toolbar-left" id="ecm-bulk-participant-form">
+                <?php wp_nonce_field('ecm_bulk_participant_action', 'ecm_bulk_participant_nonce'); ?>
+
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+
                 <select name="bulk_action">
                     <option value="">Bulk actions</option>
                     <option value="delete">Delete</option>
-                    <option value="export">Export</option>
                 </select>
 
-                <button type="submit" name="ecm_bulk_participant_submit" class="button">Apply</button>
-            </div>
+                <button type="submit" name="ecm_bulk_participant_submit" class="button">
+                    Apply
+                </button>
+            </form>
 
-            <div class="ecm-list-toolbar-right">
+            <form method="get" class="ecm-list-toolbar-right">
+                <input type="hidden" name="page" value="ecm-events">
+                <input type="hidden" name="action" value="manage">
+                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+                <input type="hidden" name="tab" value="participants">
+
                 <input
                     type="search"
                     name="participant_search"
                     value="<?php echo esc_attr($search); ?>"
                     placeholder="Search participants..."
-                    class="regular-text"
-                >
+                    class="regular-text">
 
                 <button type="submit" class="button">Search</button>
 
@@ -1240,18 +1281,20 @@ public function handle_add_participant() {
                         Clear
                     </a>
                 <?php endif; ?>
-            </div>
-        </form>
-        <?php
+            </form>
+
+        </div>
+    <?php
     }
 
-    private function render_add_participant_modal($event) {
+    private function render_add_participant_modal($event)
+    {
         $fields = $this->get_event_fields($event->id);
 
         if (empty($fields)) {
             return;
         }
-        ?>
+    ?>
         <div id="ecm-add-participant-modal" class="ecm-modal" style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
@@ -1283,8 +1326,7 @@ public function handle_add_participant() {
                                     data-field-key="<?php echo esc_attr($field->field_key); ?>"
                                     name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
                                     class="widefat ecm-participant-field"
-                                    <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>
-                                >
+                                    <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>>
                             </p>
                         <?php endforeach; ?>
                     </div>
@@ -1305,10 +1347,11 @@ public function handle_add_participant() {
                 </form>
             </div>
         </div>
-        <?php
+    <?php
     }
 
-    public function handle_delete_participant() {
+    public function handle_delete_participant()
+    {
         if (
             !isset($_GET['page'], $_GET['action'], $_GET['event_id'], $_GET['participant_id']) ||
             $_GET['page'] !== 'ecm-events' ||
@@ -1365,8 +1408,9 @@ public function handle_add_participant() {
         );
         exit;
     }
-    
-    public function handle_update_participant() {
+
+    public function handle_update_participant()
+    {
         if (!isset($_POST['ecm_update_participant_submit'])) {
             return;
         }
@@ -1497,8 +1541,9 @@ public function handle_add_participant() {
         exit;
     }
 
-    private function tab_certificates($event) {
-        ?>
+    private function tab_certificates($event)
+    {
+    ?>
         <h2>Certificates</h2>
         <p>This module will manage generated certificates, downloads, email sending, QR verification, and resend actions.</p>
 
@@ -1513,17 +1558,73 @@ public function handle_add_participant() {
                 <li>QR verification status</li>
             </ul>
         </div>
-        <?php
+    <?php
     }
 
-    public function handle_bulk_participant_action() {
-        if (!isset($_POST['ecm_bulk_participant_submit'])) {
+
+    private function render_csv_upload_modal($event)
+    {
+        $fields = $this->get_event_fields($event->id);
+
+        if (empty($fields)) {
+            return;
+        }
+
+        $headers = [];
+
+        foreach ($fields as $field) {
+            $headers[] = $field->field_key;
+        }
+
+        $csv_format = implode(',', $headers);
+    ?>
+        <div id="ecm-csv-upload-modal" class="ecm-modal" style="display:none;">
+            <div class="ecm-modal-content">
+                <div class="ecm-modal-header">
+                    <h2>Upload Participants CSV</h2>
+                    <button type="button" class="ecm-modal-close">&times;</button>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    <?php wp_nonce_field('ecm_import_participants_csv', 'ecm_import_csv_nonce'); ?>
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+
+                    <div class="ecm-modal-body">
+                        <p><strong>Required CSV header:</strong></p>
+                        <pre class="ecm-code-preview"><?php echo esc_html($csv_format); ?></pre>
+
+                        <p class="description">
+                            Your CSV first row must match this header exactly. Member ID must be numeric.
+                        </p>
+
+                        <p>
+                            <input type="file" name="participants_csv" accept=".csv" required>
+                        </p>
+                    </div>
+
+                    <div class="ecm-modal-footer">
+                        <button type="submit" name="ecm_import_csv_submit" class="button button-primary">
+                            Upload CSV
+                        </button>
+
+                        <button type="button" class="button ecm-modal-cancel">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+<?php
+    }
+    public function handle_csv_import()
+    {
+        if (!isset($_POST['ecm_import_csv_submit'])) {
             return;
         }
 
         if (
-            !isset($_POST['ecm_bulk_participant_nonce']) ||
-            !wp_verify_nonce($_POST['ecm_bulk_participant_nonce'], 'ecm_bulk_participant_action')
+            !isset($_POST['ecm_import_csv_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_import_csv_nonce'], 'ecm_import_participants_csv')
         ) {
             wp_die('Security check failed.');
         }
@@ -1533,28 +1634,52 @@ public function handle_add_participant() {
         }
 
         $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-        $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
-        $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
-            ? array_map('absint', $_POST['participant_ids'])
-            : [];
 
         if (!$event_id) {
             wp_die('Invalid event.');
         }
 
-        if (empty($bulk_action)) {
-            wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_empty_action=1'));
-            exit;
+        if (empty($_FILES['participants_csv']['tmp_name'])) {
+            wp_die('No CSV file uploaded.');
         }
 
-        if (empty($participant_ids)) {
-            wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_no_selection=1'));
-            exit;
+        $file_type = wp_check_filetype($_FILES['participants_csv']['name']);
+
+        if ($file_type['ext'] !== 'csv') {
+            wp_die('Invalid file type. Please upload a CSV file.');
         }
 
-        if ($bulk_action !== 'delete') {
-            wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_invalid_action=1'));
-            exit;
+        $fields = $this->get_event_fields($event_id);
+
+        if (empty($fields)) {
+            wp_die('Participant fields are not configured for this event.');
+        }
+
+        $expected_headers = [];
+
+        foreach ($fields as $field) {
+            $expected_headers[] = $field->field_key;
+        }
+
+        $handle = fopen($_FILES['participants_csv']['tmp_name'], 'r');
+
+        if (!$handle) {
+            wp_die('Unable to read CSV file.');
+        }
+
+        $header = fgetcsv($handle);
+
+        if (!$header) {
+            fclose($handle);
+            wp_die('CSV header row is missing.');
+        }
+
+        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
+        $header = array_map('trim', $header);
+
+        if ($header !== $expected_headers) {
+            fclose($handle);
+            wp_die('Invalid CSV header. Required header: ' . esc_html(implode(',', $expected_headers)));
         }
 
         global $wpdb;
@@ -1562,34 +1687,144 @@ public function handle_add_participant() {
         $participants_table = $wpdb->prefix . 'ecm_participants';
         $meta_table         = $wpdb->prefix . 'ecm_participant_meta';
 
-        foreach ($participant_ids as $participant_id) {
-            $participant_exists = $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT id FROM $participants_table WHERE id = %d AND event_id = %d",
-                    $participant_id,
-                    $event_id
-                )
-            );
+        $inserted = 0;
+        $skipped  = 0;
 
-            if (!$participant_exists) {
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < count($expected_headers)) {
+                $skipped++;
                 continue;
             }
 
-            $wpdb->delete(
-                $meta_table,
-                ['participant_id' => $participant_id],
-                ['%d']
+            $row_data = [];
+
+            foreach ($expected_headers as $index => $key) {
+                $row_data[$key] = isset($row[$index]) ? sanitize_text_field(trim($row[$index])) : '';
+            }
+
+            foreach ($fields as $field) {
+                $value = $row_data[$field->field_key] ?? '';
+
+                if ((int) $field->is_required === 1 && $value === '') {
+                    $skipped++;
+                    continue 2;
+                }
+
+                if ($field->field_type === 'number' && $value !== '' && !ctype_digit($value)) {
+                    $skipped++;
+                    continue 2;
+                }
+            }
+
+            if (empty($row_data['member_id'])) {
+                $skipped++;
+                continue;
+            }
+
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM $participants_table WHERE event_id = %d AND member_id = %s",
+                    $event_id,
+                    $row_data['member_id']
+                )
             );
 
-            $wpdb->delete(
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            $wpdb->insert(
                 $participants_table,
-                ['id' => $participant_id],
-                ['%d']
+                [
+                    'event_id'  => $event_id,
+                    'member_id' => $row_data['member_id'],
+                ],
+                ['%d', '%s']
             );
+
+            if (!$wpdb->insert_id) {
+                $skipped++;
+                continue;
+            }
+
+            $participant_id = (int) $wpdb->insert_id;
+
+            foreach ($row_data as $key => $value) {
+                if ($key === 'member_id') {
+                    continue;
+                }
+
+                $wpdb->insert(
+                    $meta_table,
+                    [
+                        'participant_id' => $participant_id,
+                        'meta_key'       => $key,
+                        'meta_value'     => $value,
+                    ],
+                    ['%d', '%s', '%s']
+                );
+            }
+
+            $inserted++;
         }
 
-        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_deleted=1'));
+        fclose($handle);
+
+        wp_safe_redirect(
+            admin_url(
+                'admin.php?page=ecm-events&action=manage&event_id=' . $event_id .
+                    '&tab=participants&csv_imported=1&inserted=' . $inserted .
+                    '&skipped=' . $skipped
+            )
+        );
         exit;
     }
 
+    public function handle_bulk_participant_action() {
+    if (!isset($_POST['ecm_bulk_participant_submit'])) {
+        return;
+    }
+
+    if (
+        !isset($_POST['ecm_bulk_participant_nonce']) ||
+        !wp_verify_nonce($_POST['ecm_bulk_participant_nonce'], 'ecm_bulk_participant_action')
+    ) {
+        wp_die('Security check failed.');
+    }
+
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have permission to perform this action.');
+    }
+
+    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+    $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
+    $participant_ids = isset($_POST['participant_ids']) && is_array($_POST['participant_ids'])
+        ? array_map('absint', $_POST['participant_ids'])
+        : [];
+
+    if (!$event_id || empty($bulk_action) || empty($participant_ids)) {
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+        exit;
+    }
+
+    if ($bulk_action !== 'delete') {
+        wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_error=1'));
+        exit;
+    }
+
+    global $wpdb;
+
+    $participants_table = $wpdb->prefix . 'ecm_participants';
+    $meta_table = $wpdb->prefix . 'ecm_participant_meta';
+
+    foreach ($participant_ids as $participant_id) {
+        $wpdb->delete($meta_table, ['participant_id' => $participant_id], ['%d']);
+        $wpdb->delete($participants_table, ['id' => $participant_id, 'event_id' => $event_id], ['%d', '%d']);
+    }
+
+    wp_safe_redirect(admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=participants&bulk_deleted=1'));
+    exit;
 }
+
+    }
