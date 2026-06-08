@@ -66,8 +66,6 @@ trait ECM_Event_Sessions
             )
         ); ?>
 
-        <h3>Session List</h3>
-
         <?php if (empty($sessions)) : ?>
             <p>No sessions created yet.</p>
         <?php else : ?>

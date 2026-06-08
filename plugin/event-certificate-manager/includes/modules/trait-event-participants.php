@@ -186,8 +186,6 @@ trait ECM_Event_Participants
             );
         }
     ?>
-        <div class="ecm-panel ecm-panel-full">
-            <h3>Participant List</h3>
 
             <?php if (empty($participants)) : ?>
                 <p>No participants added yet.</p>
@@ -276,7 +274,7 @@ trait ECM_Event_Participants
                     </tbody>
                 </table>
             <?php endif; ?>
-        </div>
+        
     <?php
     }
 

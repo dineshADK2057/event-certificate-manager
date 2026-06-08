@@ -6,12 +6,14 @@ if (!defined('ABSPATH')) {
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-participants.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-helpers.php';
 
 class ECM_Events
 {
     use ECM_Event_Sessions;
     use ECM_Event_Settings;
     use ECM_Event_Participants;
+    use ECM_Event_Helpers;
 
     public function __construct()
     {
@@ -580,19 +582,7 @@ class ECM_Events
     }
 
 
-    private function get_event_fields($event_id)
-    {
-        global $wpdb;
-
-        $fields_table = $wpdb->prefix . 'ecm_event_fields';
-
-        return $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $fields_table WHERE event_id = %d ORDER BY field_order ASC, id ASC",
-                $event_id
-            )
-        );
-    }
+   
 
     private function render_add_participant_section($event)
     {
