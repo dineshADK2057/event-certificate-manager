@@ -2065,6 +2065,7 @@ class ECM_Events
                             <th>Date</th>
                             <th>Status</th>
                             <th width="130">Actions</th>
+                            <th width="120">Participants</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2119,6 +2120,21 @@ class ECM_Events
                                         class="ecm-danger-link">
                                         Delete
                                     </a>
+                                </td>
+                                <?php
+                                $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+                                $participant_count = (int) $wpdb->get_var(
+                                    $wpdb->prepare(
+                                        "SELECT COUNT(*) 
+                                        FROM $session_participants_table
+                                        WHERE session_id = %d",
+                                        $session->id
+                                    )
+                                );
+                                ?>
+                                <td>
+                                    <?php echo esc_html($participant_count); ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -2441,6 +2457,37 @@ class ECM_Events
                         <?php echo esc_html(ucfirst($session->status)); ?>
                     </span>
                 </p>
+            </div>
+        </div>
+
+        <?php
+        global $wpdb;
+
+        $session_participants_table = $wpdb->prefix . 'ecm_session_participants';
+
+        $total_assigned = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*)
+                FROM $session_participants_table
+                WHERE session_id = %d",
+                $session->id
+            )
+        );
+        ?>
+
+        <div class="ecm-panel">
+            <h3>Session Statistics</h3>
+
+            <div class="ecm-stat-grid">
+                <div class="ecm-stat-card">
+                    <span class="ecm-stat-number">
+                        <?php echo esc_html($total_assigned); ?>
+                    </span>
+
+                    <span class="ecm-stat-label">
+                        Participants Assigned
+                    </span>
+                </div>
             </div>
         </div>
 
