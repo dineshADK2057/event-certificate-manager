@@ -3,9 +3,10 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-
+require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 class ECM_Events
 {
+    use ECM_Event_Sessions;
 
     public function __construct()
     {
