@@ -111,6 +111,10 @@
             $('.ecm-session-available-checkbox').prop('checked', $(this).is(':checked'));
         });
 
+        $('.ecm-open-template-modal').on('click', function () {
+    $('#ecm-add-template-modal').fadeIn(150);
+});
+
         let ecmSelectedSessionParticipants = [];
 
         function ecmUpdateSelectedCount() {

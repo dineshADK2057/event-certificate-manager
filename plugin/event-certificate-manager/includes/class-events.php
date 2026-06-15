@@ -46,6 +46,8 @@ class ECM_Events
 
         add_action('admin_init', [$this, 'handle_remove_session_participant']);
         add_action('admin_init', [$this, 'handle_save_session_settings']);
+
+        add_action('admin_init', [$this, 'handle_add_template']);
     }
 
     public function events_page()
@@ -568,14 +570,6 @@ class ECM_Events
     }
 
     
-
-    private function tab_templates($event)
-    {
-    ?>
-        <h2>Templates</h2>
-        <p>Certificate template upload and placeholder positioning will be built here.</p>
-    <?php
-    }
 
     private function tab_logs($event)
     {
