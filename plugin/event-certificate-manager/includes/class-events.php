@@ -50,6 +50,7 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_add_template']);
         add_action('admin_init', [$this, 'handle_update_template']);
         add_action('admin_init', [$this, 'handle_delete_template']);
+        add_action('admin_init', [$this, 'handle_upload_template_background']);
     }
 
     public function events_page()

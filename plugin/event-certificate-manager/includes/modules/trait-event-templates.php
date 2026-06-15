@@ -41,8 +41,15 @@ trait ECM_Event_Templates
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_GET['background_uploaded'])) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong>Template background uploaded successfully.</strong></p>
+            </div>
+        <?php endif; ?>
+
         <?php $this->render_templates_list_section($event); ?>
         <?php $this->render_add_template_modal($event); ?>
+        <?php $this->render_template_background_modal($event); ?>
     <?php
     }
 
@@ -115,6 +122,13 @@ trait ECM_Event_Templates
                                 ?>
 
                                 <td>
+                                    <a href="#"
+                                        class="ecm-upload-template-bg"
+                                        data-template-id="<?php echo esc_attr($template->id); ?>"
+                                        data-template-name="<?php echo esc_attr($template->template_name); ?>">
+                                        Upload Background
+                                    </a>
+                                    |
                                     <a href="#"
                                         class="ecm-edit-template"
                                         data-template-id="<?php echo esc_attr($template->id); ?>"
@@ -241,7 +255,7 @@ trait ECM_Event_Templates
                 </form>
             </div>
         </div>
-<?php
+    <?php
     }
 
     public function handle_add_template()
@@ -428,6 +442,149 @@ trait ECM_Event_Templates
 
         wp_safe_redirect(
             admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=templates&template_deleted=1')
+        );
+        exit;
+    }
+
+    private function render_template_background_modal($event)
+    {
+    ?>
+        <div id="ecm-template-bg-modal" class="ecm-modal" style="display:none;">
+            <div class="ecm-modal-content">
+                <div class="ecm-modal-header">
+                    <h2>Upload Template Background</h2>
+                    <button type="button" class="ecm-modal-close">&times;</button>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    <?php wp_nonce_field('ecm_upload_template_background', 'ecm_upload_template_bg_nonce'); ?>
+
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
+                    <input type="hidden" name="template_id" id="ecm_bg_template_id" value="">
+
+                    <div class="ecm-modal-body">
+                        <p>
+                            <strong>Template:</strong>
+                            <span id="ecm_bg_template_name"></span>
+                        </p>
+
+                        <p>
+                            <label>
+                                <strong>Background File</strong><br>
+                                <input type="file" name="template_background" accept=".png,.jpg,.jpeg,.pdf" required>
+                            </label>
+                        </p>
+
+                        <p class="description">
+                            Supported formats: PNG, JPG, JPEG, PDF.
+                        </p>
+                    </div>
+
+                    <div class="ecm-modal-footer">
+                        <button type="submit" name="ecm_upload_template_bg_submit" class="button button-primary">
+                            Upload Background
+                        </button>
+
+                        <button type="button" class="button ecm-modal-cancel">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+<?php
+    }
+
+    public function handle_upload_template_background()
+    {
+        if (!isset($_POST['ecm_upload_template_bg_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_upload_template_bg_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_upload_template_bg_nonce'], 'ecm_upload_template_background')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id    = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $template_id = isset($_POST['template_id']) ? absint($_POST['template_id']) : 0;
+
+        if (!$event_id || !$template_id) {
+            wp_die('Invalid template.');
+        }
+
+        if (empty($_FILES['template_background']['tmp_name'])) {
+            wp_die('No background file uploaded.');
+        }
+
+        $file = $_FILES['template_background'];
+
+        $allowed_exts = ['png', 'jpg', 'jpeg', 'pdf'];
+        $filetype = wp_check_filetype($file['name']);
+
+        if (empty($filetype['ext']) || !in_array(strtolower($filetype['ext']), $allowed_exts, true)) {
+            wp_die('Invalid file type. Please upload PNG, JPG, JPEG, or PDF.');
+        }
+
+        global $wpdb;
+
+        $templates_table = $wpdb->prefix . 'ecm_templates';
+
+        $template = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $templates_table WHERE id = %d AND event_id = %d",
+                $template_id,
+                $event_id
+            )
+        );
+
+        if (!$template) {
+            wp_die('Template not found.');
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        $upload_dir = wp_upload_dir();
+        $ecm_dir = trailingslashit($upload_dir['basedir']) . 'ecm/templates/';
+
+        if (!file_exists($ecm_dir)) {
+            wp_mkdir_p($ecm_dir);
+        }
+
+        $safe_name = sanitize_file_name(
+            'template-' . $template_id . '-' . time() . '-' . $file['name']
+        );
+
+        $destination = $ecm_dir . $safe_name;
+
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            wp_die('Failed to upload background file.');
+        }
+
+        $relative_path = 'ecm/templates/' . $safe_name;
+
+        $wpdb->update(
+            $templates_table,
+            [
+                'background_file' => $relative_path,
+                'updated_at'      => current_time('mysql'),
+            ],
+            [
+                'id'       => $template_id,
+                'event_id' => $event_id,
+            ],
+            ['%s', '%s'],
+            ['%d', '%d']
+        );
+
+        wp_safe_redirect(
+            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=templates&background_uploaded=1')
         );
         exit;
     }

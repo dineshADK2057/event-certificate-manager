@@ -180,6 +180,7 @@
                     $('#ecm-session-participant-results').html('<p>' + response.data + '</p>');
                 }
             });
+
         }
 
         $('.ecm-open-session-participants-modal').on('click', function () {
@@ -261,6 +262,17 @@
             }
 
             $('#ecm-edit-field-modal').fadeIn(150);
+        });
+
+        $('.ecm-upload-template-bg').on('click', function (e) {
+            e.preventDefault();
+
+            let button = $(this);
+
+            $('#ecm_bg_template_id').val(button.data('template-id'));
+            $('#ecm_bg_template_name').text(button.data('template-name'));
+
+            $('#ecm-template-bg-modal').fadeIn(150);
         });
     });
 
