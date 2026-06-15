@@ -337,3 +337,7 @@
     margin-top: 8px;
     color: #666;
 }
+
+.ecm-participants-fields-form{
+    display: flex;
+}

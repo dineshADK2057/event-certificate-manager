@@ -22,6 +22,8 @@ class ECM_Events
 
         add_action('admin_init', [$this, 'handle_add_default_fields']);
         add_action('admin_init', [$this, 'handle_add_custom_field']);
+        add_action('admin_init', [$this, 'handle_update_custom_field']);
+        add_action('admin_init', [$this, 'handle_delete_custom_field']);
 
         add_action('admin_init', [$this, 'handle_add_participant']);
         add_action('admin_init', [$this, 'handle_update_participant']);

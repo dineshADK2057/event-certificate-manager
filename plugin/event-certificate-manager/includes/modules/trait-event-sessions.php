@@ -515,7 +515,7 @@ trait ECM_Event_Sessions
                 </div>
             </div>
         </div>
-        <?php $this->render_session_settings_panel($event, $session); ?>
+
 
         <?php if (isset($_GET['session_participants_added'])) : ?>
             <div class="notice notice-success is-dismissible">
@@ -955,112 +955,6 @@ trait ECM_Event_Sessions
         exit;
     }
 
-    private function render_session_settings_panel($event, $session)
-    {
-        $settings = get_option('ecm_session_settings_' . $session->id, []);
-
-        $certificate_enabled = isset($settings['certificate_enabled']) ? (int) $settings['certificate_enabled'] : 0;
-        $qr_enabled          = isset($settings['qr_enabled']) ? (int) $settings['qr_enabled'] : 1;
-        $capacity            = isset($settings['capacity']) ? absint($settings['capacity']) : '';
-        ?>
-        <div class="ecm-panel ecm-panel-full">
-            <h3>Session Settings</h3>
-            <p class="description">Configure certificate and verification settings for this session.</p>
-
-            <form method="post">
-                <?php wp_nonce_field('ecm_save_session_settings', 'ecm_session_settings_nonce'); ?>
-
-                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-                <input type="hidden" name="session_id" value="<?php echo esc_attr($session->id); ?>">
-
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">Certificate Generation</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="certificate_enabled" value="1" <?php checked($certificate_enabled, 1); ?>>
-                                Enable certificate generation for this session
-                            </label>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row">QR Verification</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="qr_enabled" value="1" <?php checked($qr_enabled, 1); ?>>
-                                Enable QR verification for certificates generated from this session
-                            </label>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row">
-                            <label for="session_capacity">Session Capacity</label>
-                        </th>
-                        <td>
-                            <input type="number"
-                                id="session_capacity"
-                                name="capacity"
-                                value="<?php echo esc_attr($capacity); ?>"
-                                min="0"
-                                class="small-text">
-                            <p class="description">Optional. Leave empty or 0 for unlimited capacity.</p>
-                        </td>
-                    </tr>
-                </table>
-
-                <p>
-                    <button type="submit" name="ecm_save_session_settings_submit" class="button button-primary">
-                        Save Session Settings
-                    </button>
-                </p>
-            </form>
-        </div>
-    <?php
-    }
-
-    public function handle_save_session_settings()
-    {
-        if (!isset($_POST['ecm_save_session_settings_submit'])) {
-            return;
-        }
-
-        if (
-            !isset($_POST['ecm_session_settings_nonce']) ||
-            !wp_verify_nonce($_POST['ecm_session_settings_nonce'], 'ecm_save_session_settings')
-        ) {
-            wp_die('Security check failed.');
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_die('You do not have permission to perform this action.');
-        }
-
-        $event_id   = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-        $session_id = isset($_POST['session_id']) ? absint($_POST['session_id']) : 0;
-
-        if (!$event_id || !$session_id) {
-            wp_die('Invalid session.');
-        }
-
-        $settings = [
-            'certificate_enabled' => isset($_POST['certificate_enabled']) ? 1 : 0,
-            'qr_enabled'          => isset($_POST['qr_enabled']) ? 1 : 0,
-            'capacity'            => isset($_POST['capacity']) ? absint($_POST['capacity']) : 0,
-        ];
-
-        update_option('ecm_session_settings_' . $session_id, $settings, false);
-
-        wp_safe_redirect(
-            admin_url(
-                'admin.php?page=ecm-events&action=manage&event_id=' . $event_id .
-                    '&tab=sessions&session_action=participants&session_id=' . $session_id .
-                    '&session_settings_saved=1'
-            )
-        );
-        exit;
-    }
 
     private function render_available_session_participants($event, $session)
     {
