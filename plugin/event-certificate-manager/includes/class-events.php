@@ -7,6 +7,7 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-participants.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-helpers.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-templates.php';
 
 class ECM_Events
 {
@@ -14,6 +15,7 @@ class ECM_Events
     use ECM_Event_Settings;
     use ECM_Event_Participants;
     use ECM_Event_Helpers;
+    use ECM_Event_Templates;
 
     public function __construct()
     {
