@@ -112,8 +112,38 @@
         });
 
         $('.ecm-open-template-modal').on('click', function () {
-    $('#ecm-add-template-modal').fadeIn(150);
-});
+            $('#ecm-template-modal-title').text('Create Template');
+            $('#ecm_template_id').val('');
+            $('#ecm_template_name').val('');
+            $('#ecm_certificate_type').val('participant');
+            $('#ecm_template_session_id').val('0');
+            $('#ecm_template_orientation').val('landscape');
+            $('#ecm_template_page_size').val('A4');
+
+            $('#ecm_add_template_submit').show();
+            $('#ecm_update_template_submit').hide();
+
+            $('#ecm-add-template-modal').fadeIn(150);
+        });
+
+        $('.ecm-edit-template').on('click', function (e) {
+            e.preventDefault();
+
+            let button = $(this);
+
+            $('#ecm-template-modal-title').text('Edit Template');
+            $('#ecm_template_id').val(button.data('template-id'));
+            $('#ecm_template_name').val(button.data('template-name'));
+            $('#ecm_certificate_type').val(button.data('certificate-type'));
+            $('#ecm_template_session_id').val(String(button.data('session-id')));
+            $('#ecm_template_orientation').val(button.data('orientation'));
+            $('#ecm_template_page_size').val(button.data('page-size'));
+
+            $('#ecm_add_template_submit').hide();
+            $('#ecm_update_template_submit').show();
+
+            $('#ecm-add-template-modal').fadeIn(150);
+        });
 
         let ecmSelectedSessionParticipants = [];
 

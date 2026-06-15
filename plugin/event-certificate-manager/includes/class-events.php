@@ -48,6 +48,8 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_save_session_settings']);
 
         add_action('admin_init', [$this, 'handle_add_template']);
+        add_action('admin_init', [$this, 'handle_update_template']);
+        add_action('admin_init', [$this, 'handle_delete_template']);
     }
 
     public function events_page()
@@ -569,7 +571,7 @@ class ECM_Events
     <?php
     }
 
-    
+
 
     private function tab_logs($event)
     {
@@ -580,7 +582,7 @@ class ECM_Events
     }
 
 
-   
+
 
     private function render_add_participant_section($event)
     {
@@ -611,11 +613,11 @@ class ECM_Events
                             </th>
                             <td>
                                 <input>
-                                    type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
-                                    id="ecm_field_<?php echo esc_attr($field->field_key); ?>"
-                                    name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
-                                    class="regular-text"
-                                    <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>>
+                                type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
+                                id="ecm_field_<?php echo esc_attr($field->field_key); ?>"
+                                name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
+                                class="regular-text"
+                                <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>>
                                 </input>
                             </td>
                         </tr>
@@ -651,7 +653,7 @@ class ECM_Events
                 <li>QR verification status</li>
             </ul>
         </div>
-    <?php
+<?php
     }
 
     public function handle_add_session()
