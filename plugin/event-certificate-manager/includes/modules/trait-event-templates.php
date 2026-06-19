@@ -50,6 +50,7 @@ trait ECM_Event_Templates
         <?php $this->render_templates_list_section($event); ?>
         <?php $this->render_add_template_modal($event); ?>
         <?php $this->render_template_background_modal($event); ?>
+        <?php $this->render_template_preview_modal(); ?>
     <?php
     }
 
@@ -122,6 +123,23 @@ trait ECM_Event_Templates
                                 ?>
 
                                 <td>
+                                    <?php
+                                    $upload_dir = wp_upload_dir();
+                                    $background_url = '';
+
+                                    if (!empty($template->background_file)) {
+                                        $background_url = trailingslashit($upload_dir['baseurl']) . ltrim($template->background_file, '/');
+                                    }
+                                    ?>
+
+                                    <a href="#"
+                                        class="ecm-preview-template"
+                                        data-template-name="<?php echo esc_attr($template->template_name); ?>"
+                                        data-background-url="<?php echo esc_url($background_url); ?>"
+                                        data-background-file="<?php echo esc_attr($template->background_file); ?>">
+                                        Preview
+                                    </a>
+                                    |
                                     <a href="#"
                                         class="ecm-upload-template-bg"
                                         data-template-id="<?php echo esc_attr($template->id); ?>"
@@ -588,4 +606,24 @@ trait ECM_Event_Templates
         );
         exit;
     }
+
+    private function render_template_preview_modal() {
+    ?>
+    <div id="ecm-template-preview-modal" class="ecm-modal" style="display:none;">
+        <div class="ecm-modal-content ecm-modal-preview">
+            <div class="ecm-modal-header">
+                <h2 id="ecm-preview-template-title">Template Preview</h2>
+                <button type="button" class="ecm-modal-close">&times;</button>
+            </div>
+
+            <div class="ecm-modal-body">
+                <div id="ecm-template-preview-content">
+                    <p>No preview available.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
 }
+
+    }

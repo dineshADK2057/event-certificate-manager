@@ -274,6 +274,37 @@
 
             $('#ecm-template-bg-modal').fadeIn(150);
         });
+
+        $('.ecm-preview-template').on('click', function (e) {
+            e.preventDefault();
+
+            let button = $(this);
+            let templateName = button.data('template-name');
+            let backgroundUrl = button.data('background-url');
+            let backgroundFile = button.data('background-file');
+
+            $('#ecm-preview-template-title').text('Preview: ' + templateName);
+
+            if (!backgroundUrl) {
+                $('#ecm-template-preview-content').html('<p>No background uploaded for this template.</p>');
+                $('#ecm-template-preview-modal').fadeIn(150);
+                return;
+            }
+
+            let extension = String(backgroundFile).split('.').pop().toLowerCase();
+
+            if (extension === 'pdf') {
+                $('#ecm-template-preview-content').html(
+                    '<iframe src="' + backgroundUrl + '" class="ecm-preview-frame"></iframe>'
+                );
+            } else {
+                $('#ecm-template-preview-content').html(
+                    '<img src="' + backgroundUrl + '" class="ecm-preview-image" alt="">'
+                );
+            }
+
+            $('#ecm-template-preview-modal').fadeIn(150);
+        });
     });
 
 })(jQuery);

@@ -341,3 +341,22 @@
 .ecm-participants-fields-form{
     display: flex;
 }
+
+.ecm-modal-preview {
+    width: 1000px;
+    max-width: calc(100% - 32px);
+}
+
+.ecm-preview-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border: 1px solid #dcdcde;
+}
+
+.ecm-preview-frame {
+    width: 100%;
+    height: 75vh;
+    border: 1px solid #dcdcde;
+}
