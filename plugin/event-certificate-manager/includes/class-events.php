@@ -76,6 +76,10 @@ class ECM_Events
             } elseif ($action === 'edit') {
                 $event_id = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
                 $this->event_form($event_id);
+            } elseif ($action === 'template_builder') {
+                $event_id    = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+                $template_id = isset($_GET['template_id']) ? absint($_GET['template_id']) : 0;
+                $this->render_template_builder_page($event_id, $template_id);
             } elseif ($action === 'manage') {
                 $event_id = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
                 $this->manage_event_page($event_id);

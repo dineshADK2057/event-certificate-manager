@@ -72,104 +72,111 @@ trait ECM_Event_Templates
             )
         );
     ?>
-        <div class="ecm-panel ecm-panel-full">
-            <h3>Template List</h3>
 
-            <?php if (empty($templates)) : ?>
-                <p>No templates created yet.</p>
-            <?php else : ?>
-                <table class="widefat striped">
-                    <thead>
+        <?php if (empty($templates)) : ?>
+            <p>No templates created yet.</p>
+        <?php else : ?>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th>Template Name</th>
+                        <th>Certificate Type</th>
+                        <th>Session</th>
+                        <th>Orientation</th>
+                        <th>Page Size</th>
+                        <th>Background</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($templates as $template) : ?>
                         <tr>
-                            <th>Template Name</th>
-                            <th>Certificate Type</th>
-                            <th>Session</th>
-                            <th>Orientation</th>
-                            <th>Page Size</th>
-                            <th>Background</th>
-                            <th width="120">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($templates as $template) : ?>
-                            <tr>
-                                <td><strong><?php echo esc_html($template->template_name); ?></strong></td>
-                                <td><?php echo esc_html($template->certificate_type); ?></td>
-                                <td>
-                                    <?php
-                                    if ($template->session_id) {
-                                        echo esc_html($template->session_code . ' - ' . $template->session_name);
-                                    } else {
-                                        echo '<em>Event-wide</em>';
-                                    }
-                                    ?>
-                                </td>
-                                <td><?php echo esc_html(ucfirst($template->orientation)); ?></td>
-                                <td><?php echo esc_html($template->page_size); ?></td>
-                                <td>
-                                    <?php if (!empty($template->background_file)) : ?>
-                                        <span class="ecm-status ecm-status-active">Uploaded</span>
-                                    <?php else : ?>
-                                        <span class="ecm-status ecm-status-draft">Missing</span>
-                                    <?php endif; ?>
-                                </td>
+                            <td><strong><?php echo esc_html($template->template_name); ?></strong></td>
+                            <td><?php echo esc_html($template->certificate_type); ?></td>
+                            <td>
                                 <?php
-                                $delete_url = wp_nonce_url(
-                                    admin_url(
-                                        'admin.php?page=ecm-events&action=delete_template&event_id=' . absint($event->id) . '&template_id=' . absint($template->id)
-                                    ),
-                                    'ecm_delete_template_' . absint($template->id)
+                                if ($template->session_id) {
+                                    echo esc_html($template->session_code . ' - ' . $template->session_name);
+                                } else {
+                                    echo '<em>Event-wide</em>';
+                                }
+                                ?>
+                            </td>
+                            <td><?php echo esc_html(ucfirst($template->orientation)); ?></td>
+                            <td><?php echo esc_html($template->page_size); ?></td>
+                            <td>
+                                <?php if (!empty($template->background_file)) : ?>
+                                    <span class="ecm-status ecm-status-active">Uploaded</span>
+                                <?php else : ?>
+                                    <span class="ecm-status ecm-status-draft">Missing</span>
+                                <?php endif; ?>
+                            </td>
+                            <?php
+                            $delete_url = wp_nonce_url(
+                                admin_url(
+                                    'admin.php?page=ecm-events&action=delete_template&event_id=' . absint($event->id) . '&template_id=' . absint($template->id)
+                                ),
+                                'ecm_delete_template_' . absint($template->id)
+                            );
+                            ?>
+
+                            <td>
+                                <?php
+                                $builder_url = admin_url(
+                                    'admin.php?page=ecm-events&action=template_builder&event_id=' . absint($event->id) . '&template_id=' . absint($template->id)
                                 );
                                 ?>
 
-                                <td>
-                                    <?php
-                                    $upload_dir = wp_upload_dir();
-                                    $background_url = '';
+                                <a href="<?php echo esc_url($builder_url); ?>">Builder</a>
+                                |
 
-                                    if (!empty($template->background_file)) {
-                                        $background_url = trailingslashit($upload_dir['baseurl']) . ltrim($template->background_file, '/');
-                                    }
-                                    ?>
+                                <?php
+                                $upload_dir = wp_upload_dir();
+                                $background_url = '';
 
-                                    <a href="#"
-                                        class="ecm-preview-template"
-                                        data-template-name="<?php echo esc_attr($template->template_name); ?>"
-                                        data-background-url="<?php echo esc_url($background_url); ?>"
-                                        data-background-file="<?php echo esc_attr($template->background_file); ?>">
-                                        Preview
-                                    </a>
-                                    |
-                                    <a href="#"
-                                        class="ecm-upload-template-bg"
-                                        data-template-id="<?php echo esc_attr($template->id); ?>"
-                                        data-template-name="<?php echo esc_attr($template->template_name); ?>">
-                                        Upload Background
-                                    </a>
-                                    |
-                                    <a href="#"
-                                        class="ecm-edit-template"
-                                        data-template-id="<?php echo esc_attr($template->id); ?>"
-                                        data-template-name="<?php echo esc_attr($template->template_name); ?>"
-                                        data-certificate-type="<?php echo esc_attr($template->certificate_type); ?>"
-                                        data-session-id="<?php echo esc_attr($template->session_id ?: 0); ?>"
-                                        data-orientation="<?php echo esc_attr($template->orientation); ?>"
-                                        data-page-size="<?php echo esc_attr($template->page_size); ?>">
-                                        Edit
-                                    </a>
-                                    |
-                                    <a href="<?php echo esc_url($delete_url); ?>"
-                                        onclick="return confirm('Delete this template?');"
-                                        class="ecm-danger-link">
-                                        Delete
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-        </div>
+                                if (!empty($template->background_file)) {
+                                    $background_url = trailingslashit($upload_dir['baseurl']) . ltrim($template->background_file, '/');
+                                }
+                                ?>
+
+                                <a href="#"
+                                    class="ecm-preview-template"
+                                    data-template-name="<?php echo esc_attr($template->template_name); ?>"
+                                    data-background-url="<?php echo esc_url($background_url); ?>"
+                                    data-background-file="<?php echo esc_attr($template->background_file); ?>">
+                                    Preview
+                                </a>
+                                |
+                                <a href="#"
+                                    class="ecm-upload-template-bg"
+                                    data-template-id="<?php echo esc_attr($template->id); ?>"
+                                    data-template-name="<?php echo esc_attr($template->template_name); ?>">
+                                    Upload Background
+                                </a>
+                                |
+                                <a href="#"
+                                    class="ecm-edit-template"
+                                    data-template-id="<?php echo esc_attr($template->id); ?>"
+                                    data-template-name="<?php echo esc_attr($template->template_name); ?>"
+                                    data-certificate-type="<?php echo esc_attr($template->certificate_type); ?>"
+                                    data-session-id="<?php echo esc_attr($template->session_id ?: 0); ?>"
+                                    data-orientation="<?php echo esc_attr($template->orientation); ?>"
+                                    data-page-size="<?php echo esc_attr($template->page_size); ?>">
+                                    Edit
+                                </a>
+                                |
+                                <a href="<?php echo esc_url($delete_url); ?>"
+                                    onclick="return confirm('Delete this template?');"
+                                    class="ecm-danger-link">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
     <?php
     }
 
@@ -510,7 +517,7 @@ trait ECM_Event_Templates
                 </form>
             </div>
         </div>
-<?php
+    <?php
     }
 
     public function handle_upload_template_background()
@@ -607,23 +614,194 @@ trait ECM_Event_Templates
         exit;
     }
 
-    private function render_template_preview_modal() {
+    private function render_template_preview_modal()
+    {
     ?>
-    <div id="ecm-template-preview-modal" class="ecm-modal" style="display:none;">
-        <div class="ecm-modal-content ecm-modal-preview">
-            <div class="ecm-modal-header">
-                <h2 id="ecm-preview-template-title">Template Preview</h2>
-                <button type="button" class="ecm-modal-close">&times;</button>
-            </div>
+        <div id="ecm-template-preview-modal" class="ecm-modal" style="display:none;">
+            <div class="ecm-modal-content ecm-modal-preview">
+                <div class="ecm-modal-header">
+                    <h2 id="ecm-preview-template-title">Template Preview</h2>
+                    <button type="button" class="ecm-modal-close">&times;</button>
+                </div>
 
-            <div class="ecm-modal-body">
-                <div id="ecm-template-preview-content">
-                    <p>No preview available.</p>
+                <div class="ecm-modal-body">
+                    <div id="ecm-template-preview-content">
+                        <p>No preview available.</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     <?php
-}
-
     }
+
+    private function render_template_builder_page($event_id, $template_id)
+    {
+        global $wpdb;
+
+        $events_table    = $wpdb->prefix . 'ecm_events';
+        $templates_table = $wpdb->prefix . 'ecm_templates';
+        $elements_table  = $wpdb->prefix . 'ecm_template_elements';
+
+        $event = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $events_table WHERE id = %d",
+                $event_id
+            )
+        );
+
+        $template = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $templates_table WHERE id = %d AND event_id = %d",
+                $template_id,
+                $event_id
+            )
+        );
+
+        if (!$event || !$template) {
+            echo '<div class="notice notice-error"><p>Template not found.</p></div>';
+            return;
+        }
+
+        $elements = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $elements_table WHERE template_id = %d ORDER BY element_order ASC, id ASC",
+                $template_id
+            )
+        );
+
+        $upload_dir = wp_upload_dir();
+        $background_url = '';
+
+        if (!empty($template->background_file)) {
+            $background_url = trailingslashit($upload_dir['baseurl']) . ltrim($template->background_file, '/');
+        }
+
+        $back_url = admin_url(
+            'admin.php?page=ecm-events&action=manage&event_id=' . absint($event_id) . '&tab=templates'
+        );
+
+        $variables = $this->get_template_variables($event, $template);
+    ?>
+
+        <div class="wrap ecm-wrap">
+            <div class="ecm-form-header">
+                <a href="<?php echo esc_url($back_url); ?>" class="button">
+                    ← Back to Templates
+                </a>
+            </div>
+
+            <div class="ecm-event-heading">
+                <div>
+                    <h2>Template Builder: <?php echo esc_html($template->template_name); ?></h2>
+                    <p>
+                        <strong>Event:</strong> <?php echo esc_html($event->event_name); ?>
+                        &nbsp; | &nbsp;
+                        <strong>Type:</strong> <?php echo esc_html($template->certificate_type); ?>
+                        &nbsp; | &nbsp;
+                        <strong>Page:</strong> <?php echo esc_html($template->page_size); ?> / <?php echo esc_html($template->orientation); ?>
+                    </p>
+                </div>
+            </div>
+
+            <div class="ecm-builder-layout">
+
+                <div class="ecm-builder-sidebar">
+                    <h3>Variables</h3>
+
+                    <?php foreach ($variables as $group_label => $items) : ?>
+                        <div class="ecm-variable-group">
+                            <h4><?php echo esc_html($group_label); ?></h4>
+
+                            <?php foreach ($items as $variable) : ?>
+                                <code class="ecm-variable-code"><?php echo esc_html($variable); ?></code>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="ecm-builder-canvas-wrap">
+                    <h3>Preview</h3>
+
+                    <div class="ecm-builder-canvas ecm-builder-<?php echo esc_attr($template->orientation); ?>">
+                        <?php if (!empty($background_url)) : ?>
+                            <?php
+                            $extension = strtolower(pathinfo($template->background_file, PATHINFO_EXTENSION));
+                            ?>
+
+                            <?php if ($extension === 'pdf') : ?>
+                                <iframe src="<?php echo esc_url($background_url); ?>" class="ecm-builder-pdf"></iframe>
+                            <?php else : ?>
+                                <img src="<?php echo esc_url($background_url); ?>" class="ecm-builder-bg" alt="">
+                            <?php endif; ?>
+                        <?php else : ?>
+                            <div class="ecm-empty-canvas">
+                                No background uploaded.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="ecm-builder-sidebar">
+                    <div class="ecm-builder-panel-header">
+                        <h3>Elements</h3>
+                        <button type="button" class="button button-primary" disabled>
+                            + Add Element
+                        </button>
+                    </div>
+
+                    <?php if (empty($elements)) : ?>
+                        <p>No elements added yet.</p>
+                    <?php else : ?>
+                        <ul class="ecm-elements-list">
+                            <?php foreach ($elements as $element) : ?>
+                                <li>
+                                    <strong><?php echo esc_html($element->placeholder_key); ?></strong>
+                                    <br>
+                                    <span class="description">
+                                        X: <?php echo esc_html($element->x_position); ?>,
+                                        Y: <?php echo esc_html($element->y_position); ?>,
+                                        Size: <?php echo esc_html($element->font_size); ?>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+
+            </div>
+        </div>
+<?php
+    }
+
+    private function get_template_variables($event, $template) {
+    $variables = [
+        'Participant Fields' => [],
+        'Event Fields' => [
+            '{event_name}',
+            '{event_type}',
+            '{event_venue}',
+            '{event_start_date}',
+            '{event_end_date}',
+        ],
+        'Session Fields' => [
+            '{session_name}',
+            '{session_code}',
+            '{tutor_name}',
+            '{session_date}',
+        ],
+        'System Fields' => [
+            '{issue_date}',
+            '{certificate_id}',
+            '{qr_code}',
+        ],
+    ];
+
+    $fields = $this->get_event_fields($event->id);
+
+    foreach ($fields as $field) {
+        $variables['Participant Fields'][] = '{' . $field->field_key . '}';
+    }
+
+    return $variables;
+}
+}
