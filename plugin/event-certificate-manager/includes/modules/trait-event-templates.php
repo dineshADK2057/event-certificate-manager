@@ -723,24 +723,10 @@ trait ECM_Event_Templates
 
             <div class="ecm-builder-layout">
 
-                <div class="ecm-builder-sidebar">
-                    <h3>Variables</h3>
-
-                    <?php foreach ($variables as $group_label => $items) : ?>
-                        <div class="ecm-variable-group">
-                            <h4><?php echo esc_html($group_label); ?></h4>
-
-                            <?php foreach ($items as $variable) : ?>
-                                <code class="ecm-variable-code"><?php echo esc_html($variable); ?></code>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
                 <div class="ecm-builder-canvas-wrap">
                     <h3>Preview</h3>
 
-                    <div class="ecm-builder-canvas ecm-builder-<?php echo esc_attr($template->orientation); ?>">
+                    <div class="ecm-builder-canvas ecm-builder-<?php echo esc_attr($template->orientation); ?> ecm-page-<?php echo esc_attr(strtolower($template->page_size)); ?>">
                         <?php if (!empty($background_url)) : ?>
                             <?php
                             $extension = strtolower(pathinfo($template->background_file, PATHINFO_EXTENSION));
