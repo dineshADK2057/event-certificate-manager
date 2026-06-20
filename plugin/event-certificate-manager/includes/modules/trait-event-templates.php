@@ -744,6 +744,26 @@ trait ECM_Event_Templates
                                 No background uploaded.
                             </div>
                         <?php endif; ?>
+                        <?php foreach ($elements as $element) : ?>
+                            <?php
+                            $sample_value = $this->get_template_element_sample_value($element, $event, $template);
+
+                            $style = sprintf(
+                                'left:%spx; top:%spx; font-family:%s; font-size:%spx; color:%s; text-align:%s; transform:rotate(%sdeg);',
+                                esc_attr($element->x_position),
+                                esc_attr($element->y_position),
+                                esc_attr($element->font_family),
+                                esc_attr($element->font_size),
+                                esc_attr($element->font_color),
+                                esc_attr($element->alignment),
+                                esc_attr($element->rotation)
+                            );
+                            ?>
+                            <div class="ecm-builder-element"
+                                style="<?php echo esc_attr($style); ?>">
+                                <?php echo esc_html($sample_value); ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
@@ -1034,5 +1054,30 @@ trait ECM_Event_Templates
             )
         );
         exit;
+    }
+
+    private function get_template_element_sample_value($element, $event, $template)
+    {
+        $key = $element->placeholder_key;
+
+        $samples = [
+            'member_id'        => '123456',
+            'member_name'      => 'Lion Dinesh Adhikari',
+            'home_club'        => 'LC Chitwan Nirvana',
+            'event_name'       => $event->event_name ?? 'Event Name',
+            'event_type'       => $event->event_type ?? 'Event Type',
+            'event_venue'      => $event->venue ?? 'Venue',
+            'event_start_date' => $event->start_date ?? 'Start Date',
+            'event_end_date'   => $event->end_date ?? 'End Date',
+            'session_name'     => 'Leadership Session',
+            'session_code'     => 'SES-001',
+            'tutor_name'       => 'Tutor Name',
+            'session_date'     => 'Session Date',
+            'issue_date'       => date_i18n('Y-m-d'),
+            'certificate_id'   => 'ECM-000001',
+            'qr_code'          => '[QR]',
+        ];
+
+        return $samples[$key] ?? '{' . $key . '}';
     }
 }

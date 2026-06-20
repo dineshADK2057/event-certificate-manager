@@ -393,7 +393,7 @@
 }
 
 .ecm-builder-canvas {
-
+    position: relative;
     min-height: 420px;
     display: flex;
     align-items: center;
@@ -401,7 +401,13 @@
     overflow: auto;
 }
 
-
+.ecm-builder-element {
+    position: absolute;
+    z-index: 5;
+    white-space: nowrap;
+    pointer-events: none;
+    line-height: 1.2;
+}
 
 .ecm-builder-portrait {
     aspect-ratio: 1 / 1.414;
