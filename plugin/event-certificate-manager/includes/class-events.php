@@ -52,6 +52,8 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_delete_template']);
         add_action('admin_init', [$this, 'handle_upload_template_background']);
         add_action('admin_init', [$this, 'handle_add_template_element']);
+        add_action('admin_init', [$this, 'handle_update_template_element']);
+        add_action('admin_init', [$this, 'handle_delete_template_element']);
     }
 
     public function events_page()
@@ -577,8 +579,6 @@ class ECM_Events
     <?php
     }
 
-
-
     private function tab_logs($event)
     {
     ?>
@@ -586,60 +586,6 @@ class ECM_Events
         <p>Generated certificate history, email status, downloads, and resend actions will be built here.</p>
     <?php
     }
-
-
-
-
-    private function render_add_participant_section($event)
-    {
-        $fields = $this->get_event_fields($event->id);
-
-        if (empty($fields)) {
-            return;
-        }
-    ?>
-        <div class="ecm-panel ecm-panel-full">
-            <h3>Add Participant</h3>
-            <p class="description">Add one participant manually using this event's fields.</p>
-
-            <form method="post">
-                <?php wp_nonce_field('ecm_add_participant', 'ecm_add_participant_nonce'); ?>
-                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-
-                <table class="form-table">
-                    <?php foreach ($fields as $field) : ?>
-                        <tr>
-                            <th scope="row">
-                                <label for="ecm_field_<?php echo esc_attr($field->field_key); ?>">
-                                    <?php echo esc_html($field->field_label); ?>
-                                    <?php if ((int) $field->is_required === 1) : ?>
-                                        <span class="description">(required)</span>
-                                    <?php endif; ?>
-                                </label>
-                            </th>
-                            <td>
-                                <input>
-                                type="<?php echo $field->field_type === 'number' ? 'number' : 'text'; ?>"
-                                id="ecm_field_<?php echo esc_attr($field->field_key); ?>"
-                                name="participant_fields[<?php echo esc_attr($field->field_key); ?>]"
-                                class="regular-text"
-                                <?php echo (int) $field->is_required === 1 ? 'required' : ''; ?>>
-                                </input>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-
-                <p>
-                    <button type="submit" name="ecm_add_participant_submit" class="button button-primary">
-                        Add Participant
-                    </button>
-                </p>
-            </form>
-        </div>
-    <?php
-    }
-
 
 
     private function tab_certificates($event)

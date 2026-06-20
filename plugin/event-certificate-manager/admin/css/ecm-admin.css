@@ -1,6 +1,4 @@
-.ecm-wrap {
-    max-width: 1200px;
-}
+
 
 .ecm-subtitle {
     font-size: 15px;
@@ -43,7 +41,6 @@
     border: 1px solid #dcdcde;
     border-radius: 10px;
     padding: 24px;
-    max-width: 760px;
 }
 
 .ecm-panel h2 {
@@ -115,10 +112,6 @@
     color: #8a2424;
 }
 
-.ecm-panel-full {
-    max-width: none;
-    width: 100%;
-}
 
 .ecm-form-header {
     margin-bottom: 16px;

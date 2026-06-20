@@ -696,6 +696,18 @@ trait ECM_Event_Templates
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($_GET['element_updated'])) : ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><strong>Template element updated successfully.</strong></p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['element_deleted'])) : ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><strong>Template element deleted successfully.</strong></p>
+                </div>
+            <?php endif; ?>
+
             <div class="ecm-event-heading">
                 <div>
                     <h2>Template Builder: <?php echo esc_html($template->template_name); ?></h2>
@@ -780,14 +792,46 @@ trait ECM_Event_Templates
                     <?php else : ?>
                         <ul class="ecm-elements-list">
                             <?php foreach ($elements as $element) : ?>
+                                <?php
+                                $delete_element_url = wp_nonce_url(
+                                    admin_url(
+                                        'admin.php?page=ecm-events&action=delete_template_element&event_id=' . absint($event->id) .
+                                            '&template_id=' . absint($template->id) .
+                                            '&element_id=' . absint($element->id)
+                                    ),
+                                    'ecm_delete_template_element_' . absint($element->id)
+                                );
+                                ?>
+
                                 <li>
-                                    <strong><?php echo esc_html($element->placeholder_key); ?></strong>
+                                    <strong><?php echo esc_html('{' . $element->placeholder_key . '}'); ?></strong>
                                     <br>
                                     <span class="description">
                                         X: <?php echo esc_html($element->x_position); ?>,
                                         Y: <?php echo esc_html($element->y_position); ?>,
                                         Size: <?php echo esc_html($element->font_size); ?>
                                     </span>
+                                    <br>
+                                    <a href="#"
+                                        class="ecm-edit-element"
+                                        data-element-id="<?php echo esc_attr($element->id); ?>"
+                                        data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
+                                        data-source-type="<?php echo esc_attr($element->source_type); ?>"
+                                        data-font-family="<?php echo esc_attr($element->font_family); ?>"
+                                        data-font-size="<?php echo esc_attr($element->font_size); ?>"
+                                        data-font-color="<?php echo esc_attr($element->font_color); ?>"
+                                        data-alignment="<?php echo esc_attr($element->alignment); ?>"
+                                        data-x-position="<?php echo esc_attr($element->x_position); ?>"
+                                        data-y-position="<?php echo esc_attr($element->y_position); ?>"
+                                        data-rotation="<?php echo esc_attr($element->rotation); ?>">
+                                        Edit
+                                    </a>
+                                    |
+                                    <a href="<?php echo esc_url($delete_element_url); ?>"
+                                        onclick="return confirm('Delete this template element?');"
+                                        class="ecm-danger-link">
+                                        Delete
+                                    </a>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -832,27 +876,30 @@ trait ECM_Event_Templates
 
         return $variables;
     }
+
     private function render_add_element_modal($event, $template, $variables)
     {
     ?>
         <div id="ecm-add-element-modal" class="ecm-modal" style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
-                    <h2>Add Template Element</h2>
+                    <h2 id="ecm-element-modal-title">Add Template Element</h2>
                     <button type="button" class="ecm-modal-close">&times;</button>
                 </div>
 
                 <form method="post">
                     <?php wp_nonce_field('ecm_add_template_element', 'ecm_add_template_element_nonce'); ?>
+                    <?php wp_nonce_field('ecm_update_template_element', 'ecm_update_template_element_nonce'); ?>
 
                     <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
                     <input type="hidden" name="template_id" value="<?php echo esc_attr($template->id); ?>">
+                    <input type="hidden" name="element_id" id="ecm_element_id" value="">
 
                     <div class="ecm-modal-body">
                         <p>
                             <label>
                                 <strong>Placeholder</strong>
-                                <select name="placeholder_key" class="widefat" required>
+                                <select name="placeholder_key" id="ecm_element_placeholder_key" class="widefat" required>
                                     <?php foreach ($variables as $group_label => $items) : ?>
                                         <optgroup label="<?php echo esc_attr($group_label); ?>">
                                             <?php foreach ($items as $variable) : ?>
@@ -885,28 +932,28 @@ trait ECM_Event_Templates
                         <p>
                             <label>
                                 <strong>Font Family</strong>
-                                <input type="text" name="font_family" class="widefat" value="Arial">
+                                <input type="text" name="font_family" id="ecm_element_font_family" class="widefat" value="Arial">
                             </label>
                         </p>
 
                         <p>
                             <label>
                                 <strong>Font Size</strong>
-                                <input type="number" name="font_size" class="widefat" value="18" min="1">
+                                <input type="number" name="font_size" id="ecm_element_font_size" class="widefat" value="18" min="1">
                             </label>
                         </p>
 
                         <p>
                             <label>
                                 <strong>Font Color</strong>
-                                <input type="color" name="font_color" value="#000000">
+                                <input type="color" name="font_color" id="ecm_element_font_color" value="#000000">
                             </label>
                         </p>
 
                         <p>
                             <label>
                                 <strong>Alignment</strong>
-                                <select name="alignment" class="widefat">
+                                <select name="alignment" id="ecm_element_alignment" class="widefat">
                                     <option value="left">Left</option>
                                     <option value="center">Center</option>
                                     <option value="right">Right</option>
@@ -917,28 +964,32 @@ trait ECM_Event_Templates
                         <p>
                             <label>
                                 <strong>X Position</strong>
-                                <input type="number" name="x_position" class="widefat" value="100" step="0.1">
+                                <input type="number" name="x_position" id="ecm_element_x_position" class="widefat" value="100" step="0.1">
                             </label>
                         </p>
 
                         <p>
                             <label>
                                 <strong>Y Position</strong>
-                                <input type="number" name="y_position" class="widefat" value="100" step="0.1">
+                                <input type="number" name="y_position" id="ecm_element_y_position" class="widefat" value="100" step="0.1">
                             </label>
                         </p>
 
                         <p>
                             <label>
                                 <strong>Rotation</strong>
-                                <input type="number" name="rotation" class="widefat" value="0" step="0.1">
+                                <input type="number" name="rotation" id="ecm_element_rotation" class="widefat" value="0" step="0.1">
                             </label>
                         </p>
                     </div>
 
                     <div class="ecm-modal-footer">
-                        <button type="submit" name="ecm_add_template_element_submit" class="button button-primary">
+                        <button type="submit" name="ecm_add_template_element_submit" id="ecm_add_template_element_submit" class="button button-primary">
                             Add Element
+                        </button>
+
+                        <button type="submit" name="ecm_update_template_element_submit" id="ecm_update_template_element_submit" class="button button-primary" style="display:none;">
+                            Update Element
                         </button>
 
                         <button type="button" class="button ecm-modal-cancel">
@@ -953,6 +1004,10 @@ trait ECM_Event_Templates
 
     public function handle_add_template_element()
     {
+        if (isset($_POST['ecm_update_template_element_submit'])) {
+            return;
+        }
+
         if (!isset($_POST['ecm_add_template_element_submit'])) {
             return;
         }
@@ -1079,5 +1134,178 @@ trait ECM_Event_Templates
         ];
 
         return $samples[$key] ?? '{' . $key . '}';
+    }
+
+    public function handle_update_template_element()
+    {
+        if (!isset($_POST['ecm_update_template_element_submit'])) {
+            return;
+        }
+
+        if (
+            !isset($_POST['ecm_update_template_element_nonce']) ||
+            !wp_verify_nonce($_POST['ecm_update_template_element_nonce'], 'ecm_update_template_element')
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id       = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $template_id    = isset($_POST['template_id']) ? absint($_POST['template_id']) : 0;
+        $element_id     = isset($_POST['element_id']) ? absint($_POST['element_id']) : 0;
+        $placeholder    = sanitize_text_field($_POST['placeholder_key'] ?? '');
+        $source_type    = sanitize_text_field($_POST['source_type'] ?? 'participant');
+        $font_family    = sanitize_text_field($_POST['font_family'] ?? 'Arial');
+        $font_size      = isset($_POST['font_size']) ? absint($_POST['font_size']) : 18;
+        $font_color     = sanitize_hex_color($_POST['font_color'] ?? '#000000');
+        $alignment      = sanitize_text_field($_POST['alignment'] ?? 'left');
+        $x_position     = isset($_POST['x_position']) ? floatval($_POST['x_position']) : 0;
+        $y_position     = isset($_POST['y_position']) ? floatval($_POST['y_position']) : 0;
+        $rotation       = isset($_POST['rotation']) ? floatval($_POST['rotation']) : 0;
+
+        if (!$event_id || !$template_id || !$element_id || empty($placeholder)) {
+            wp_die('Invalid element data.');
+        }
+
+        $allowed_sources = ['participant', 'event', 'session', 'system'];
+        if (!in_array($source_type, $allowed_sources, true)) {
+            $source_type = 'participant';
+        }
+
+        $allowed_alignments = ['left', 'center', 'right'];
+        if (!in_array($alignment, $allowed_alignments, true)) {
+            $alignment = 'left';
+        }
+
+        if (!$font_color) {
+            $font_color = '#000000';
+        }
+
+        global $wpdb;
+
+        $templates_table = $wpdb->prefix . 'ecm_templates';
+        $elements_table  = $wpdb->prefix . 'ecm_template_elements';
+
+        $element = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT e.*
+             FROM $elements_table e
+             INNER JOIN $templates_table t ON e.template_id = t.id
+             WHERE e.id = %d
+             AND e.template_id = %d
+             AND t.event_id = %d",
+                $element_id,
+                $template_id,
+                $event_id
+            )
+        );
+
+        if (!$element) {
+            wp_die('Element not found.');
+        }
+
+        $updated = $wpdb->update(
+            $elements_table,
+            [
+                'placeholder_key' => $placeholder,
+                'source_type'     => $source_type,
+                'x_position'      => $x_position,
+                'y_position'      => $y_position,
+                'font_family'     => $font_family,
+                'font_size'       => $font_size,
+                'font_color'      => $font_color,
+                'alignment'       => $alignment,
+                'rotation'        => $rotation,
+            ],
+            [
+                'id'          => $element_id,
+                'template_id' => $template_id,
+            ],
+            ['%s', '%s', '%f', '%f', '%s', '%f', '%s', '%s', '%f'],
+            ['%d', '%d']
+        );
+
+        if ($updated === false) {
+            wp_die('Failed to update template element.');
+        }
+
+        wp_safe_redirect(
+            admin_url(
+                'admin.php?page=ecm-events&action=template_builder&event_id=' . $event_id .
+                    '&template_id=' . $template_id .
+                    '&element_updated=1'
+            )
+        );
+        exit;
+    }
+
+    public function handle_delete_template_element()
+    {
+        if (
+            !isset($_GET['page'], $_GET['action'], $_GET['event_id'], $_GET['template_id'], $_GET['element_id']) ||
+            $_GET['page'] !== 'ecm-events' ||
+            $_GET['action'] !== 'delete_template_element'
+        ) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
+        $event_id    = absint($_GET['event_id']);
+        $template_id = absint($_GET['template_id']);
+        $element_id  = absint($_GET['element_id']);
+
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'ecm_delete_template_element_' . $element_id)
+        ) {
+            wp_die('Security check failed.');
+        }
+
+        global $wpdb;
+
+        $templates_table = $wpdb->prefix . 'ecm_templates';
+        $elements_table  = $wpdb->prefix . 'ecm_template_elements';
+
+        $element = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT e.*
+             FROM $elements_table e
+             INNER JOIN $templates_table t ON e.template_id = t.id
+             WHERE e.id = %d
+             AND e.template_id = %d
+             AND t.event_id = %d",
+                $element_id,
+                $template_id,
+                $event_id
+            )
+        );
+
+        if (!$element) {
+            wp_die('Element not found.');
+        }
+
+        $wpdb->delete(
+            $elements_table,
+            [
+                'id'          => $element_id,
+                'template_id' => $template_id,
+            ],
+            ['%d', '%d']
+        );
+
+        wp_safe_redirect(
+            admin_url(
+                'admin.php?page=ecm-events&action=template_builder&event_id=' . $event_id .
+                    '&template_id=' . $template_id .
+                    '&element_deleted=1'
+            )
+        );
+        exit;
     }
 }
