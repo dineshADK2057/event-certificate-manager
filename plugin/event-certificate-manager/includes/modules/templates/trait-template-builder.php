@@ -61,7 +61,7 @@ trait ECM_Template_Builder
         );
 
         $variables = $this->get_template_variables($event, $template);
-        ?>
+?>
 
         <div class="wrap ecm-wrap">
             <div class="ecm-form-header">
@@ -143,7 +143,18 @@ trait ECM_Template_Builder
                                 esc_attr($element->rotation)
                             );
                             ?>
-                            <div class="ecm-builder-element"
+                            <div
+                                class="ecm-builder-element ecm-selectable-builder-element"
+                                data-element-id="<?php echo esc_attr($element->id); ?>"
+                                data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
+                                data-source-type="<?php echo esc_attr($element->source_type); ?>"
+                                data-font-family="<?php echo esc_attr($element->font_family); ?>"
+                                data-font-size="<?php echo esc_attr($element->font_size); ?>"
+                                data-font-color="<?php echo esc_attr($element->font_color); ?>"
+                                data-alignment="<?php echo esc_attr($element->alignment); ?>"
+                                data-x-position="<?php echo esc_attr($element->x_position); ?>"
+                                data-y-position="<?php echo esc_attr($element->y_position); ?>"
+                                data-rotation="<?php echo esc_attr($element->rotation); ?>"
                                 style="<?php echo esc_attr($style); ?>">
                                 <?php echo esc_html($sample_value); ?>
                             </div>
@@ -151,70 +162,216 @@ trait ECM_Template_Builder
                     </div>
                 </div>
 
-                <div class="ecm-builder-sidebar">
-                    <div class="ecm-builder-panel-header">
-                        <h3>Elements</h3>
-                        <button type="button" class="button button-primary ecm-open-element-modal">
-                            + Add Element
-                        </button>
+                <div class="ecm-builder-sidebar ecm-builder-properties-sidebar">
+
+                    <!-- Element list view -->
+                    <div id="ecm-elements-list-view">
+                        <div class="ecm-builder-panel-header">
+                            <h3>Elements</h3>
+
+                            <button type="button" class="button button-primary ecm-open-element-modal">
+                                + Add Element
+                            </button>
+                        </div>
+
+                        <?php if (empty($elements)) : ?>
+                            <p>No elements added yet.</p>
+                        <?php else : ?>
+                            <ul class="ecm-elements-list">
+                                <?php foreach ($elements as $element) : ?>
+                                    <?php
+                                    $delete_element_url = wp_nonce_url(
+                                        admin_url(
+                                            'admin.php?page=ecm-events&action=delete_template_element' .
+                                                '&event_id=' . absint($event->id) .
+                                                '&template_id=' . absint($template->id) .
+                                                '&element_id=' . absint($element->id)
+                                        ),
+                                        'ecm_delete_template_element_' . absint($element->id)
+                                    );
+                                    ?>
+
+                                    <li
+                                        class="ecm-element-list-item"
+                                        data-element-id="<?php echo esc_attr($element->id); ?>">
+                                        <button
+                                            type="button"
+                                            class="ecm-select-element-from-list"
+                                            data-element-id="<?php echo esc_attr($element->id); ?>">
+                                            <strong>
+                                                <?php echo esc_html('{' . $element->placeholder_key . '}'); ?>
+                                            </strong>
+
+                                            <span class="description">
+                                                X: <?php echo esc_html($element->x_position); ?>,
+                                                Y: <?php echo esc_html($element->y_position); ?>,
+                                                Size: <?php echo esc_html($element->font_size); ?>
+                                            </span>
+                                        </button>
+
+                                        <div class="ecm-element-list-actions">
+                                            <a
+                                                href="#"
+                                                class="ecm-edit-element"
+                                                data-element-id="<?php echo esc_attr($element->id); ?>"
+                                                data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
+                                                data-source-type="<?php echo esc_attr($element->source_type); ?>"
+                                                data-font-family="<?php echo esc_attr($element->font_family); ?>"
+                                                data-font-size="<?php echo esc_attr($element->font_size); ?>"
+                                                data-font-color="<?php echo esc_attr($element->font_color); ?>"
+                                                data-alignment="<?php echo esc_attr($element->alignment); ?>"
+                                                data-x-position="<?php echo esc_attr($element->x_position); ?>"
+                                                data-y-position="<?php echo esc_attr($element->y_position); ?>"
+                                                data-rotation="<?php echo esc_attr($element->rotation); ?>">
+                                                Edit
+                                            </a>
+
+                                            <span aria-hidden="true">|</span>
+
+                                            <a
+                                                href="<?php echo esc_url($delete_element_url); ?>"
+                                                onclick="return confirm('Delete this template element?');"
+                                                class="ecm-danger-link">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
 
-                    <?php if (empty($elements)) : ?>
-                        <p>No elements added yet.</p>
-                    <?php else : ?>
-                        <ul class="ecm-elements-list">
-                            <?php foreach ($elements as $element) : ?>
-                                <?php
-                                $delete_element_url = wp_nonce_url(
-                                    admin_url(
-                                        'admin.php?page=ecm-events&action=delete_template_element&event_id=' . absint($event->id) .
-                                            '&template_id=' . absint($template->id) .
-                                            '&element_id=' . absint($element->id)
-                                    ),
-                                    'ecm_delete_template_element_' . absint($element->id)
-                                );
-                                ?>
+                    <!-- Selected element properties view -->
+                    <div id="ecm-element-properties-view" style="display:none;">
+                        <div class="ecm-builder-panel-header">
+                            <button type="button" class="button-link ecm-back-to-elements">
+                                ← Elements
+                            </button>
 
-                                <li>
-                                    <strong><?php echo esc_html('{' . $element->placeholder_key . '}'); ?></strong>
-                                    <br>
-                                    <span class="sdescription">
-                                        X: <?php echo esc_html($element->x_position); ?>,
-                                        Y: <?php echo esc_html($element->y_position); ?>,
-                                        Size: <?php echo esc_html($element->font_size); ?>
-                                    </span>
+                            <span class="ecm-selected-element-badge">Selected</span>
+                        </div>
 
-                                    <br>
-                                    <a href="#"
-                                        class="ecm-edit-element"
-                                        data-element-id="<?php echo esc_attr($element->id); ?>"
-                                        data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
-                                        data-source-type="<?php echo esc_attr($element->source_type); ?>"
-                                        data-font-family="<?php echo esc_attr($element->font_family); ?>"
-                                        data-font-size="<?php echo esc_attr($element->font_size); ?>"
-                                        data-font-color="<?php echo esc_attr($element->font_color); ?>"
-                                        data-alignment="<?php echo esc_attr($element->alignment); ?>"
-                                        data-x-position="<?php echo esc_attr($element->x_position); ?>"
-                                        data-y-position="<?php echo esc_attr($element->y_position); ?>"
-                                        data-rotation="<?php echo esc_attr($element->rotation); ?>">
-                                        Edit
-                                    </a>
-                                    |
-                                    <a href="<?php echo esc_url($delete_element_url); ?>"
-                                        onclick="return confirm('Delete this template element?');"
-                                        class="ecm-danger-link">
-                                        Delete
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
+                        <h3 id="ecm-properties-element-title">Element Properties</h3>
+
+                        <input type="hidden" id="ecm_properties_element_id" value="">
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_placeholder">
+                                Placeholder
+                            </label>
+
+                            <input
+                                type="text"
+                                id="ecm_properties_placeholder"
+                                class="widefat"
+                                readonly>
+                        </div>
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_font_family">
+                                Font Family
+                            </label>
+
+                            <input
+                                type="text"
+                                id="ecm_properties_font_family"
+                                class="widefat">
+                        </div>
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_font_size">
+                                Font Size
+                            </label>
+
+                            <input
+                                type="number"
+                                id="ecm_properties_font_size"
+                                class="widefat"
+                                min="1"
+                                step="1">
+                        </div>
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_font_color">
+                                Font Color
+                            </label>
+
+                            <input
+                                type="color"
+                                id="ecm_properties_font_color">
+                        </div>
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_alignment">
+                                Alignment
+                            </label>
+
+                            <select id="ecm_properties_alignment" class="widefat">
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+
+                        <div class="ecm-property-row">
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_x_position">
+                                    X
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="ecm_properties_x_position"
+                                    class="widefat"
+                                    step="0.1">
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_y_position">
+                                    Y
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="ecm_properties_y_position"
+                                    class="widefat"
+                                    step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_rotation">
+                                Rotation
+                            </label>
+
+                            <input
+                                type="number"
+                                id="ecm_properties_rotation"
+                                class="widefat"
+                                step="0.1">
+                        </div>
+
+                        <p>
+                            <button
+                                type="button"
+                                class="button button-primary"
+                                id="ecm-save-element-properties"
+                                disabled>
+                                Save Changes
+                            </button>
+                        </p>
+
+                        <p class="description">
+                            Saving from this panel will be enabled in the next step.
+                        </p>
+                    </div>
+
                 </div>
 
             </div>
         </div>
         <?php $this->render_add_element_modal($event, $template, $variables); ?>
-        <?php
+<?php
     }
 
     private function get_template_variables($event, $template)

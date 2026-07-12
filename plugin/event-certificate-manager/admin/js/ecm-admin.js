@@ -351,6 +351,113 @@
             let selected = $(this).find(':selected');
             $('#ecm_element_source_type').val(selected.data('source-type'));
         });
+
+        function ecmSelectBuilderElement(elementId) {
+            let canvasElement = $('.ecm-selectable-builder-element[data-element-id="' + elementId + '"]');
+
+            if (!canvasElement.length) {
+                return;
+            }
+
+            // Remove old selections.
+            $('.ecm-selectable-builder-element').removeClass('ecm-element-selected');
+            $('.ecm-element-list-item').removeClass('ecm-element-list-item-selected');
+
+            // Highlight current selection.
+            canvasElement.addClass('ecm-element-selected');
+
+            $('.ecm-element-list-item[data-element-id="' + elementId + '"]')
+                .addClass('ecm-element-list-item-selected');
+
+            // Read element values from the canvas data attributes.
+            let placeholder = canvasElement.data('placeholder-key');
+            let fontFamily = canvasElement.data('font-family');
+            let fontSize = canvasElement.data('font-size');
+            let fontColor = canvasElement.data('font-color');
+            let alignment = canvasElement.data('alignment');
+            let xPosition = canvasElement.data('x-position');
+            let yPosition = canvasElement.data('y-position');
+            let rotation = canvasElement.data('rotation');
+
+            // Fill properties panel.
+            $('#ecm_properties_element_id').val(elementId);
+            $('#ecm_properties_placeholder').val('{' + placeholder + '}');
+            $('#ecm_properties_font_family').val(fontFamily);
+            $('#ecm_properties_font_size').val(fontSize);
+            $('#ecm_properties_font_color').val(fontColor);
+            $('#ecm_properties_alignment').val(alignment);
+            $('#ecm_properties_x_position').val(xPosition);
+            $('#ecm_properties_y_position').val(yPosition);
+            $('#ecm_properties_rotation').val(rotation);
+
+            $('#ecm-properties-element-title').text('{' + placeholder + '}');
+
+            // Switch sidebar view.
+            $('#ecm-elements-list-view').hide();
+            $('#ecm-element-properties-view').show();
+        }
+
+        $(document).on('click', '.ecm-selectable-builder-element', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            ecmSelectBuilderElement($(this).data('element-id'));
+        });
+
+        $(document).on('click', '.ecm-select-element-from-list', function (e) {
+            e.preventDefault();
+
+            ecmSelectBuilderElement($(this).data('element-id'));
+        });
+
+        $('.ecm-back-to-elements').on('click', function () {
+            $('#ecm-element-properties-view').hide();
+            $('#ecm-elements-list-view').show();
+
+            $('.ecm-selectable-builder-element').removeClass('ecm-element-selected');
+            $('.ecm-element-list-item').removeClass('ecm-element-list-item-selected');
+        });
+
+        function ecmGetSelectedCanvasElement() {
+            let elementId = $('#ecm_properties_element_id').val();
+
+            if (!elementId) {
+                return $();
+            }
+
+            return $('.ecm-selectable-builder-element[data-element-id="' + elementId + '"]');
+        }
+
+        $('#ecm_properties_font_family').on('input change', function () {
+            ecmGetSelectedCanvasElement().css('font-family', $(this).val());
+        });
+
+        $('#ecm_properties_font_size').on('input change', function () {
+            ecmGetSelectedCanvasElement().css('font-size', $(this).val() + 'px');
+        });
+
+        $('#ecm_properties_font_color').on('input change', function () {
+            ecmGetSelectedCanvasElement().css('color', $(this).val());
+        });
+
+        $('#ecm_properties_alignment').on('change', function () {
+            ecmGetSelectedCanvasElement().css('text-align', $(this).val());
+        });
+
+        $('#ecm_properties_x_position').on('input change', function () {
+            ecmGetSelectedCanvasElement().css('left', $(this).val() + 'px');
+        });
+
+        $('#ecm_properties_y_position').on('input change', function () {
+            ecmGetSelectedCanvasElement().css('top', $(this).val() + 'px');
+        });
+
+        $('#ecm_properties_rotation').on('input change', function () {
+            ecmGetSelectedCanvasElement().css(
+                'transform',
+                'rotate(' + $(this).val() + 'deg)'
+            );
+        });
     });
 
 })(jQuery);
