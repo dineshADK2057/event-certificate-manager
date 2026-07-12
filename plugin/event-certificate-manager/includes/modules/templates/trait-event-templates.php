@@ -1,15 +1,15 @@
 <?php
 
 /**
-     * Event Templates Module
-     *
-     * Handles certificate template CRUD, template listing,
-     * template background uploads, and template-related routing.
-     *
-     * Builder, element, preview, and rendering logic will be
-     * separated into dedicated traits within this module.
-     *
-     * @package EventCertificateManager
+ * Event Templates Module
+ *
+ * Handles certificate template CRUD, template listing,
+ * template background uploads, and template-related routing.
+ *
+ * Builder, element, preview, and rendering logic will be
+ * separated into dedicated traits within this module.
+ *
+ * @package EventCertificateManager
  */
 
 if (!defined('ABSPATH')) {
@@ -21,7 +21,7 @@ trait ECM_Event_Templates
 
     private function tab_templates($event)
     {
-?>
+    ?>
         <div class="ecm-tab-header">
             <div>
                 <h2>Templates</h2>
@@ -1027,7 +1027,7 @@ trait ECM_Event_Templates
                 </form>
             </div>
         </div>
-<?php
+    <?php
     }
 
     public function handle_add_template_element()
@@ -1311,5 +1311,4 @@ trait ECM_Event_Templates
         );
         exit;
     }
-
 }

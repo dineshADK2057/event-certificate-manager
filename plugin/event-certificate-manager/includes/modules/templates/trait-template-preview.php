@@ -13,7 +13,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-trait ECM_Template_Preview {
+trait ECM_Template_Preview
+{
 
     private function generate_pdf_preview_image($pdf_path, $preview_path, $template)
     {
@@ -70,7 +71,7 @@ trait ECM_Template_Preview {
         }
     }
 
-     private function get_template_builder_background($template)
+    private function get_template_builder_background($template)
     {
         if (empty($template->background_file)) {
             return [
