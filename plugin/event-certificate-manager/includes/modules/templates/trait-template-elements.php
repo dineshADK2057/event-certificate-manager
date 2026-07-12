@@ -13,11 +13,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-trait ECM_Template_Elements {
+trait ECM_Template_Elements
+{
 
     private function render_add_element_modal($event, $template, $variables)
     {
-        ?>
+?>
         <div id="ecm-add-element-modal" class="ecm-modal" style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
@@ -137,7 +138,7 @@ trait ECM_Template_Elements {
                 </form>
             </div>
         </div>
-        <?php
+<?php
     }
 
     public function handle_add_template_element()
@@ -422,5 +423,155 @@ trait ECM_Template_Elements {
         exit;
     }
 
+    public function ajax_update_template_element_properties()
+    {
+        check_ajax_referer(
+            'ecm_update_template_element_properties',
+            'nonce'
+        );
 
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error([
+                'message' => 'You do not have permission to update this element.',
+            ], 403);
+        }
+
+        $event_id    = isset($_POST['event_id'])
+            ? absint($_POST['event_id'])
+            : 0;
+
+        $template_id = isset($_POST['template_id'])
+            ? absint($_POST['template_id'])
+            : 0;
+
+        $element_id  = isset($_POST['element_id'])
+            ? absint($_POST['element_id'])
+            : 0;
+
+        if (!$event_id || !$template_id || !$element_id) {
+            wp_send_json_error([
+                'message' => 'Invalid event, template, or element.',
+            ], 400);
+        }
+
+        $font_family = sanitize_text_field(
+            wp_unslash($_POST['font_family'] ?? 'Arial')
+        );
+
+        $font_size = isset($_POST['font_size'])
+            ? max(1, floatval($_POST['font_size']))
+            : 18;
+
+        $font_color = sanitize_hex_color(
+            wp_unslash($_POST['font_color'] ?? '#000000')
+        );
+
+        $alignment = sanitize_key(
+            wp_unslash($_POST['alignment'] ?? 'left')
+        );
+
+        $x_position = isset($_POST['x_position'])
+            ? floatval($_POST['x_position'])
+            : 0;
+
+        $y_position = isset($_POST['y_position'])
+            ? floatval($_POST['y_position'])
+            : 0;
+
+        $rotation = isset($_POST['rotation'])
+            ? floatval($_POST['rotation'])
+            : 0;
+
+        if (!$font_color) {
+            $font_color = '#000000';
+        }
+
+        $allowed_alignments = ['left', 'center', 'right'];
+
+        if (!in_array($alignment, $allowed_alignments, true)) {
+            $alignment = 'left';
+        }
+
+        global $wpdb;
+
+        $templates_table = $wpdb->prefix . 'ecm_templates';
+        $elements_table  = $wpdb->prefix . 'ecm_template_elements';
+
+        /*
+     * Confirm that the element belongs to the requested template
+     * and that the template belongs to the requested event.
+     */
+        $element_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT e.id
+             FROM {$elements_table} e
+             INNER JOIN {$templates_table} t
+                ON e.template_id = t.id
+             WHERE e.id = %d
+               AND e.template_id = %d
+               AND t.event_id = %d",
+                $element_id,
+                $template_id,
+                $event_id
+            )
+        );
+
+        if (!$element_exists) {
+            wp_send_json_error([
+                'message' => 'Template element not found.',
+            ], 404);
+        }
+
+        $updated = $wpdb->update(
+            $elements_table,
+            [
+                'font_family' => $font_family,
+                'font_size'   => $font_size,
+                'font_color'  => $font_color,
+                'alignment'   => $alignment,
+                'x_position'  => $x_position,
+                'y_position'  => $y_position,
+                'rotation'    => $rotation,
+            ],
+            [
+                'id'          => $element_id,
+                'template_id' => $template_id,
+            ],
+            [
+                '%s',
+                '%f',
+                '%s',
+                '%s',
+                '%f',
+                '%f',
+                '%f',
+            ],
+            [
+                '%d',
+                '%d',
+            ]
+        );
+
+        if ($updated === false) {
+            wp_send_json_error([
+                'message' => $wpdb->last_error
+                    ? $wpdb->last_error
+                    : 'Failed to save element properties.',
+            ], 500);
+        }
+
+        wp_send_json_success([
+            'message' => 'Element properties saved.',
+            'element' => [
+                'id'          => $element_id,
+                'font_family' => $font_family,
+                'font_size'   => $font_size,
+                'font_color'  => $font_color,
+                'alignment'   => $alignment,
+                'x_position'  => $x_position,
+                'y_position'  => $y_position,
+                'rotation'    => $rotation,
+            ],
+        ]);
+    }
 }

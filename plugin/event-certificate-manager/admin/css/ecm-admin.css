@@ -614,3 +614,63 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
+
+.ecm-auto-save-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    margin-top: 18px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #f6f7f7;
+    color: #646970;
+    font-size: 13px;
+}
+
+.ecm-auto-save-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #8c8f94;
+    flex: 0 0 auto;
+}
+
+.ecm-auto-save-status.is-saving {
+    color: #996800;
+    background: #fcf9e8;
+}
+
+.ecm-auto-save-status.is-saving .ecm-auto-save-dot {
+    background: #dba617;
+    animation: ecm-save-pulse 1s infinite;
+}
+
+.ecm-auto-save-status.is-saved {
+    color: #116329;
+    background: #edfaef;
+}
+
+.ecm-auto-save-status.is-saved .ecm-auto-save-dot {
+    background: #00a32a;
+}
+
+.ecm-auto-save-status.is-error {
+    color: #8a2424;
+    background: #fcf0f1;
+}
+
+.ecm-auto-save-status.is-error .ecm-auto-save-dot {
+    background: #d63638;
+}
+
+@keyframes ecm-save-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}

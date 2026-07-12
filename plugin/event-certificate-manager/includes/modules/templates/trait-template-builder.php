@@ -63,6 +63,10 @@ trait ECM_Template_Builder
         $variables = $this->get_template_variables($event, $template);
 ?>
 
+
+
+
+
         <div class="wrap ecm-wrap">
             <div class="ecm-form-header">
                 <a href="<?php echo esc_url($back_url); ?>" class="button">
@@ -100,6 +104,23 @@ trait ECM_Template_Builder
                     </p>
                 </div>
             </div>
+
+            <input
+                type="hidden"
+                id="ecm_element_properties_nonce"
+                value="<?php echo esc_attr(
+                            wp_create_nonce('ecm_update_template_element_properties')
+                        ); ?>">
+
+            <input
+                type="hidden"
+                id="ecm_builder_event_id"
+                value="<?php echo esc_attr($event->id); ?>">
+
+            <input
+                type="hidden"
+                id="ecm_builder_template_id"
+                value="<?php echo esc_attr($template->id); ?>">
 
             <div class="ecm-builder-layout">
 
@@ -351,19 +372,10 @@ trait ECM_Template_Builder
                                 step="0.1">
                         </div>
 
-                        <p>
-                            <button
-                                type="button"
-                                class="button button-primary"
-                                id="ecm-save-element-properties"
-                                disabled>
-                                Save Changes
-                            </button>
-                        </p>
-
-                        <p class="description">
-                            Saving from this panel will be enabled in the next step.
-                        </p>
+                        <div class="ecm-auto-save-status" aria-live="polite">
+                            <span class="ecm-auto-save-dot"></span>
+                            <span id="ecm-element-save-status">Changes save automatically</span>
+                        </div>
                     </div>
 
                 </div>
@@ -406,4 +418,6 @@ trait ECM_Template_Builder
 
         return $variables;
     }
+
+    
 }

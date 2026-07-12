@@ -64,6 +64,11 @@ class ECM_Events
         add_action('admin_init', [$this, 'handle_add_template_element']);
         add_action('admin_init', [$this, 'handle_update_template_element']);
         add_action('admin_init', [$this, 'handle_delete_template_element']);
+
+        add_action(
+            'wp_ajax_ecm_update_template_element_properties',
+            [$this, 'ajax_update_template_element_properties']
+        );
     }
 
     public function events_page()
