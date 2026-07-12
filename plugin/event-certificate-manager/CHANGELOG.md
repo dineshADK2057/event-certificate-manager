@@ -1,10 +1,27 @@
+# Changelog
+
+All notable changes to Event Certificate Manager will be documented here.
+
 ## Unreleased
 
-### Changed
-- Refactored the template module into dedicated submodules.
-- Moved template preview generation and builder background helpers into a separate preview trait.
-- Completed separation of template CRUD, builder, elements, and preview responsibilities.
-
 ### Added
-- Added live AJAX property editing for template elements.
-- Added automatic property saving with visual save status.
+
+- Template Builder
+- Template element CRUD
+- Builder properties panel
+- Live AJAX property editing
+- Automatic PDF preview generation
+- Session participant assignment
+- Participant CSV import and export
+
+### Changed
+
+- Refactored the event module into dedicated traits.
+- Refactored template functionality into dedicated CRUD, builder, element, preview, and renderer traits.
+- Moved session configuration into the main event Settings tab.
+
+### Fixed
+
+- Fixed session update creating duplicate records.
+- Fixed AJAX session participant search registration.
+- Fixed template element updates referencing a missing `updated_at` column.
