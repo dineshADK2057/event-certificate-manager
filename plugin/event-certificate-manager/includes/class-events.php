@@ -7,7 +7,12 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-participants.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-helpers.php';
-require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-templates.php';
+
+require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-event-templates.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-builder.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-elements.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-preview.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-renderer.php';
 
 class ECM_Events
 {
@@ -15,7 +20,12 @@ class ECM_Events
     use ECM_Event_Settings;
     use ECM_Event_Participants;
     use ECM_Event_Helpers;
+
     use ECM_Event_Templates;
+    use ECM_Template_Builder;
+    use ECM_Template_Elements;
+    use ECM_Template_Preview;
+    use ECM_Template_Renderer;
 
     public function __construct()
     {

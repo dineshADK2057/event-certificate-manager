@@ -1,5 +1,17 @@
 <?php
 
+/**
+     * Event Templates Module
+     *
+     * Handles certificate template CRUD, template listing,
+     * template background uploads, and template-related routing.
+     *
+     * Builder, element, preview, and rendering logic will be
+     * separated into dedicated traits within this module.
+     *
+     * @package EventCertificateManager
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -594,6 +606,31 @@ trait ECM_Event_Templates
 
         $relative_path = 'ecm/templates/' . $safe_name;
 
+        $extension = strtolower(pathinfo($destination, PATHINFO_EXTENSION));
+
+        if ($extension === 'pdf') {
+            $preview_filename = pathinfo($safe_name, PATHINFO_FILENAME) . '-preview.png';
+            $preview_path     = $ecm_dir . $preview_filename;
+
+            $preview_result = $this->generate_pdf_preview_image(
+                $destination,
+                $preview_path,
+                $template
+            );
+
+            if (is_wp_error($preview_result)) {
+                // Remove the PDF because its required preview could not be generated.
+                if (file_exists($destination)) {
+                    unlink($destination);
+                }
+
+                wp_die(
+                    'PDF uploaded, but preview generation failed: ' .
+                        esc_html($preview_result->get_error_message())
+                );
+            }
+        }
+
         $wpdb->update(
             $templates_table,
             [
@@ -669,12 +706,10 @@ trait ECM_Event_Templates
             )
         );
 
-        $upload_dir = wp_upload_dir();
-        $background_url = '';
+        $builder_background = $this->get_template_builder_background($template);
 
-        if (!empty($template->background_file)) {
-            $background_url = trailingslashit($upload_dir['baseurl']) . ltrim($template->background_file, '/');
-        }
+        $background_url   = $builder_background['url'];
+        $background_error = $builder_background['error'];
 
         $back_url = admin_url(
             'admin.php?page=ecm-events&action=manage&event_id=' . absint($event_id) . '&tab=templates'
@@ -724,24 +759,30 @@ trait ECM_Event_Templates
             <div class="ecm-builder-layout">
 
                 <div class="ecm-builder-canvas-wrap">
-                    <h3>Preview</h3>
 
                     <div class="ecm-builder-canvas ecm-builder-<?php echo esc_attr($template->orientation); ?> ecm-page-<?php echo esc_attr(strtolower($template->page_size)); ?>">
-                        <?php if (!empty($background_url)) : ?>
-                            <?php
-                            $extension = strtolower(pathinfo($template->background_file, PATHINFO_EXTENSION));
-                            ?>
 
-                            <?php if ($extension === 'pdf') : ?>
-                                <iframe src="<?php echo esc_url($background_url); ?>" class="ecm-builder-pdf"></iframe>
-                            <?php else : ?>
-                                <img src="<?php echo esc_url($background_url); ?>" class="ecm-builder-bg" alt="">
-                            <?php endif; ?>
+                        <?php if (!empty($background_url)) : ?>
+                            <img
+                                src="<?php echo esc_url($background_url); ?>"
+                                class="ecm-builder-bg"
+                                alt="<?php echo esc_attr($template->template_name); ?>">
                         <?php else : ?>
                             <div class="ecm-empty-canvas">
-                                No background uploaded.
+                                <?php if (!empty($background_error)) : ?>
+                                    <div class="ecm-builder-error">
+                                        <strong>Preview unavailable</strong>
+                                        <span><?php echo esc_html($background_error); ?></span>
+                                    </div>
+                                <?php elseif (!empty($template->background_file)) : ?>
+                                    Preview could not be generated.
+                                <?php else : ?>
+                                    No background uploaded.
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
+
+
                         <?php foreach ($elements as $element) : ?>
                             <?php
                             $sample_value = $this->get_template_element_sample_value($element, $event, $template);
@@ -792,11 +833,12 @@ trait ECM_Event_Templates
                                 <li>
                                     <strong><?php echo esc_html('{' . $element->placeholder_key . '}'); ?></strong>
                                     <br>
-                                    <span class="description">
+                                    <span class="sdescription">
                                         X: <?php echo esc_html($element->x_position); ?>,
                                         Y: <?php echo esc_html($element->y_position); ?>,
                                         Size: <?php echo esc_html($element->font_size); ?>
                                     </span>
+
                                     <br>
                                     <a href="#"
                                         class="ecm-edit-element"
@@ -1293,5 +1335,125 @@ trait ECM_Event_Templates
             )
         );
         exit;
+    }
+
+    private function generate_pdf_preview_image($pdf_path, $preview_path, $template)
+    {
+        if (!class_exists('Imagick')) {
+            return new WP_Error(
+                'imagick_missing',
+                'Imagick is not available. PDF preview generation requires the Imagick PHP extension.'
+            );
+        }
+
+        $page_size   = strtolower($template->page_size);
+        $orientation = strtolower($template->orientation);
+
+        if ($page_size === 'letter') {
+            $width  = $orientation === 'portrait' ? 816 : 1056;
+            $height = $orientation === 'portrait' ? 1056 : 816;
+        } else {
+            $width  = $orientation === 'portrait' ? 794 : 1123;
+            $height = $orientation === 'portrait' ? 1123 : 794;
+        }
+
+        try {
+            $imagick = new Imagick();
+
+            $imagick->setResolution(150, 150);
+            $imagick->readImage($pdf_path . '[0]');
+            $imagick->setImageFormat('png');
+            $imagick->setImageBackgroundColor('white');
+            $imagick->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
+
+            $flattened = $imagick->mergeImageLayers(Imagick::LAYERMETHOD_FLATTEN);
+
+            $flattened->resizeImage(
+                $width,
+                $height,
+                Imagick::FILTER_LANCZOS,
+                1,
+                false
+            );
+
+            $flattened->writeImage($preview_path);
+
+            $flattened->clear();
+            $flattened->destroy();
+            $imagick->clear();
+            $imagick->destroy();
+
+            return true;
+        } catch (Throwable $exception) {
+            return new WP_Error(
+                'pdf_preview_failed',
+                $exception->getMessage()
+            );
+        }
+    }
+
+    private function get_template_builder_background($template)
+    {
+        if (empty($template->background_file)) {
+            return [
+                'url'   => '',
+                'path'  => '',
+                'error' => '',
+            ];
+        }
+
+        $upload_dir   = wp_upload_dir();
+        $relative     = ltrim($template->background_file, '/');
+        $original_path = trailingslashit($upload_dir['basedir']) . $relative;
+        $original_url  = trailingslashit($upload_dir['baseurl']) . $relative;
+
+        if (!file_exists($original_path)) {
+            return [
+                'url'   => '',
+                'path'  => '',
+                'error' => 'The uploaded template background file could not be found.',
+            ];
+        }
+
+        $extension = strtolower(pathinfo($relative, PATHINFO_EXTENSION));
+
+        // PNG/JPG files can be used directly.
+        if ($extension !== 'pdf') {
+            return [
+                'url'   => $original_url,
+                'path'  => $original_path,
+                'error' => '',
+            ];
+        }
+
+        $directory        = dirname($relative);
+        $filename         = pathinfo($relative, PATHINFO_FILENAME);
+        $preview_relative = trailingslashit($directory) . $filename . '-preview.png';
+
+        $preview_path = trailingslashit($upload_dir['basedir']) . $preview_relative;
+        $preview_url  = trailingslashit($upload_dir['baseurl']) . $preview_relative;
+
+        // Generate preview automatically for old or newly uploaded PDFs.
+        if (!file_exists($preview_path)) {
+            $generated = $this->generate_pdf_preview_image(
+                $original_path,
+                $preview_path,
+                $template
+            );
+
+            if (is_wp_error($generated)) {
+                return [
+                    'url'   => '',
+                    'path'  => '',
+                    'error' => $generated->get_error_message(),
+                ];
+            }
+        }
+
+        return [
+            'url'   => $preview_url,
+            'path'  => $preview_path,
+            'error' => '',
+        ];
     }
 }
