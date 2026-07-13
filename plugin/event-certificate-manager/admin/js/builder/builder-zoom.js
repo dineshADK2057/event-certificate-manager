@@ -121,13 +121,9 @@
     function updateControls(zoom) {
         const percentage = Math.round(zoom * 100);
 
-        if (typeof Builder.updateToolbarZoom === 'function') {
-            Builder.updateToolbarZoom(zoom);
-        } else {
-            $('#ecm-toolbar-zoom-value').text(
-                percentage + '%'
-            );
-        }
+        $('#ecm-toolbar-zoom-value').text(
+            percentage + '%'
+        );
 
         $('#ecm-toolbar-zoom-out').prop(
             'disabled',

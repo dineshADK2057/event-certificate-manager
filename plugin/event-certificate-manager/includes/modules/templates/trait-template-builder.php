@@ -122,113 +122,10 @@ trait ECM_Template_Builder
                 id="ecm_builder_template_id"
                 value="<?php echo esc_attr($template->id); ?>">
 
-            <div class="ecm-builder-toolbar">
 
-                <div class="ecm-builder-toolbar-group ecm-toolbar-left">
-                    <a
-                        href="<?php echo esc_url($back_url); ?>"
-                        class="button ecm-toolbar-button">
-                        ← Back
-                    </a>
-
-                    <span class="ecm-toolbar-divider" aria-hidden="true"></span>
-
-                    <button
-                        type="button"
-                        class="button button-primary ecm-open-element-modal">
-                        + Add Element
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button ecm-toolbar-requires-selection"
-                        id="ecm-toolbar-duplicate"
-                        title="Duplicate element will be added in a later step.">
-                        Duplicate
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button ecm-toolbar-danger ecm-toolbar-requires-selection"
-                        id="ecm-toolbar-delete"
-                        title="Toolbar deletion will be enabled later.">
-                        Delete
-                    </button>
-                </div>
-
-                <div class="ecm-builder-toolbar-group ecm-toolbar-center">
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button"
-                        id="ecm-toolbar-zoom-out"
-                        title="Workspace zoom will be added next.">
-                        −
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-zoom-value"
-                        id="ecm-toolbar-zoom-value">
-                        100%
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button"
-                        id="ecm-toolbar-zoom-in"
-                        title="Workspace zoom will be added next.">
-                        +
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button"
-                        id="ecm-toolbar-fit-page">
-                        Fit Page
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-button"
-                        id="ecm-toolbar-fit-width">
-                        Fit Width
-                    </button>
-                </div>
-
-                <div class="ecm-builder-toolbar-group ecm-toolbar-right">
-                    <span class="ecm-toolbar-selection-name">
-                        No element selected
-                    </span>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-toggle"
-                        id="ecm-toolbar-grid"
-                        title="Grid will be enabled later.">
-                        Grid
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-toggle"
-                        id="ecm-toolbar-snap"
-                        title="Snapping will be enabled later.">
-                        Snap
-                    </button>
-
-                    <button
-                        type="button"
-                        class="button ecm-toolbar-toggle"
-                        id="ecm-toolbar-guides"
-                        title="Guides will be enabled later.">
-                        Guides
-                    </button>
-                </div>
-
-            </div>
             <div class="ecm-builder-layout">
 
-                <div class="ecm-builder-workspace">
+                <div class="ecm-builder-workspace" >
 
                     <div class="ecm-builder-zoom-wrapper">
 
@@ -321,12 +218,51 @@ trait ECM_Template_Builder
                 </div>
 
                 <div class="ecm-builder-sidebar ecm-builder-properties-sidebar">
-
                     <!-- Element list view -->
                     <div id="ecm-elements-list-view">
-                        <div class="ecm-builder-panel-header">
-                            <h3>Elements</h3>
+                        <div class="ecm-builder-sidebar-tools">
+                            <div class="ecm-builder-zoom-controls">
+                                <button
+                                    type="button"
+                                    class="ecm-button button"
+                                    id="ecm-toolbar-zoom-out"
+                                    title="Zoom out">
+                                    −
+                                </button>
 
+                                <button
+                                    type="button"
+                                    class="ecm-button button ecm-builder-zoom-value"
+                                    id="ecm-toolbar-zoom-value"
+                                    title="Reset zoom to 100%">
+                                    100%
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="ecm-button button"
+                                    id="ecm-toolbar-zoom-in"
+                                    title="Zoom in">
+                                    +
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="ecm-button button"
+                                    id="ecm-toolbar-fit-width">
+                                    Fit Width
+                                </button>
+                            </div>
+
+                            <div class="ecm-builder-panel-header">
+                                <h3>Elements</h3>
+
+                                <button
+                                    type="button"
+                                    class="button button-primary ecm-open-element-modal">
+                                    + Add Element
+                                </button>
+                            </div>
                         </div>
 
                         <?php if (empty($elements)) : ?>

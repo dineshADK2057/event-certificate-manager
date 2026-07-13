@@ -96,13 +96,22 @@
     };
 
     Builder.state = Builder.state || {
-    selectedElementId: null,
-    zoom: 1,
-    zoomMode: 'manual',
-    gridEnabled: false,
-    snapEnabled: false,
-    guidesEnabled: false,
-    dragging: false
-};
+        selectedElementId: null,
+        zoom: 1,
+        zoomMode: 'manual',
+        dragging: false
+    };
+
+    Builder.state = Builder.state || {
+        selectedElementId: null,
+        zoom: 1,
+        zoomMode: 'manual',
+        gridEnabled: false,
+        snapEnabled: false,
+        guidesEnabled: false,
+        dragging: false,
+
+        keyboardStep: 1
+    };
 
 })(jQuery, window);

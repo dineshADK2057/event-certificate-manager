@@ -363,7 +363,7 @@
     border: 1px solid #dcdcde;
     border-radius: 10px;
     padding: 18px;
-    min-width: 240px;
+    width: 240px;
 
 }
 
@@ -903,4 +903,16 @@
     width: max-content;
     height: max-content;
     margin: 0 auto;
+}
+
+.ecm-builder-zoom-controls{
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.ecm-button{
+    padding-inline: 12px !important;
+    line-height: 0px !important;;
 }

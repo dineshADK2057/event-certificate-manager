@@ -31,6 +31,7 @@
          */
         Builder.state.selectedElementId = String(elementId);
 
+
         /*
          * Remove the previous selection.
          */
@@ -95,15 +96,7 @@
         $('#ecm-elements-list-view').hide();
         $('#ecm-element-properties-view').show();
 
-        /*
-         * Update the toolbar selection information.
-         */
-        $('.ecm-toolbar-selection-name').text(
-            '{' + placeholder + '}'
-        );
-
-        $('.ecm-toolbar-requires-selection')
-            .prop('disabled', false);
+        
 
         /*
          * Reset the autosave status for the newly selected element.
@@ -133,15 +126,7 @@
 
         $('#ecm_properties_element_id').val('');
 
-        /*
-         * Reset the toolbar selection state.
-         */
-        $('.ecm-toolbar-selection-name').text(
-            'No element selected'
-        );
-
-        $('.ecm-toolbar-requires-selection')
-            .prop('disabled', true);
+    
     };
 
     /**

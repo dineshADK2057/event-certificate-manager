@@ -38,3 +38,8 @@ All notable changes to Event Certificate Manager will be documented here.
 ### Changed
 - Added a dedicated Builder workspace and zoom-wrapper structure.
 - Prepared the certificate canvas for workspace zoom, grids, and alignment guides.
+
+### Added
+- Added Builder workspace zoom controls.
+- Added Zoom In, Zoom Out, Reset, Fit Width, and Fit Page.
+- Added zoom-aware pointer dragging while preserving certificate coordinates.
