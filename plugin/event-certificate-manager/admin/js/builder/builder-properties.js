@@ -35,18 +35,7 @@
      * still temporarily located in the main admin script.
      */
     function scheduleSave() {
-        if (typeof Builder.schedulePropertySave === 'function') {
-            Builder.schedulePropertySave();
-            return;
-        }
-
-        /*
-         * Temporary compatibility with the old function in
-         * ecm-admin.js. Remove this fallback after Sprint 05.09.3.
-         */
-        if (typeof window.ecmScheduleElementPropertySave === 'function') {
-            window.ecmScheduleElementPropertySave();
-        }
+        Builder.schedulePropertySave();
     }
 
     /**
