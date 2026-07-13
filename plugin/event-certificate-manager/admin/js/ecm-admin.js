@@ -352,80 +352,8 @@
             $('#ecm_element_source_type').val(selected.data('source-type'));
         });
 
-        
 
-        function ecmGetSelectedCanvasElement() {
-            let elementId = $('#ecm_properties_element_id').val();
 
-            if (!elementId) {
-                return $();
-            }
-
-            return $('.ecm-selectable-builder-element[data-element-id="' + elementId + '"]');
-        }
-
-        $('#ecm_properties_font_family').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'font-family',
-                $(this).val()
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_font_size').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'font-size',
-                $(this).val() + 'px'
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_font_color').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'color',
-                $(this).val()
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_alignment').on('change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'text-align',
-                $(this).val()
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_x_position').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'left',
-                $(this).val() + 'px'
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_y_position').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'top',
-                $(this).val() + 'px'
-            );
-
-            ecmScheduleElementPropertySave();
-        });
-
-        $('#ecm_properties_rotation').on('input change', function () {
-            ecmGetSelectedCanvasElement().css(
-                'transform',
-                'rotate(' + $(this).val() + 'deg)'
-            );
-
-            ecmScheduleElementPropertySave();
-        });
     });
 
     let ecmElementSaveTimer = null;
@@ -613,13 +541,12 @@
             'Waiting to save…'
         );
 
-        /*
-         * Debounce input changes to avoid sending an AJAX request
-         * for every individual keystroke.
-         */
         ecmElementSaveTimer = setTimeout(function () {
             ecmSaveSelectedElementProperties();
         }, 450);
     }
+
+    window.ecmScheduleElementPropertySave =
+        ecmScheduleElementPropertySave;
 
 })(jQuery);
