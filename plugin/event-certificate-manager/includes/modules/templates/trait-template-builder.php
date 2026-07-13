@@ -165,7 +165,7 @@ trait ECM_Template_Builder
                             );
                             ?>
                             <div
-                                class="ecm-builder-element ecm-selectable-builder-element"
+                                class="ecm-builder-element ecm-builder-element-frame ecm-selectable-builder-element"
                                 data-element-id="<?php echo esc_attr($element->id); ?>"
                                 data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
                                 data-source-type="<?php echo esc_attr($element->source_type); ?>"
@@ -176,8 +176,22 @@ trait ECM_Template_Builder
                                 data-x-position="<?php echo esc_attr($element->x_position); ?>"
                                 data-y-position="<?php echo esc_attr($element->y_position); ?>"
                                 data-rotation="<?php echo esc_attr($element->rotation); ?>"
+                                tabindex="0"
+                                role="button"
+                                aria-label="<?php echo esc_attr(
+                                                'Select {' . $element->placeholder_key . '} element'
+                                            ); ?>"
                                 style="<?php echo esc_attr($style); ?>">
-                                <?php echo esc_html($sample_value); ?>
+                                <div class="ecm-builder-element-content">
+                                    <?php echo esc_html($sample_value); ?>
+                                </div>
+
+                                <div class="ecm-builder-element-handles" aria-hidden="true">
+                                    <span class="ecm-element-handle ecm-element-handle-nw"></span>
+                                    <span class="ecm-element-handle ecm-element-handle-ne"></span>
+                                    <span class="ecm-element-handle ecm-element-handle-sw"></span>
+                                    <span class="ecm-element-handle ecm-element-handle-se"></span>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -418,6 +432,4 @@ trait ECM_Template_Builder
 
         return $variables;
     }
-
-    
 }

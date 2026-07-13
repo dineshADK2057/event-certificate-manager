@@ -116,6 +116,24 @@
         }
     );
 
+    /**
+ * Select an element through keyboard interaction.
+ */
+    $(document).on(
+        'keydown',
+        '.ecm-selectable-builder-element',
+        function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            Builder.selectElement($(this).data('element-id'));
+        }
+    );
+
     $(document).on(
         'click',
         '.ecm-back-to-elements',
