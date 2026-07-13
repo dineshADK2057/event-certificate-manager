@@ -63,11 +63,19 @@
                 return;
             }
 
+            const zoom = Builder.state.zoom || 1;
+
             const deltaX =
-                interaction.latestClientX - interaction.startClientX;
+                (
+                    interaction.latestClientX -
+                    interaction.startClientX
+                ) / zoom;
 
             const deltaY =
-                interaction.latestClientY - interaction.startClientY;
+                (
+                    interaction.latestClientY -
+                    interaction.startClientY
+                ) / zoom;
 
             let nextX = interaction.startX + deltaX;
             let nextY = interaction.startY + deltaY;

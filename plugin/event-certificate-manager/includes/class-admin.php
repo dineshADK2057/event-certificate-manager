@@ -174,26 +174,32 @@ class ECM_Admin
             true
         );
 
+
+
         wp_enqueue_script(
-            'ecm-builder-zoom',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-zoom.js',
-            ['jquery', 'ecm-builder-core'],
+            'ecm-builder-toolbar',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-toolbar.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-selection',
+                'ecm-builder-interaction',
+            ],
             ECM_VERSION,
             true
         );
-
+        
         wp_enqueue_script(
-    'ecm-builder-toolbar',
-    ECM_PLUGIN_URL . 'admin/js/builder/builder-toolbar.js',
-    [
-        'jquery',
-        'ecm-builder-core',
-        'ecm-builder-selection',
-        'ecm-builder-interaction',
-    ],
-    ECM_VERSION,
-    true
-);
+            'ecm-builder-zoom',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-zoom.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-toolbar',
+            ],
+            ECM_VERSION,
+            true
+        );
     }
 
     public function dashboard_page()

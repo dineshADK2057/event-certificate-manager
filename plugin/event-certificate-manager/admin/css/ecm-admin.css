@@ -385,14 +385,16 @@
 
 .ecm-builder-canvas {
     position: relative;
-    overflow: hidden;
     display: block;
-    overflow-x: auto;
+    overflow: hidden;
     margin: 0;
     background: #ffffff;
     border: 0;
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
     touch-action: none;
+    transform-origin: top left;
+    will-change: transform;
+    transition: transform 120ms ease-out;
 }
 
 
@@ -882,6 +884,8 @@
 .ecm-builder-workspace {
     position: relative;
     min-width: 0;
+    height: calc(100vh - 250px);
+    min-height: 520px;
     overflow: auto;
     background: #f0f0f1;
     border: 1px solid #dcdcde;
@@ -899,5 +903,4 @@
     width: max-content;
     height: max-content;
     margin: 0 auto;
-    transform-origin: top left;
 }

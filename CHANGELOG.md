@@ -34,3 +34,7 @@ All notable changes to Event Certificate Manager will be documented here.
 - Added native Pointer Events drag interaction for Builder elements.
 - Added live X/Y synchronization and automatic position persistence.
 - Added canvas containment for element movement.
+
+### Changed
+- Added a dedicated Builder workspace and zoom-wrapper structure.
+- Prepared the certificate canvas for workspace zoom, grids, and alignment guides.

@@ -143,7 +143,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-button ecm-toolbar-requires-selection"
                         id="ecm-toolbar-duplicate"
-                        disabled
                         title="Duplicate element will be added in a later step.">
                         Duplicate
                     </button>
@@ -152,7 +151,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-button ecm-toolbar-danger ecm-toolbar-requires-selection"
                         id="ecm-toolbar-delete"
-                        disabled
                         title="Toolbar deletion will be enabled later.">
                         Delete
                     </button>
@@ -163,7 +161,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-button"
                         id="ecm-toolbar-zoom-out"
-                        disabled
                         title="Workspace zoom will be added next.">
                         −
                     </button>
@@ -171,8 +168,7 @@ trait ECM_Template_Builder
                     <button
                         type="button"
                         class="button ecm-toolbar-zoom-value"
-                        id="ecm-toolbar-zoom-value"
-                        disabled>
+                        id="ecm-toolbar-zoom-value">
                         100%
                     </button>
 
@@ -180,7 +176,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-button"
                         id="ecm-toolbar-zoom-in"
-                        disabled
                         title="Workspace zoom will be added next.">
                         +
                     </button>
@@ -188,16 +183,14 @@ trait ECM_Template_Builder
                     <button
                         type="button"
                         class="button ecm-toolbar-button"
-                        id="ecm-toolbar-fit-page"
-                        disabled>
+                        id="ecm-toolbar-fit-page">
                         Fit Page
                     </button>
 
                     <button
                         type="button"
                         class="button ecm-toolbar-button"
-                        id="ecm-toolbar-fit-width"
-                        disabled>
+                        id="ecm-toolbar-fit-width">
                         Fit Width
                     </button>
                 </div>
@@ -211,7 +204,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-toggle"
                         id="ecm-toolbar-grid"
-                        disabled
                         title="Grid will be enabled later.">
                         Grid
                     </button>
@@ -220,7 +212,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-toggle"
                         id="ecm-toolbar-snap"
-                        disabled
                         title="Snapping will be enabled later.">
                         Snap
                     </button>
@@ -229,7 +220,6 @@ trait ECM_Template_Builder
                         type="button"
                         class="button ecm-toolbar-toggle"
                         id="ecm-toolbar-guides"
-                        disabled
                         title="Guides will be enabled later.">
                         Guides
                     </button>

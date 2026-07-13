@@ -95,4 +95,14 @@
         element.data('y-position', y);
     };
 
+    Builder.state = Builder.state || {
+    selectedElementId: null,
+    zoom: 1,
+    zoomMode: 'manual',
+    gridEnabled: false,
+    snapEnabled: false,
+    guidesEnabled: false,
+    dragging: false
+};
+
 })(jQuery, window);
