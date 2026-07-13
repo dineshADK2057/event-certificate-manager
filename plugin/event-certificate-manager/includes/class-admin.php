@@ -4,14 +4,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class ECM_Admin {
+class ECM_Admin
+{
 
-    public function init() {
+    public function init()
+    {
         add_action('admin_menu', [$this, 'register_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
     }
 
-    public function register_menu() {
+    public function register_menu()
+    {
 
         add_menu_page(
             'Event Certificate Manager',
@@ -89,11 +92,23 @@ class ECM_Admin {
         );
     }
 
-    public function enqueue_assets($hook) {
+    public function enqueue_assets($hook)
+    {
         if (strpos($hook, 'ecm') === false) {
             return;
         }
 
+        wp_enqueue_style(
+            'ecm-admin',
+            ECM_PLUGIN_URL . 'admin/css/ecm-admin.css',
+            [],
+            ECM_VERSION
+        );
+
+        /*
+     * General ECM admin functionality:
+     * modals, participants, sessions, templates list, etc.
+     */
         wp_enqueue_script(
             'ecm-admin',
             ECM_PLUGIN_URL . 'admin/js/ecm-admin.js',
@@ -102,15 +117,68 @@ class ECM_Admin {
             true
         );
 
-        wp_enqueue_style(
-            'ecm-admin',
-            ECM_PLUGIN_URL . 'admin/css/ecm-admin.css',
-            [],
-            ECM_VERSION
+        /*
+     * Load Builder modules only on the Template Builder screen.
+     */
+        $action = isset($_GET['action'])
+            ? sanitize_key(wp_unslash($_GET['action']))
+            : '';
+
+        if ($action !== 'template_builder') {
+            return;
+        }
+
+        wp_enqueue_script(
+            'ecm-builder-core',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-core.js',
+            ['jquery'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-selection',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-selection.js',
+            ['jquery', 'ecm-builder-core'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-properties',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-properties.js',
+            ['jquery', 'ecm-builder-core', 'ecm-builder-selection'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-autosave',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-autosave.js',
+            ['jquery', 'ecm-builder-core', 'ecm-builder-properties'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-drag',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-drag.js',
+            ['jquery', 'ecm-builder-core', 'ecm-builder-selection'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-zoom',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-zoom.js',
+            ['jquery', 'ecm-builder-core'],
+            ECM_VERSION,
+            true
         );
     }
 
-    public function dashboard_page() {
+    public function dashboard_page()
+    {
         global $wpdb;
 
         $events_table       = $wpdb->prefix . 'ecm_events';
@@ -123,7 +191,7 @@ class ECM_Admin {
         $templates_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $templates_table");
         $certificates_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $certificates_table");
 
-        ?>
+?>
         <div class="wrap ecm-wrap">
             <h1>Event Certificate Manager</h1>
             <p class="ecm-subtitle">Manage events, participants, templates, certificates, QR verification, and email automation.</p>
@@ -161,15 +229,16 @@ class ECM_Admin {
                 </ol>
             </div>
         </div>
-        <?php
+    <?php
     }
 
-    public function placeholder_page() {
-        ?>
+    public function placeholder_page()
+    {
+    ?>
         <div class="wrap ecm-wrap">
             <h1>Coming Soon</h1>
             <p>This ECM module will be built in the next sprint.</p>
         </div>
-        <?php
+<?php
     }
 }
