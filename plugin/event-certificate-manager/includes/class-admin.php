@@ -161,9 +161,15 @@ class ECM_Admin
         );
 
         wp_enqueue_script(
-            'ecm-builder-drag',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-drag.js',
-            ['jquery', 'ecm-builder-core', 'ecm-builder-selection'],
+            'ecm-builder-interaction',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-interaction.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-selection',
+                'ecm-builder-properties',
+                'ecm-builder-autosave',
+            ],
             ECM_VERSION,
             true
         );

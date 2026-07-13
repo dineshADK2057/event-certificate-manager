@@ -682,6 +682,8 @@
     pointer-events: auto;
     transform-origin: center center;
     border: 1px solid transparent;
+    cursor: grab;
+    touch-action: none;
 }
 
 /**
@@ -761,4 +763,36 @@
 .ecm-builder-element-frame:focus-visible {
     outline: 2px solid #2271b1;
     outline-offset: 3px;
+}
+
+/**
+ * Active element movement state.
+ */
+.ecm-builder-element-frame.ecm-element-dragging {
+    cursor: grabbing;
+    z-index: 100;
+    opacity: 0.92;
+    position: absolute;
+    z-index: 5;
+    display: inline-block;
+    min-width: 24px;
+    min-height: 20px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    line-height: 1.2;
+    cursor: grab;
+    user-select: none;
+    pointer-events: auto;
+    touch-action: none;
+    transform-origin: center center;
+    border: 1px solid transparent;
+}
+
+/**
+ * Prevent the certificate workspace from selecting text or
+ * scrolling during pointer-based element movement.
+ */
+.ecm-builder-canvas {
+    touch-action: none;
 }

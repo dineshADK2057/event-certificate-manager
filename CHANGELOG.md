@@ -25,3 +25,7 @@ All notable changes to Event Certificate Manager will be documented here.
 - Fixed session update creating duplicate records.
 - Fixed AJAX session participant search registration.
 - Fixed template element updates referencing a missing `updated_at` column.
+
+### Added
+- Added interaction frames and future resize handles for Builder elements.
+- Added keyboard-accessible Builder element selection.

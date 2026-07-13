@@ -102,6 +102,10 @@
             event.preventDefault();
             event.stopPropagation();
 
+            if ($(this).hasClass('ecm-element-dragging')) {
+                return;
+            }
+
             Builder.selectElement($(this).data('element-id'));
         }
     );

@@ -55,4 +55,23 @@
     Builder.getSelectedElementId = function () {
         return String($('#ecm_properties_element_id').val() || '');
     };
+
+    /**
+ * Update an element's stored position values in the DOM.
+ *
+ * This keeps HTML data attributes and jQuery's cached data
+ * synchronized with the current canvas position.
+ *
+ * @param {jQuery} element
+ * @param {number} x
+ * @param {number} y
+ */
+    Builder.setElementPositionData = function (element, x, y) {
+        element.attr('data-x-position', x);
+        element.attr('data-y-position', y);
+
+        element.data('x-position', x);
+        element.data('y-position', y);
+    };
+    
 })(jQuery, window);
