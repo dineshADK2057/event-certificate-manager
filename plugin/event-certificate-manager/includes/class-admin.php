@@ -181,6 +181,19 @@ class ECM_Admin
             ECM_VERSION,
             true
         );
+
+        wp_enqueue_script(
+    'ecm-builder-toolbar',
+    ECM_PLUGIN_URL . 'admin/js/builder/builder-toolbar.js',
+    [
+        'jquery',
+        'ecm-builder-core',
+        'ecm-builder-selection',
+        'ecm-builder-interaction',
+    ],
+    ECM_VERSION,
+    true
+);
     }
 
     public function dashboard_page()

@@ -122,79 +122,212 @@ trait ECM_Template_Builder
                 id="ecm_builder_template_id"
                 value="<?php echo esc_attr($template->id); ?>">
 
+            <div class="ecm-builder-toolbar">
+
+                <div class="ecm-builder-toolbar-group ecm-toolbar-left">
+                    <a
+                        href="<?php echo esc_url($back_url); ?>"
+                        class="button ecm-toolbar-button">
+                        ← Back
+                    </a>
+
+                    <span class="ecm-toolbar-divider" aria-hidden="true"></span>
+
+                    <button
+                        type="button"
+                        class="button button-primary ecm-open-element-modal">
+                        + Add Element
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button ecm-toolbar-requires-selection"
+                        id="ecm-toolbar-duplicate"
+                        disabled
+                        title="Duplicate element will be added in a later step.">
+                        Duplicate
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button ecm-toolbar-danger ecm-toolbar-requires-selection"
+                        id="ecm-toolbar-delete"
+                        disabled
+                        title="Toolbar deletion will be enabled later.">
+                        Delete
+                    </button>
+                </div>
+
+                <div class="ecm-builder-toolbar-group ecm-toolbar-center">
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button"
+                        id="ecm-toolbar-zoom-out"
+                        disabled
+                        title="Workspace zoom will be added next.">
+                        −
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-zoom-value"
+                        id="ecm-toolbar-zoom-value"
+                        disabled>
+                        100%
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button"
+                        id="ecm-toolbar-zoom-in"
+                        disabled
+                        title="Workspace zoom will be added next.">
+                        +
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button"
+                        id="ecm-toolbar-fit-page"
+                        disabled>
+                        Fit Page
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-button"
+                        id="ecm-toolbar-fit-width"
+                        disabled>
+                        Fit Width
+                    </button>
+                </div>
+
+                <div class="ecm-builder-toolbar-group ecm-toolbar-right">
+                    <span class="ecm-toolbar-selection-name">
+                        No element selected
+                    </span>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-toggle"
+                        id="ecm-toolbar-grid"
+                        disabled
+                        title="Grid will be enabled later.">
+                        Grid
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-toggle"
+                        id="ecm-toolbar-snap"
+                        disabled
+                        title="Snapping will be enabled later.">
+                        Snap
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button ecm-toolbar-toggle"
+                        id="ecm-toolbar-guides"
+                        disabled
+                        title="Guides will be enabled later.">
+                        Guides
+                    </button>
+                </div>
+
+            </div>
             <div class="ecm-builder-layout">
 
-                <div class="ecm-builder-canvas-wrap">
+                <div class="ecm-builder-workspace">
 
-                    <div class="ecm-builder-canvas ecm-builder-<?php echo esc_attr($template->orientation); ?> ecm-page-<?php echo esc_attr(strtolower($template->page_size)); ?>">
+                    <div class="ecm-builder-zoom-wrapper">
 
-                        <?php if (!empty($background_url)) : ?>
-                            <img
-                                src="<?php echo esc_url($background_url); ?>"
-                                class="ecm-builder-bg"
-                                alt="<?php echo esc_attr($template->template_name); ?>">
-                        <?php else : ?>
-                            <div class="ecm-empty-canvas">
-                                <?php if (!empty($background_error)) : ?>
-                                    <div class="ecm-builder-error">
-                                        <strong>Preview unavailable</strong>
-                                        <span><?php echo esc_html($background_error); ?></span>
+                        <div
+                            class="ecm-builder-canvas
+                                    ecm-builder-<?php echo esc_attr($template->orientation); ?>
+                                    ecm-page-<?php echo esc_attr(strtolower($template->page_size)); ?>">
+
+                            <?php if (!empty($background_url)) : ?>
+                                <img
+                                    src="<?php echo esc_url($background_url); ?>"
+                                    class="ecm-builder-bg"
+                                    alt="<?php echo esc_attr($template->template_name); ?>">
+                            <?php else : ?>
+                                <div class="ecm-empty-canvas">
+                                    <?php if (!empty($background_error)) : ?>
+                                        <div class="ecm-builder-error">
+                                            <strong>Preview unavailable</strong>
+                                            <span>
+                                                <?php echo esc_html($background_error); ?>
+                                            </span>
+                                        </div>
+                                    <?php elseif (!empty($template->background_file)) : ?>
+                                        Preview could not be generated.
+                                    <?php else : ?>
+                                        No background uploaded.
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php foreach ($elements as $element) : ?>
+                                <?php
+                                $sample_value = $this->get_template_element_sample_value(
+                                    $element,
+                                    $event,
+                                    $template
+                                );
+
+                                $style = sprintf(
+                                    'left:%spx; top:%spx; font-family:%s; font-size:%spx; color:%s; text-align:%s; transform:rotate(%sdeg);',
+                                    esc_attr($element->x_position),
+                                    esc_attr($element->y_position),
+                                    esc_attr($element->font_family),
+                                    esc_attr($element->font_size),
+                                    esc_attr($element->font_color),
+                                    esc_attr($element->alignment),
+                                    esc_attr($element->rotation)
+                                );
+                                ?>
+
+                                <div
+                                    class="ecm-builder-element
+                           ecm-builder-element-frame
+                           ecm-selectable-builder-element"
+                                    data-element-id="<?php echo esc_attr($element->id); ?>"
+                                    data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
+                                    data-source-type="<?php echo esc_attr($element->source_type); ?>"
+                                    data-font-family="<?php echo esc_attr($element->font_family); ?>"
+                                    data-font-size="<?php echo esc_attr($element->font_size); ?>"
+                                    data-font-color="<?php echo esc_attr($element->font_color); ?>"
+                                    data-alignment="<?php echo esc_attr($element->alignment); ?>"
+                                    data-x-position="<?php echo esc_attr($element->x_position); ?>"
+                                    data-y-position="<?php echo esc_attr($element->y_position); ?>"
+                                    data-rotation="<?php echo esc_attr($element->rotation); ?>"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="<?php echo esc_attr(
+                                                    'Select {' . $element->placeholder_key . '} element'
+                                                ); ?>"
+                                    style="<?php echo esc_attr($style); ?>">
+                                    <div class="ecm-builder-element-content">
+                                        <?php echo esc_html($sample_value); ?>
                                     </div>
-                                <?php elseif (!empty($template->background_file)) : ?>
-                                    Preview could not be generated.
-                                <?php else : ?>
-                                    No background uploaded.
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
 
-
-                        <?php foreach ($elements as $element) : ?>
-                            <?php
-                            $sample_value = $this->get_template_element_sample_value($element, $event, $template);
-
-                            $style = sprintf(
-                                'left:%spx; top:%spx; font-family:%s; font-size:%spx; color:%s; text-align:%s; transform:rotate(%sdeg);',
-                                esc_attr($element->x_position),
-                                esc_attr($element->y_position),
-                                esc_attr($element->font_family),
-                                esc_attr($element->font_size),
-                                esc_attr($element->font_color),
-                                esc_attr($element->alignment),
-                                esc_attr($element->rotation)
-                            );
-                            ?>
-                            <div
-                                class="ecm-builder-element ecm-builder-element-frame ecm-selectable-builder-element"
-                                data-element-id="<?php echo esc_attr($element->id); ?>"
-                                data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
-                                data-source-type="<?php echo esc_attr($element->source_type); ?>"
-                                data-font-family="<?php echo esc_attr($element->font_family); ?>"
-                                data-font-size="<?php echo esc_attr($element->font_size); ?>"
-                                data-font-color="<?php echo esc_attr($element->font_color); ?>"
-                                data-alignment="<?php echo esc_attr($element->alignment); ?>"
-                                data-x-position="<?php echo esc_attr($element->x_position); ?>"
-                                data-y-position="<?php echo esc_attr($element->y_position); ?>"
-                                data-rotation="<?php echo esc_attr($element->rotation); ?>"
-                                tabindex="0"
-                                role="button"
-                                aria-label="<?php echo esc_attr(
-                                                'Select {' . $element->placeholder_key . '} element'
-                                            ); ?>"
-                                style="<?php echo esc_attr($style); ?>">
-                                <div class="ecm-builder-element-content">
-                                    <?php echo esc_html($sample_value); ?>
+                                    <div
+                                        class="ecm-builder-element-handles"
+                                        aria-hidden="true">
+                                        <span class="ecm-element-handle ecm-element-handle-nw"></span>
+                                        <span class="ecm-element-handle ecm-element-handle-ne"></span>
+                                        <span class="ecm-element-handle ecm-element-handle-sw"></span>
+                                        <span class="ecm-element-handle ecm-element-handle-se"></span>
+                                    </div>
                                 </div>
+                            <?php endforeach; ?>
 
-                                <div class="ecm-builder-element-handles" aria-hidden="true">
-                                    <span class="ecm-element-handle ecm-element-handle-nw"></span>
-                                    <span class="ecm-element-handle ecm-element-handle-ne"></span>
-                                    <span class="ecm-element-handle ecm-element-handle-sw"></span>
-                                    <span class="ecm-element-handle ecm-element-handle-se"></span>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+                        </div>
+
                     </div>
+
                 </div>
 
                 <div class="ecm-builder-sidebar ecm-builder-properties-sidebar">
@@ -204,9 +337,6 @@ trait ECM_Template_Builder
                         <div class="ecm-builder-panel-header">
                             <h3>Elements</h3>
 
-                            <button type="button" class="button button-primary ecm-open-element-modal">
-                                + Add Element
-                            </button>
                         </div>
 
                         <?php if (empty($elements)) : ?>
@@ -393,6 +523,8 @@ trait ECM_Template_Builder
                     </div>
 
                 </div>
+
+
 
             </div>
         </div>

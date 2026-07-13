@@ -11,6 +11,23 @@
     const Builder = window.ECMBuilder;
 
     /**
+ * Shared Builder state.
+ *
+ * Future modules such as zoom, snapping, guides, layers,
+ * and keyboard controls will use this central state.
+ */
+    Builder.state = Builder.state || {
+        selectedElementId: null,
+        zoom: 1,
+        gridEnabled: false,
+        snapEnabled: false,
+        guidesEnabled: false,
+        dragging: false
+    };
+
+
+
+    /**
      * Check whether the current page contains the Template Builder.
      *
      * @returns {boolean}
@@ -53,6 +70,10 @@
      * @returns {string}
      */
     Builder.getSelectedElementId = function () {
+        if (Builder.state.selectedElementId) {
+            return String(Builder.state.selectedElementId);
+        }
+
         return String($('#ecm_properties_element_id').val() || '');
     };
 
@@ -73,5 +94,5 @@
         element.data('x-position', x);
         element.data('y-position', y);
     };
-    
+
 })(jQuery, window);

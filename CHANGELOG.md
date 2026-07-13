@@ -29,3 +29,8 @@ All notable changes to Event Certificate Manager will be documented here.
 ### Added
 - Added interaction frames and future resize handles for Builder elements.
 - Added keyboard-accessible Builder element selection.
+
+### Added
+- Added native Pointer Events drag interaction for Builder elements.
+- Added live X/Y synchronization and automatic position persistence.
+- Added canvas containment for element movement.

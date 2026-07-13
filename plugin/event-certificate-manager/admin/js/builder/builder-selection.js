@@ -24,39 +24,63 @@
             return;
         }
 
+        const placeholder = canvasElement.data('placeholder-key');
+
+        /*
+         * Store the selected element in shared Builder state.
+         */
+        Builder.state.selectedElementId = String(elementId);
+
+        /*
+         * Remove the previous selection.
+         */
         $('.ecm-selectable-builder-element')
             .removeClass('ecm-element-selected');
 
         $('.ecm-element-list-item')
             .removeClass('ecm-element-list-item-selected');
 
+        /*
+         * Highlight the selected canvas element and matching list item.
+         */
         canvasElement.addClass('ecm-element-selected');
 
         Builder.getListItem(elementId)
             .addClass('ecm-element-list-item-selected');
 
-        const placeholder = canvasElement.data('placeholder-key');
-
+        /*
+         * Populate the properties panel.
+         */
         $('#ecm_properties_element_id').val(elementId);
-        $('#ecm_properties_placeholder').val('{' + placeholder + '}');
+
+        $('#ecm_properties_placeholder').val(
+            '{' + placeholder + '}'
+        );
+
         $('#ecm_properties_font_family').val(
             canvasElement.data('font-family')
         );
+
         $('#ecm_properties_font_size').val(
             canvasElement.data('font-size')
         );
+
         $('#ecm_properties_font_color').val(
             canvasElement.data('font-color')
         );
+
         $('#ecm_properties_alignment').val(
             canvasElement.data('alignment')
         );
+
         $('#ecm_properties_x_position').val(
             canvasElement.data('x-position')
         );
+
         $('#ecm_properties_y_position').val(
             canvasElement.data('y-position')
         );
+
         $('#ecm_properties_rotation').val(
             canvasElement.data('rotation')
         );
@@ -65,12 +89,24 @@
             '{' + placeholder + '}'
         );
 
+        /*
+         * Show the properties view.
+         */
         $('#ecm-elements-list-view').hide();
         $('#ecm-element-properties-view').show();
 
         /*
-         * Autosave module will define this later.
-         * The guard prevents errors during incremental refactoring.
+         * Update the toolbar selection information.
+         */
+        $('.ecm-toolbar-selection-name').text(
+            '{' + placeholder + '}'
+        );
+
+        $('.ecm-toolbar-requires-selection')
+            .prop('disabled', false);
+
+        /*
+         * Reset the autosave status for the newly selected element.
          */
         if (typeof Builder.setSaveStatus === 'function') {
             Builder.setSaveStatus(
@@ -81,9 +117,11 @@
     };
 
     /**
-     * Clear the active selection.
+     * Clear the active element selection.
      */
     Builder.clearSelection = function () {
+        Builder.state.selectedElementId = null;
+
         $('.ecm-selectable-builder-element')
             .removeClass('ecm-element-selected');
 
@@ -92,9 +130,23 @@
 
         $('#ecm-element-properties-view').hide();
         $('#ecm-elements-list-view').show();
+
         $('#ecm_properties_element_id').val('');
+
+        /*
+         * Reset the toolbar selection state.
+         */
+        $('.ecm-toolbar-selection-name').text(
+            'No element selected'
+        );
+
+        $('.ecm-toolbar-requires-selection')
+            .prop('disabled', true);
     };
 
+    /**
+     * Select an element by clicking it on the canvas.
+     */
     $(document).on(
         'click',
         '.ecm-selectable-builder-element',
@@ -102,27 +154,37 @@
             event.preventDefault();
             event.stopPropagation();
 
+            /*
+             * Ignore the click that may fire immediately after dragging.
+             */
             if ($(this).hasClass('ecm-element-dragging')) {
                 return;
             }
 
-            Builder.selectElement($(this).data('element-id'));
+            Builder.selectElement(
+                $(this).data('element-id')
+            );
         }
     );
 
+    /**
+     * Select an element from the Elements sidebar.
+     */
     $(document).on(
         'click',
         '.ecm-select-element-from-list',
         function (event) {
             event.preventDefault();
 
-            Builder.selectElement($(this).data('element-id'));
+            Builder.selectElement(
+                $(this).data('element-id')
+            );
         }
     );
 
     /**
- * Select an element through keyboard interaction.
- */
+     * Select an element through keyboard interaction.
+     */
     $(document).on(
         'keydown',
         '.ecm-selectable-builder-element',
@@ -134,10 +196,15 @@
             event.preventDefault();
             event.stopPropagation();
 
-            Builder.selectElement($(this).data('element-id'));
+            Builder.selectElement(
+                $(this).data('element-id')
+            );
         }
     );
 
+    /**
+     * Return from the Properties panel to the Elements list.
+     */
     $(document).on(
         'click',
         '.ecm-back-to-elements',
