@@ -14,6 +14,7 @@
 
     let saveTimer = null;
     let saveRequest = null;
+    let statusHideTimer = null;
 
     /**
      * Update the visual autosave status.
@@ -21,17 +22,38 @@
      * @param {string} status
      * @param {string} message
      */
+    /**
+ * Update the visible autosave status.
+ *
+ * Saved messages disappear automatically after a short delay.
+ *
+ * @param {string} status
+ * @param {string} message
+ */
     Builder.setSaveStatus = function (status, message) {
         const container = $('.ecm-auto-save-status');
         const text = $('#ecm-element-save-status');
 
-        container.removeClass('is-saving is-saved is-error');
+        clearTimeout(statusHideTimer);
+
+        container
+            .stop(true, true)
+            .removeClass('is-saving is-saved is-error is-hidden')
+            .show();
 
         if (status) {
             container.addClass(status);
         }
 
         text.text(message);
+
+        if (status === 'is-saved') {
+            statusHideTimer = setTimeout(function () {
+                container.fadeOut(250, function () {
+                    container.addClass('is-hidden');
+                });
+            }, 2200);
+        }
     };
 
     /**

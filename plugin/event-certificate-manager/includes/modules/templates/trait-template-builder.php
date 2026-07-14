@@ -69,17 +69,17 @@ trait ECM_Template_Builder
         * Fonts available to the Builder.
         */
         $available_fonts = class_exists('ECM_Font_Manager')
-        ? ECM_Font_Manager::get_available_fonts()
-        : [];
+            ? ECM_Font_Manager::get_available_fonts()
+            : [];
 
         /*
         * Local @font-face declarations for installed Google/custom fonts.
         */
         $font_face_css = class_exists('ECM_Font_Manager')
-        ? ECM_Font_Manager::get_font_face_css()
-        : '';
+            ? ECM_Font_Manager::get_font_face_css()
+            : '';
 
-        ?>
+?>
 
         <div class="wrap ecm-wrap">
 
@@ -287,7 +287,27 @@ trait ECM_Template_Builder
                         </div>
 
                         <?php if (empty($elements)) : ?>
-                            <p>No elements added yet.</p>
+
+                            <div class="ecm-elements-empty-state">
+                                <div class="ecm-elements-empty-icon" aria-hidden="true">
+                                    +
+                                </div>
+
+                                <h4>No placeholders yet</h4>
+
+                                <p>
+                                    Add your first dynamic element to begin designing
+                                    this certificate.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="button button-primary ecm-open-element-modal">
+                                    + Add Element
+                                </button>
+                            </div>
+
+                            
                         <?php else : ?>
                             <ul class="ecm-elements-list">
                                 <?php foreach ($elements as $element) : ?>
@@ -326,7 +346,7 @@ trait ECM_Template_Builder
                                                 href="#"
                                                 class="ecm-select-element-from-list"
                                                 data-element-id="<?php echo esc_attr($element->id); ?>">
-                                                
+
                                                 Edit
                                             </a>
 
@@ -355,212 +375,350 @@ trait ECM_Template_Builder
                             <span class="ecm-selected-element-badge">Selected</span>
                         </div>
 
-                        <h3 id="ecm-properties-element-title">Element Properties</h3>
 
-                        <input type="hidden" id="ecm_properties_element_id" value="">
+                        <input
+                            type="hidden"
+                            id="ecm_properties_element_id"
+                            value="">
 
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_placeholder">
-                                Placeholder
-                            </label>
-
-                            <input
-                                type="text"
-                                id="ecm_properties_placeholder"
-                                class="widefat"
-                                readonly>
-                        </div>
-
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_font_search">
-                                Font Family
-                            </label>
-
-                            <div
-                                class="ecm-font-picker"
-                                id="ecm-properties-font-picker">
-                                <input
-                                    type="hidden"
-                                    id="ecm_properties_font_family"
-                                    value="Arial">
-
-                                <button
-                                    type="button"
-                                    class="ecm-font-picker-trigger"
-                                    aria-haspopup="listbox"
-                                    aria-expanded="false">
-                                    <span
-                                        class="ecm-font-picker-current"
-                                        style="font-family: Arial, sans-serif;">
-                                        Arial
-                                    </span>
-
-                                    <span
-                                        class="ecm-font-picker-arrow"
-                                        aria-hidden="true">
-                                        ▾
-                                    </span>
-                                </button>
-
-                                <div
-                                    class="ecm-font-picker-dropdown"
-                                    role="dialog"
-                                    aria-label="Choose font"
-                                    hidden>
-                                    <div class="ecm-font-picker-search-wrap">
-                                        <input
-                                            type="search"
-                                            id="ecm_properties_font_search"
-                                            class="ecm-font-picker-search"
-                                            placeholder="Search fonts..."
-                                            autocomplete="off">
-                                    </div>
-
-                                    <div
-                                        class="ecm-font-picker-options"
-                                        role="listbox">
-                                        <?php if (empty($available_fonts)) : ?>
-
-                                            <div class="ecm-font-picker-empty">
-                                                No fonts are available.
-                                            </div>
-
-                                        <?php else : ?>
-
-                                            <?php
-                                            $current_source = '';
-
-                                            foreach ($available_fonts as $font) :
-                                                $family = $font['family'] ?? '';
-                                                $source = $font['source'] ?? 'builtin';
-
-                                                if ($family === '') {
-                                                    continue;
-                                                }
-
-                                                if ($source !== $current_source) :
-                                                    $current_source = $source;
-
-                                                    $source_labels = [
-                                                        'builtin'   => 'Built-in Fonts',
-                                                        'google'    => 'Google Fonts',
-                                                        'custom'    => 'Custom Fonts',
-                                                        'wordpress' => 'Website Fonts',
-                                                    ];
-
-                                                    $source_label = $source_labels[$source]
-                                                        ?? ucfirst($source);
-                                            ?>
-
-                                                    <div
-                                                        class="ecm-font-picker-group-label"
-                                                        data-font-group="<?php echo esc_attr($source); ?>">
-                                                        <?php echo esc_html($source_label); ?>
-                                                    </div>
-
-                                                <?php endif; ?>
-
-                                                <button
-                                                    type="button"
-                                                    class="ecm-font-picker-option"
-                                                    role="option"
-                                                    data-font-family="<?php echo esc_attr($family); ?>"
-                                                    data-font-source="<?php echo esc_attr($source); ?>"
-                                                    style="font-family: '<?php echo esc_attr($family); ?>', sans-serif;">
-                                                    <span class="ecm-font-option-preview">
-                                                        <?php echo esc_html($family); ?>
-                                                    </span>
-
-                                                    <span class="ecm-font-option-source">
-                                                        <?php echo esc_html(ucfirst($source)); ?>
-                                                    </span>
-                                                </button>
-
-                                            <?php endforeach; ?>
-
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                        <!-- Content -->
+                        <section class="ecm-property-card">
+                            <div class="ecm-property-card-header">
+                                <h4>Content</h4>
+                                <p>Dynamic value used on the certificate.</p>
                             </div>
-                        </div>
 
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_font_size">
-                                Font Size
-                            </label>
-
-                            <input
-                                type="number"
-                                id="ecm_properties_font_size"
-                                class="widefat"
-                                min="1"
-                                step="1">
-                        </div>
-
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_font_color">
-                                Font Color
-                            </label>
-
-                            <input
-                                type="color"
-                                id="ecm_properties_font_color">
-                        </div>
-
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_alignment">
-                                Alignment
-                            </label>
-
-                            <select id="ecm_properties_alignment" class="widefat">
-                                <option value="left">Left</option>
-                                <option value="center">Center</option>
-                                <option value="right">Right</option>
-                            </select>
-                        </div>
-
-                        <div class="ecm-property-row">
                             <div class="ecm-property-field">
-                                <label for="ecm_properties_x_position">
-                                    X
+                                <label for="ecm_properties_placeholder">
+                                    Placeholder
                                 </label>
 
                                 <input
-                                    type="number"
-                                    id="ecm_properties_x_position"
+                                    type="text"
+                                    id="ecm_properties_placeholder"
                                     class="widefat"
-                                    step="0.1">
+                                    readonly>
+                            </div>
+                        </section>
+
+                        <!-- Typography -->
+                        <section class="ecm-property-card">
+                            <div class="ecm-property-card-header">
+                                <h4>Typography</h4>
+                                <p>Control the appearance of this text.</p>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_font_search">
+                                    Font Family
+                                </label>
+
+                                <div
+                                    class="ecm-font-picker"
+                                    id="ecm-properties-font-picker">
+                                    <input
+                                        type="hidden"
+                                        id="ecm_properties_font_family"
+                                        value="Arial">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-font-picker-trigger"
+                                        aria-haspopup="listbox"
+                                        aria-expanded="false">
+                                        <span
+                                            class="ecm-font-picker-current"
+                                            style="font-family: Arial, sans-serif;">
+                                            Arial
+                                        </span>
+
+                                        <span
+                                            class="ecm-font-picker-arrow"
+                                            aria-hidden="true">
+                                            ▾
+                                        </span>
+                                    </button>
+
+                                    <div
+                                        class="ecm-font-picker-dropdown"
+                                        role="dialog"
+                                        aria-label="Choose font"
+                                        hidden>
+                                        <div class="ecm-font-picker-search-wrap">
+                                            <input
+                                                type="search"
+                                                id="ecm_properties_font_search"
+                                                class="ecm-font-picker-search"
+                                                placeholder="Search fonts..."
+                                                autocomplete="off">
+                                        </div>
+
+                                        <div
+                                            class="ecm-font-picker-options"
+                                            role="listbox">
+                                            <?php if (empty($available_fonts)) : ?>
+
+                                                <div class="ecm-font-picker-empty">
+                                                    No fonts are available.
+                                                </div>
+
+                                            <?php else : ?>
+
+                                                <?php
+                                                $current_source = '';
+
+                                                $source_labels = [
+                                                    'builtin'   => 'Built-in Fonts',
+                                                    'google'    => 'Google Fonts',
+                                                    'custom'    => 'Custom Fonts',
+                                                    'wordpress' => 'Website Fonts',
+                                                ];
+
+                                                foreach ($available_fonts as $font) :
+                                                    $family = $font['family'] ?? '';
+                                                    $source = $font['source'] ?? 'builtin';
+
+                                                    if ($family === '') {
+                                                        continue;
+                                                    }
+
+                                                    if ($source !== $current_source) :
+                                                        $current_source = $source;
+                                                ?>
+
+                                                        <div
+                                                            class="ecm-font-picker-group-label"
+                                                            data-font-group="<?php echo esc_attr($source); ?>">
+                                                            <?php
+                                                            echo esc_html(
+                                                                $source_labels[$source]
+                                                                    ?? ucfirst($source)
+                                                            );
+                                                            ?>
+                                                        </div>
+
+                                                    <?php endif; ?>
+
+                                                    <button
+                                                        type="button"
+                                                        class="ecm-font-picker-option"
+                                                        role="option"
+                                                        data-font-family="<?php echo esc_attr($family); ?>"
+                                                        data-font-source="<?php echo esc_attr($source); ?>"
+                                                        style="font-family:'<?php echo esc_attr($family); ?>',sans-serif;">
+                                                        <span class="ecm-font-option-preview">
+                                                            <?php echo esc_html($family); ?>
+                                                        </span>
+
+                                                        <span class="ecm-font-option-source">
+                                                            <?php echo esc_html(ucfirst($source)); ?>
+                                                        </span>
+                                                    </button>
+
+                                                <?php endforeach; ?>
+
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_font_size">
+                                    Font Size
+                                </label>
+
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_font_size"
+                                        data-stepper-direction="-1"
+                                        aria-label="Decrease font size">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_font_size"
+                                        min="1"
+                                        step="1">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_font_size"
+                                        data-stepper-direction="1"
+                                        aria-label="Increase font size">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_font_color">
+                                    Font Color
+                                </label>
+
+                                <div class="ecm-color-control">
+                                    <div class="ecm-color-presets">
+                                        <?php
+                                        $preset_colors = [
+                                            '#000000',
+                                            '#FFFFFF',
+                                            '#1E3A5F',
+                                            '#C62828',
+                                            '#2E7D32',
+                                            '#C99700',
+                                            '#6A1B9A',
+                                        ];
+
+                                        foreach ($preset_colors as $preset_color) :
+                                        ?>
+                                            <button
+                                                type="button"
+                                                class="ecm-color-preset"
+                                                data-color="<?php echo esc_attr($preset_color); ?>"
+                                                style="--ecm-preset-color:<?php echo esc_attr($preset_color); ?>;"
+                                                aria-label="Use color <?php echo esc_attr($preset_color); ?>"
+                                                title="<?php echo esc_attr($preset_color); ?>"></button>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <label class="ecm-custom-color">
+                                        <span>Custom</span>
+
+                                        <input
+                                            type="color"
+                                            id="ecm_properties_font_color"
+                                            value="#000000">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_alignment">
+                                    Alignment
+                                </label>
+
+                                <select
+                                    id="ecm_properties_alignment"
+                                    class="widefat">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                        </section>
+
+                        <!-- Position -->
+                        <section class="ecm-property-card">
+                            <div class="ecm-property-card-header">
+                                <h4>Position</h4>
+                                <p>Fine-tune placement on the certificate.</p>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_x_position">
+                                    Horizontal Position
+                                </label>
+
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_x_position"
+                                        data-stepper-direction="-1"
+                                        aria-label="Move left">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_x_position"
+                                        step="1">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_x_position"
+                                        data-stepper-direction="1"
+                                        aria-label="Move right">
+                                        +
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="ecm-property-field">
                                 <label for="ecm_properties_y_position">
-                                    Y
+                                    Vertical Position
                                 </label>
 
-                                <input
-                                    type="number"
-                                    id="ecm_properties_y_position"
-                                    class="widefat"
-                                    step="0.1">
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_y_position"
+                                        data-stepper-direction="-1"
+                                        aria-label="Move up">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_y_position"
+                                        step="1">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_y_position"
+                                        data-stepper-direction="1"
+                                        aria-label="Move down">
+                                        +
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="ecm-property-field">
-                            <label for="ecm_properties_rotation">
-                                Rotation
-                            </label>
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_rotation">
+                                    Rotation
+                                </label>
 
-                            <input
-                                type="number"
-                                id="ecm_properties_rotation"
-                                class="widefat"
-                                step="0.1">
-                        </div>
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_rotation"
+                                        data-stepper-direction="-1"
+                                        aria-label="Rotate counter-clockwise">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_rotation"
+                                        step="1">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_rotation"
+                                        data-stepper-direction="1"
+                                        aria-label="Rotate clockwise">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
 
                         <div class="ecm-auto-save-status" aria-live="polite">
                             <span class="ecm-auto-save-dot"></span>
-                            <span id="ecm-element-save-status">Changes save automatically</span>
+                            <span id="ecm-element-save-status">
+                                Changes save automatically
+                            </span>
                         </div>
+
                     </div>
 
                 </div>

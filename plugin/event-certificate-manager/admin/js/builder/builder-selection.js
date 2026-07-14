@@ -112,6 +112,10 @@
         /*
          * Reset the autosave status for the newly selected element.
          */
+        $('.ecm-auto-save-status')
+            .removeClass('is-hidden')
+            .show();
+
         if (typeof Builder.setSaveStatus === 'function') {
             Builder.setSaveStatus(
                 '',

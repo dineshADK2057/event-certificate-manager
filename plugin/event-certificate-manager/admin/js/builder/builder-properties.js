@@ -120,4 +120,99 @@
 
         scheduleSave();
     });
+
+    /**
+ * Increment or decrement a numeric property field.
+ */
+    $(document).on(
+        'click',
+        '.ecm-stepper-button',
+        function (event) {
+            event.preventDefault();
+
+            const button = $(this);
+            const targetId = button.data('stepper-target');
+            const direction =
+                parseFloat(button.data('stepper-direction')) || 0;
+
+            const input = $('#' + targetId);
+
+            if (!input.length || !direction) {
+                return;
+            }
+
+            const step =
+                parseFloat(input.attr('step')) || 1;
+
+            let value =
+                parseFloat(input.val()) || 0;
+
+            value += step * direction;
+
+            const minimum = parseFloat(input.attr('min'));
+            const maximum = parseFloat(input.attr('max'));
+
+            if (!Number.isNaN(minimum)) {
+                value = Math.max(minimum, value);
+            }
+
+            if (!Number.isNaN(maximum)) {
+                value = Math.min(maximum, value);
+            }
+
+            value = Math.round(value * 100) / 100;
+
+            input
+                .val(value)
+                .trigger('input');
+        }
+    );
+
+    /**
+     * Apply a preset font color.
+     */
+    $(document).on(
+        'click',
+        '.ecm-color-preset',
+        function (event) {
+            event.preventDefault();
+
+            const color = String(
+                $(this).data('color') || '#000000'
+            );
+
+            $('#ecm_properties_font_color')
+                .val(color)
+                .trigger('input');
+
+            $('.ecm-color-preset')
+                .removeClass('is-selected');
+
+            $(this).addClass('is-selected');
+        }
+    );
+
+    /**
+     * Keep preset selection synchronized with custom colors.
+     */
+    $('#ecm_properties_font_color').on(
+        'input change',
+        function () {
+            const selectedColor = String(
+                $(this).val() || ''
+            ).toUpperCase();
+
+            $('.ecm-color-preset').each(function () {
+                const preset = $(this);
+
+                preset.toggleClass(
+                    'is-selected',
+                    String(
+                        preset.data('color') || ''
+                    ).toUpperCase() === selectedColor
+                );
+            });
+        }
+    );
+
 })(jQuery, window);

@@ -601,6 +601,9 @@
     background: #f6f7f7;
     color: #646970;
     font-size: 13px;
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
 }
 
 .ecm-auto-save-dot {
@@ -614,6 +617,11 @@
 .ecm-auto-save-status.is-saving {
     color: #996800;
     background: #fcf9e8;
+    transform: translateY(0);
+}
+
+.ecm-auto-save-status.is-hidden {
+    display: none;
 }
 
 .ecm-auto-save-status.is-saving .ecm-auto-save-dot {
@@ -624,6 +632,7 @@
 .ecm-auto-save-status.is-saved {
     color: #116329;
     background: #edfaef;
+    transform: translateY(0);
 }
 
 .ecm-auto-save-status.is-saved .ecm-auto-save-dot {
@@ -1045,4 +1054,202 @@
     padding: 18px 12px;
     color: #646970;
     text-align: center;
+}
+
+/**
+ * Modern Builder properties cards
+ */
+.ecm-property-card {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    border-radius: 10px;
+}
+
+.ecm-property-card-header {
+    margin-bottom: 15px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.ecm-property-card-header h4 {
+    margin: 0 0 3px;
+    color: #1d2327;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ecm-property-card-header p {
+    margin: 0;
+    color: #646970;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.ecm-property-card .ecm-property-field:last-child {
+    margin-bottom: 0;
+}
+
+/**
+ * Numeric steppers
+ */
+.ecm-number-stepper {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    align-items: stretch;
+}
+
+.ecm-number-stepper input {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    border-radius: 0;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.ecm-number-stepper input::-webkit-inner-spin-button,
+.ecm-number-stepper input::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+.ecm-stepper-button {
+    padding: 0;
+    background: #ffffff;
+    border: 1px solid #8c8f94;
+    color: #1d2327;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.ecm-stepper-button:first-child {
+    border-right: 0;
+    border-radius: 5px 0 0 5px;
+}
+
+.ecm-stepper-button:last-child {
+    border-left: 0;
+    border-radius: 0 5px 5px 0;
+}
+
+.ecm-stepper-button:hover,
+.ecm-stepper-button:focus {
+    z-index: 2;
+    border-color: #2271b1;
+    background: #e7f3ff;
+    color: #135e96;
+    outline: none;
+}
+
+/**
+ * Color presets
+ */
+.ecm-color-control {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.ecm-color-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ecm-color-preset {
+    position: relative;
+    width: 29px;
+    height: 29px;
+    padding: 0;
+    background: var(--ecm-preset-color);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #a7aaad;
+    cursor: pointer;
+}
+
+.ecm-color-preset:hover,
+.ecm-color-preset.is-selected {
+    box-shadow:
+        0 0 0 2px #2271b1,
+        0 0 0 4px #ffffff;
+}
+
+.ecm-color-preset[data-color="#FFFFFF"] {
+    background-image:
+        linear-gradient(45deg, #ececec 25%, transparent 25%),
+        linear-gradient(-45deg, #ececec 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ececec 75%),
+        linear-gradient(-45deg, transparent 75%, #ececec 75%);
+    background-position:
+        0 0,
+        0 5px,
+        5px -5px,
+        -5px 0;
+    background-size: 10px 10px;
+}
+
+.ecm-custom-color {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #50575e;
+    font-size: 13px;
+}
+
+.ecm-custom-color input[type="color"] {
+    width: 48px;
+    height: 34px;
+    padding: 3px;
+    background: #ffffff;
+    border: 1px solid #8c8f94;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/**
+ * Elements panel empty state
+ */
+.ecm-elements-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+    padding: 32px 20px;
+    text-align: center;
+    background: #f8f9fa;
+    border: 1px dashed #c3c4c7;
+    border-radius: 10px;
+}
+
+.ecm-elements-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: #e7f3ff;
+    color: #135e96;
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.ecm-elements-empty-state h4 {
+    margin: 0 0 7px;
+    color: #1d2327;
+    font-size: 16px;
+}
+
+.ecm-elements-empty-state p {
+    max-width: 230px;
+    margin: 0 0 17px;
+    color: #646970;
+    font-size: 13px;
+    line-height: 1.5;
 }
