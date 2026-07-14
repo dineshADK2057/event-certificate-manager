@@ -542,8 +542,8 @@
 }
 
 .ecm-select-element-from-list {
-    display: block;
-    width: 100%;
+    /* display: block; */
+    /* width: 100%; */
     padding: 0;
     border: 0;
     background: transparent;
@@ -558,6 +558,8 @@
 
 .ecm-element-list-actions {
     margin-top: 8px;
+    display: flex;
+    gap: 8px;
 }
 
 .ecm-selected-element-badge {

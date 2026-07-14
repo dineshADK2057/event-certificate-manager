@@ -28,11 +28,8 @@ trait ECM_Template_Elements
 
                 <form method="post">
                     <?php wp_nonce_field('ecm_add_template_element', 'ecm_add_template_element_nonce'); ?>
-                    <?php wp_nonce_field('ecm_update_template_element', 'ecm_update_template_element_nonce'); ?>
-
                     <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
                     <input type="hidden" name="template_id" value="<?php echo esc_attr($template->id); ?>">
-                    <input type="hidden" name="element_id" id="ecm_element_id" value="">
 
                     <div class="ecm-modal-body">
                         <p>
@@ -127,10 +124,6 @@ trait ECM_Template_Elements
                             Add Element
                         </button>
 
-                        <button type="submit" name="ecm_update_template_element_submit" id="ecm_update_template_element_submit" class="button button-primary" style="display:none;">
-                            Update Element
-                        </button>
-
                         <button type="button" class="button ecm-modal-cancel">
                             Cancel
                         </button>
@@ -143,9 +136,6 @@ trait ECM_Template_Elements
 
     public function handle_add_template_element()
     {
-        if (isset($_POST['ecm_update_template_element_submit'])) {
-            return;
-        }
 
         if (!isset($_POST['ecm_add_template_element_submit'])) {
             return;
@@ -250,111 +240,6 @@ trait ECM_Template_Elements
         exit;
     }
 
-    public function handle_update_template_element()
-    {
-        if (!isset($_POST['ecm_update_template_element_submit'])) {
-            return;
-        }
-
-        if (
-            !isset($_POST['ecm_update_template_element_nonce']) ||
-            !wp_verify_nonce($_POST['ecm_update_template_element_nonce'], 'ecm_update_template_element')
-        ) {
-            wp_die('Security check failed.');
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_die('You do not have permission to perform this action.');
-        }
-
-        $event_id       = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-        $template_id    = isset($_POST['template_id']) ? absint($_POST['template_id']) : 0;
-        $element_id     = isset($_POST['element_id']) ? absint($_POST['element_id']) : 0;
-        $placeholder    = sanitize_text_field($_POST['placeholder_key'] ?? '');
-        $source_type    = sanitize_text_field($_POST['source_type'] ?? 'participant');
-        $font_family    = sanitize_text_field($_POST['font_family'] ?? 'Arial');
-        $font_size      = isset($_POST['font_size']) ? absint($_POST['font_size']) : 18;
-        $font_color     = sanitize_hex_color($_POST['font_color'] ?? '#000000');
-        $alignment      = sanitize_text_field($_POST['alignment'] ?? 'left');
-        $x_position     = isset($_POST['x_position']) ? floatval($_POST['x_position']) : 0;
-        $y_position     = isset($_POST['y_position']) ? floatval($_POST['y_position']) : 0;
-        $rotation       = isset($_POST['rotation']) ? floatval($_POST['rotation']) : 0;
-
-        if (!$event_id || !$template_id || !$element_id || empty($placeholder)) {
-            wp_die('Invalid element data.');
-        }
-
-        $allowed_sources = ['participant', 'event', 'session', 'system'];
-        if (!in_array($source_type, $allowed_sources, true)) {
-            $source_type = 'participant';
-        }
-
-        $allowed_alignments = ['left', 'center', 'right'];
-        if (!in_array($alignment, $allowed_alignments, true)) {
-            $alignment = 'left';
-        }
-
-        if (!$font_color) {
-            $font_color = '#000000';
-        }
-
-        global $wpdb;
-
-        $templates_table = $wpdb->prefix . 'ecm_templates';
-        $elements_table  = $wpdb->prefix . 'ecm_template_elements';
-
-        $element = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT e.*
-             FROM $elements_table e
-             INNER JOIN $templates_table t ON e.template_id = t.id
-             WHERE e.id = %d
-             AND e.template_id = %d
-             AND t.event_id = %d",
-                $element_id,
-                $template_id,
-                $event_id
-            )
-        );
-
-        if (!$element) {
-            wp_die('Element not found.');
-        }
-
-        $updated = $wpdb->update(
-            $elements_table,
-            [
-                'placeholder_key' => $placeholder,
-                'source_type'     => $source_type,
-                'x_position'      => $x_position,
-                'y_position'      => $y_position,
-                'font_family'     => $font_family,
-                'font_size'       => $font_size,
-                'font_color'      => $font_color,
-                'alignment'       => $alignment,
-                'rotation'        => $rotation,
-            ],
-            [
-                'id'          => $element_id,
-                'template_id' => $template_id,
-            ],
-            ['%s', '%s', '%f', '%f', '%s', '%f', '%s', '%s', '%f'],
-            ['%d', '%d']
-        );
-
-        if ($updated === false) {
-            wp_die('Failed to update template element.');
-        }
-
-        wp_safe_redirect(
-            admin_url(
-                'admin.php?page=ecm-events&action=template_builder&event_id=' . $event_id .
-                    '&template_id=' . $template_id .
-                    '&element_updated=1'
-            )
-        );
-        exit;
-    }
 
     public function handle_delete_template_element()
     {

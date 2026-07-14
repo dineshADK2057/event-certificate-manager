@@ -43,3 +43,20 @@ All notable changes to Event Certificate Manager will be documented here.
 - Added Builder workspace zoom controls.
 - Added Zoom In, Zoom Out, Reset, Fit Width, and Fit Page.
 - Added zoom-aware pointer dragging while preserving certificate coordinates.
+
+## Sprint 05.10.3 — Font Manager Foundation
+
+### Added
+- Introduced a new filesystem-based Font Manager module.
+- Added `ECM_Font_Manager` for centralized font management.
+- Implemented automatic font manifest (`fonts.json`) handling.
+- Added support for registering and unregistering fonts.
+- Added built-in font catalog management.
+- Added helper methods for font paths, URLs and font-face CSS generation.
+- Added support for custom and Google font storage.
+- Created automatic `google/` and `custom/` font directories.
+- Removed the need for a dedicated `wp_ecm_fonts` database table.
+
+### Changed
+- Migrated font architecture from database-driven to filesystem-driven.
+- Builder is now prepared to consume fonts from the Font Manager.

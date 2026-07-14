@@ -90,23 +90,6 @@
             ', Size: ' + properties.font_size
         );
 
-        const editLink = listItem.find('.ecm-edit-element');
-
-        editLink.attr('data-font-family', properties.font_family);
-        editLink.attr('data-font-size', properties.font_size);
-        editLink.attr('data-font-color', properties.font_color);
-        editLink.attr('data-alignment', properties.alignment);
-        editLink.attr('data-x-position', properties.x_position);
-        editLink.attr('data-y-position', properties.y_position);
-        editLink.attr('data-rotation', properties.rotation);
-
-        editLink.data('font-family', properties.font_family);
-        editLink.data('font-size', properties.font_size);
-        editLink.data('font-color', properties.font_color);
-        editLink.data('alignment', properties.alignment);
-        editLink.data('x-position', properties.x_position);
-        editLink.data('y-position', properties.y_position);
-        editLink.data('rotation', properties.rotation);
     };
 
     /**

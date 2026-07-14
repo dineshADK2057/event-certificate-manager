@@ -324,17 +324,9 @@ trait ECM_Template_Builder
                                         <div class="ecm-element-list-actions">
                                             <a
                                                 href="#"
-                                                class="ecm-edit-element"
-                                                data-element-id="<?php echo esc_attr($element->id); ?>"
-                                                data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
-                                                data-source-type="<?php echo esc_attr($element->source_type); ?>"
-                                                data-font-family="<?php echo esc_attr($element->font_family); ?>"
-                                                data-font-size="<?php echo esc_attr($element->font_size); ?>"
-                                                data-font-color="<?php echo esc_attr($element->font_color); ?>"
-                                                data-alignment="<?php echo esc_attr($element->alignment); ?>"
-                                                data-x-position="<?php echo esc_attr($element->x_position); ?>"
-                                                data-y-position="<?php echo esc_attr($element->y_position); ?>"
-                                                data-rotation="<?php echo esc_attr($element->rotation); ?>">
+                                                class="ecm-select-element-from-list"
+                                                data-element-id="<?php echo esc_attr($element->id); ?>">
+                                                
                                                 Edit
                                             </a>
 
