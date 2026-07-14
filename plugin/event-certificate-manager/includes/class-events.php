@@ -14,6 +14,8 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-elemen
 require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-preview.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-renderer.php';
 
+require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/trait-font-ajax.php';
+
 class ECM_Events
 {
     use ECM_Event_Sessions;
@@ -26,6 +28,9 @@ class ECM_Events
     use ECM_Template_Elements;
     use ECM_Template_Preview;
     use ECM_Template_Renderer;
+
+    use ECM_Font_Ajax;
+
 
     public function __construct()
     {
@@ -68,6 +73,12 @@ class ECM_Events
             'wp_ajax_ecm_update_template_element_properties',
             [$this, 'ajax_update_template_element_properties']
         );
+
+        add_action(
+            'wp_ajax_ecm_install_google_font',
+            [$this, 'ajax_install_google_font']
+        );
+        
     }
 
     public function events_page()

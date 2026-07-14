@@ -604,6 +604,9 @@ class ECM_Font_Manager
         $css = '';
 
         foreach (self::get_available_fonts() as $font) {
+            if ($variant === 'stylesheet') {
+                continue;
+            }
             if (empty($font['files']) || !is_array($font['files'])) {
                 continue;
             }
@@ -639,6 +642,32 @@ class ECM_Font_Manager
         }
 
         return $css;
+    }
+
+    /**
+     * Return locally stored font stylesheets.
+     *
+     * @return array
+     */
+    public static function get_local_stylesheet_urls()
+    {
+        $stylesheets = [];
+
+        foreach (self::get_available_fonts() as $font) {
+            if (
+                empty($font['files']['stylesheet'])
+            ) {
+                continue;
+            }
+
+            $stylesheets[] = self::get_font_file_url(
+                $font['files']['stylesheet']
+            );
+        }
+
+        return array_values(
+            array_unique($stylesheets)
+        );
     }
 
     /**

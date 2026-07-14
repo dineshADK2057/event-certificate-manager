@@ -8,6 +8,7 @@
 
     const Builder = window.ECMBuilder || {};
     const loadedPreviewFonts = new Set();
+    const fontInstallRequests = new Map();
 
     if (!Builder.isActive || !Builder.isActive()) {
         return;
@@ -128,6 +129,13 @@
      * @param {string} fontFamily
      * @param {boolean} triggerChange
      */
+    /**
+ * Set the selected font picker value and update its visible preview.
+ *
+ * @param {string} pickerId
+ * @param {string} fontFamily
+ * @param {boolean} triggerChange
+ */
     Builder.setFontPickerValue = function (
         pickerId,
         fontFamily,
@@ -143,37 +151,47 @@
             fontFamily || 'Arial'
         );
 
-        picker
-            .find('input[type="hidden"]')
-            .val(normalizedFamily);
+        const hiddenInput = picker.find(
+            'input[type="hidden"]'
+        );
 
-        picker
-            .find('.ecm-font-picker-current')
+        const currentLabel = picker.find(
+            '.ecm-font-picker-current'
+        );
+
+        const options = picker.find(
+            '.ecm-font-picker-option'
+        );
+
+        hiddenInput.val(normalizedFamily);
+
+        currentLabel
             .text(normalizedFamily)
             .css(
                 'font-family',
                 '"' + normalizedFamily + '", sans-serif'
             );
 
-        picker
-            .find('.ecm-font-picker-option')
+        options
             .removeClass('is-selected')
             .attr('aria-selected', 'false');
 
-        picker
-            .find('.ecm-font-picker-option')
-            .filter(function () {
-                return String(
-                    $(this).data('font-family')
-                ) === normalizedFamily;
-            })
+        const selectedOption = options.filter(function () {
+            return String(
+                $(this).data('font-family')
+            ) === normalizedFamily;
+        });
+
+        selectedOption
             .addClass('is-selected')
             .attr('aria-selected', 'true');
 
+        if (selectedOption.length) {
+            loadFontPreview(selectedOption);
+        }
+
         if (triggerChange) {
-            picker
-                .find('input[type="hidden"]')
-                .trigger('change');
+            hiddenInput.trigger('change');
         }
     };
 
@@ -249,6 +267,153 @@
     );
 
     /**
+ * Install an uninstalled Google Font locally.
+ *
+ * @param {jQuery} option
+ * @returns {Promise}
+ */
+    function installGoogleFont(option) {
+        const family = String(
+            option.data('font-family') || ''
+        );
+
+        const source = String(
+            option.data('font-source') || ''
+        );
+
+        const picker = option.closest('.ecm-font-picker');
+
+        const installed =
+            String(option.attr('data-font-installed') || '0') === '1';
+
+        if (source !== 'google' || installed) {
+            return Promise.resolve({
+                installed: true
+            });
+        }
+
+        if (fontInstallRequests.has(family)) {
+            return fontInstallRequests.get(family);
+        }
+
+        option
+            .addClass('is-installing')
+            .prop('disabled', true);
+
+        option
+            .find('.ecm-font-option-source')
+            .text('Installing…');
+
+        const request = $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'ecm_install_google_font',
+                nonce: $('#ecm_install_google_font_nonce').val(),
+                family: family
+            }
+        })
+            .done(function (response) {
+                if (!response || !response.success) {
+                    const message =
+                        response &&
+                            response.data &&
+                            response.data.message
+                            ? response.data.message
+                            : 'The font could not be installed.';
+
+                    option
+                        .removeClass('is-installing')
+                        .prop('disabled', false);
+
+                    option
+                        .find('.ecm-font-option-source')
+                        .text('Install failed');
+
+                    window.alert(message);
+                    return;
+                }
+
+                const cssUrl =
+                    response.data && response.data.css_url
+                        ? response.data.css_url
+                        : '';
+
+                if (cssUrl) {
+                    const existingLink = document.querySelector(
+                        'link[data-ecm-local-font="' + family + '"]'
+                    );
+
+                    if (!existingLink) {
+                        const link = document.createElement('link');
+
+                        link.rel = 'stylesheet';
+                        link.href = cssUrl;
+                        link.dataset.ecmLocalFont = family;
+
+                        document.head.appendChild(link);
+                    }
+                }
+
+                option
+                    .attr('data-font-installed', '1')
+                    .data('font-installed', 1)
+                    .removeClass('is-installing')
+                    .prop('disabled', false);
+
+                option
+                    .find('.ecm-font-option-source')
+                    .text('Installed');
+
+                Builder.setFontPickerValue(
+                    picker.attr('id'),
+                    family,
+                    true
+                );
+
+                closePicker(picker);
+            })
+            .fail(function (xhr, status, error) {
+                console.error('ECM font installation failed:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    responseJSON: xhr.responseJSON
+                });
+
+                let message = 'The font could not be installed.';
+
+                if (
+                    xhr.responseJSON &&
+                    xhr.responseJSON.data &&
+                    xhr.responseJSON.data.message
+                ) {
+                    message = xhr.responseJSON.data.message;
+                } else if (xhr.responseText) {
+                    message += '\n\nServer response: ' + xhr.responseText;
+                }
+
+                option
+                    .removeClass('is-installing')
+                    .prop('disabled', false);
+
+                option
+                    .find('.ecm-font-option-source')
+                    .text('Install failed');
+
+                window.alert(message);
+            })
+            .always(function () {
+                fontInstallRequests.delete(family);
+            });
+
+        fontInstallRequests.set(family, request);
+
+        return request;
+    }
+
+    /**
      * Select a font.
      */
     $(document).on(
@@ -259,17 +424,26 @@
 
             const option = $(this);
             const picker = option.closest('.ecm-font-picker');
-            const fontFamily = option.data('font-family');
+            const fontFamily = String(
+                option.data('font-family') || ''
+            );
+
+            if (!fontFamily) {
+                return;
+            }
 
             loadFontPreview(option);
 
-            Builder.setFontPickerValue(
-                picker.attr('id'),
-                fontFamily,
-                true
-            );
+            installGoogleFont(option)
+                .then(function () {
+                    Builder.setFontPickerValue(
+                        picker.attr('id'),
+                        fontFamily,
+                        true
+                    );
 
-            closePicker(picker);
+                    closePicker(picker);
+                });
         }
     );
 

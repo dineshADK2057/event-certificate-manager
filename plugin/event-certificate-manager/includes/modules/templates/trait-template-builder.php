@@ -147,6 +147,13 @@ trait ECM_Template_Builder
                 id="ecm_builder_template_id"
                 value="<?php echo esc_attr($template->id); ?>">
 
+            <input
+                type="hidden"
+                id="ecm_install_google_font_nonce"
+                value="<?php echo esc_attr(
+                            wp_create_nonce('ecm_install_google_font')
+                        ); ?>">
+
 
             <div class="ecm-builder-layout">
 
@@ -410,7 +417,7 @@ trait ECM_Template_Builder
                             <div class="ecm-property-card-header">
                                 <h4>Typography</h4>
                                 <p>Control the appearance of this text.</p>
-                                
+
                             </div>
 
                             <div class="ecm-property-field">
@@ -426,6 +433,19 @@ trait ECM_Template_Builder
                                 <div
                                     class="ecm-font-picker"
                                     id="ecm-properties-font-picker">
+                                    <?php
+                                    $local_font_stylesheets =
+                                        class_exists('ECM_Font_Manager')
+                                        ? ECM_Font_Manager::get_local_stylesheet_urls()
+                                        : [];
+
+                                    foreach ($local_font_stylesheets as $stylesheet_url) :
+                                    ?>
+                                        <link
+                                            rel="stylesheet"
+                                            href="<?php echo esc_url($stylesheet_url); ?>">
+                                    <?php endforeach; ?>
+                                    
                                     <input
                                         type="hidden"
                                         id="ecm_properties_font_family"
