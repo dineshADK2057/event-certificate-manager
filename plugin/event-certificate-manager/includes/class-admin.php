@@ -189,6 +189,7 @@ class ECM_Admin
 
     public function dashboard_page()
     {
+
         global $wpdb;
 
         $events_table       = $wpdb->prefix . 'ecm_events';
