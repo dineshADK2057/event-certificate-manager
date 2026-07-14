@@ -1253,3 +1253,11 @@
     font-size: 13px;
     line-height: 1.5;
 }
+
+.ecm-font-picker-help {
+    margin: 7px 0 0;
+    color: #646970;
+    font-size: 11px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}

@@ -68,9 +68,13 @@ trait ECM_Template_Builder
         /*
         * Fonts available to the Builder.
         */
-        $available_fonts = class_exists('ECM_Font_Manager')
+        $installed_fonts = class_exists('ECM_Font_Manager')
             ? ECM_Font_Manager::get_available_fonts()
             : [];
+
+        $available_fonts = class_exists('ECM_Google_Fonts')
+            ? ECM_Google_Fonts::merge_with_installed($installed_fonts)
+            : $installed_fonts;
 
         /*
         * Local @font-face declarations for installed Google/custom fonts.
@@ -307,7 +311,7 @@ trait ECM_Template_Builder
                                 </button>
                             </div>
 
-                            
+
                         <?php else : ?>
                             <ul class="ecm-elements-list">
                                 <?php foreach ($elements as $element) : ?>
@@ -406,12 +410,18 @@ trait ECM_Template_Builder
                             <div class="ecm-property-card-header">
                                 <h4>Typography</h4>
                                 <p>Control the appearance of this text.</p>
+                                
                             </div>
 
                             <div class="ecm-property-field">
                                 <label for="ecm_properties_font_search">
                                     Font Family
                                 </label>
+                                <p class="ecm-font-picker-help">
+                                    Google Font previews require an internet connection.
+                                    Selected Google Fonts will be installed locally before
+                                    final certificate generation.
+                                </p>
 
                                 <div
                                     class="ecm-font-picker"
@@ -505,13 +515,30 @@ trait ECM_Template_Builder
                                                         role="option"
                                                         data-font-family="<?php echo esc_attr($family); ?>"
                                                         data-font-source="<?php echo esc_attr($source); ?>"
-                                                        style="font-family:'<?php echo esc_attr($family); ?>',sans-serif;">
+                                                        data-font-installed="<?php
+                                                                                echo !empty($font['installed']) ? '1' : '0';
+                                                                                ?>"
+                                                        data-font-preview-url="<?php
+                                                                                echo esc_url($font['preview_url'] ?? '');
+                                                                                ?>"
+                                                        style="font-family:'<?php
+                                                                            echo esc_attr($family);
+                                                                            ?>',sans-serif;">
                                                         <span class="ecm-font-option-preview">
                                                             <?php echo esc_html($family); ?>
                                                         </span>
 
                                                         <span class="ecm-font-option-source">
-                                                            <?php echo esc_html(ucfirst($source)); ?>
+                                                            <?php if (
+                                                                $source === 'google' &&
+                                                                empty($font['installed'])
+                                                            ) : ?>
+                                                                Google
+                                                            <?php elseif ($source === 'google') : ?>
+                                                                Installed
+                                                            <?php else : ?>
+                                                                <?php echo esc_html(ucfirst($source)); ?>
+                                                            <?php endif; ?>
                                                         </span>
                                                     </button>
 

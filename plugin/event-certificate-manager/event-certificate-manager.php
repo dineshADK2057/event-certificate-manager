@@ -34,6 +34,7 @@ require_once ECM_PLUGIN_PATH . 'includes/class-loader.php';
  * Font management.
  */
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-font-manager.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-google-fonts.php';
 
 /*
  * Plugin lifecycle hooks.

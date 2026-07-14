@@ -7,6 +7,7 @@
     'use strict';
 
     const Builder = window.ECMBuilder || {};
+    const loadedPreviewFonts = new Set();
 
     if (!Builder.isActive || !Builder.isActive()) {
         return;
@@ -177,6 +178,44 @@
     };
 
     /**
+ * Load a Google Font preview stylesheet only once.
+ *
+ * @param {jQuery} option
+ */
+    function loadFontPreview(option) {
+        const source = String(
+            option.data('font-source') || ''
+        );
+
+        const previewUrl = String(
+            option.data('font-preview-url') || ''
+        );
+
+        const family = String(
+            option.data('font-family') || ''
+        );
+
+        if (
+            source !== 'google' ||
+            !previewUrl ||
+            !family ||
+            loadedPreviewFonts.has(family)
+        ) {
+            return;
+        }
+
+        const link = document.createElement('link');
+
+        link.rel = 'stylesheet';
+        link.href = previewUrl;
+        link.dataset.ecmFontFamily = family;
+
+        document.head.appendChild(link);
+
+        loadedPreviewFonts.add(family);
+    }
+
+    /**
      * Toggle picker dropdown.
      */
     $(document).on(
@@ -221,6 +260,8 @@
             const option = $(this);
             const picker = option.closest('.ecm-font-picker');
             const fontFamily = option.data('font-family');
+
+            loadFontPreview(option);
 
             Builder.setFontPickerValue(
                 picker.attr('id'),
@@ -273,4 +314,14 @@
             false
         );
     });
+    /**
+ * Load a Google Font when its option is hovered or focused.
+ */
+    $(document).on(
+        'mouseenter focusin',
+        '.ecm-font-picker-option[data-font-source="google"]',
+        function () {
+            loadFontPreview($(this));
+        }
+    );
 })(jQuery, window);
