@@ -60,3 +60,9 @@ All notable changes to Event Certificate Manager will be documented here.
 ### Changed
 - Migrated font architecture from database-driven to filesystem-driven.
 - Builder is now prepared to consume fonts from the Font Manager.
+
+### Added
+- Added curated Google Fonts to the Builder font picker.
+- Added live Google Font previews.
+- Added secure local installation of selected Google Fonts.
+- Added local stylesheet reuse for installed fonts.

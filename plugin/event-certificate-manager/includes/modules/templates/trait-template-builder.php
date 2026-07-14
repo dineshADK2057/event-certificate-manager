@@ -76,6 +76,13 @@ trait ECM_Template_Builder
             ? ECM_Google_Fonts::merge_with_installed($installed_fonts)
             : $installed_fonts;
 
+        $font_groups = class_exists('ECM_Google_Fonts')
+            ? ECM_Google_Fonts::group_fonts_for_picker($available_fonts)
+            : [
+                'builtin' => $available_fonts,
+                'google'  => [],
+            ];
+
         /*
         * Local @font-face declarations for installed Google/custom fonts.
         */
@@ -445,7 +452,7 @@ trait ECM_Template_Builder
                                             rel="stylesheet"
                                             href="<?php echo esc_url($stylesheet_url); ?>">
                                     <?php endforeach; ?>
-                                    
+
                                     <input
                                         type="hidden"
                                         id="ecm_properties_font_family"
@@ -486,7 +493,12 @@ trait ECM_Template_Builder
                                         <div
                                             class="ecm-font-picker-options"
                                             role="listbox">
-                                            <?php if (empty($available_fonts)) : ?>
+                                            <?php
+                                            $has_builtin_fonts = !empty($font_groups['builtin']);
+                                            $has_google_fonts = !empty($font_groups['google']);
+                                            ?>
+
+                                            <?php if (!$has_builtin_fonts && !$has_google_fonts) : ?>
 
                                                 <div class="ecm-font-picker-empty">
                                                     No fonts are available.
@@ -494,75 +506,102 @@ trait ECM_Template_Builder
 
                                             <?php else : ?>
 
-                                                <?php
-                                                $current_source = '';
+                                                <?php if ($has_builtin_fonts) : ?>
 
-                                                $source_labels = [
-                                                    'builtin'   => 'Built-in Fonts',
-                                                    'google'    => 'Google Fonts',
-                                                    'custom'    => 'Custom Fonts',
-                                                    'wordpress' => 'Website Fonts',
-                                                ];
+                                                    <div
+                                                        class="ecm-font-picker-group-label"
+                                                        data-font-group="builtin">
+                                                        Built-in Fonts
+                                                    </div>
 
-                                                foreach ($available_fonts as $font) :
-                                                    $family = $font['family'] ?? '';
-                                                    $source = $font['source'] ?? 'builtin';
+                                                    <?php foreach ($font_groups['builtin'] as $font) : ?>
+                                                        <?php
+                                                        $family = $font['family'] ?? '';
 
-                                                    if ($family === '') {
-                                                        continue;
-                                                    }
+                                                        if ($family === '') {
+                                                            continue;
+                                                        }
+                                                        ?>
 
-                                                    if ($source !== $current_source) :
-                                                        $current_source = $source;
-                                                ?>
+                                                        <button
+                                                            type="button"
+                                                            class="ecm-font-picker-option"
+                                                            role="option"
+                                                            data-font-family="<?php echo esc_attr($family); ?>"
+                                                            data-font-source="builtin"
+                                                            data-font-installed="1"
+                                                            data-font-preview-url=""
+                                                            style="font-family:'<?php echo esc_attr($family); ?>', sans-serif;">
+                                                            <span class="ecm-font-option-preview">
+                                                                <?php echo esc_html($family); ?>
+                                                            </span>
+
+                                                            <span class="ecm-font-option-source">
+                                                                Built-in
+                                                            </span>
+                                                        </button>
+                                                    <?php endforeach; ?>
+
+                                                <?php endif; ?>
+
+                                                <?php if ($has_google_fonts) : ?>
+
+                                                    <div
+                                                        class="ecm-font-picker-group-label"
+                                                        data-font-group="google">
+                                                        Google Fonts
+                                                    </div>
+
+                                                    <?php foreach ($font_groups['google'] as $category_label => $category_fonts) : ?>
+
+                                                        <?php if (empty($category_fonts)) : ?>
+                                                            <?php continue; ?>
+                                                        <?php endif; ?>
 
                                                         <div
-                                                            class="ecm-font-picker-group-label"
-                                                            data-font-group="<?php echo esc_attr($source); ?>">
-                                                            <?php
-                                                            echo esc_html(
-                                                                $source_labels[$source]
-                                                                    ?? ucfirst($source)
-                                                            );
-                                                            ?>
+                                                            class="ecm-font-picker-category-label"
+                                                            data-font-category="<?php echo esc_attr(
+                                                                                    sanitize_title($category_label)
+                                                                                ); ?>">
+                                                            <?php echo esc_html($category_label); ?>
                                                         </div>
 
-                                                    <?php endif; ?>
+                                                        <?php foreach ($category_fonts as $font) : ?>
+                                                            <?php
+                                                            $family = $font['family'] ?? '';
 
-                                                    <button
-                                                        type="button"
-                                                        class="ecm-font-picker-option"
-                                                        role="option"
-                                                        data-font-family="<?php echo esc_attr($family); ?>"
-                                                        data-font-source="<?php echo esc_attr($source); ?>"
-                                                        data-font-installed="<?php
-                                                                                echo !empty($font['installed']) ? '1' : '0';
-                                                                                ?>"
-                                                        data-font-preview-url="<?php
-                                                                                echo esc_url($font['preview_url'] ?? '');
-                                                                                ?>"
-                                                        style="font-family:'<?php
-                                                                            echo esc_attr($family);
-                                                                            ?>',sans-serif;">
-                                                        <span class="ecm-font-option-preview">
-                                                            <?php echo esc_html($family); ?>
-                                                        </span>
+                                                            if ($family === '') {
+                                                                continue;
+                                                            }
 
-                                                        <span class="ecm-font-option-source">
-                                                            <?php if (
-                                                                $source === 'google' &&
-                                                                empty($font['installed'])
-                                                            ) : ?>
-                                                                Google
-                                                            <?php elseif ($source === 'google') : ?>
-                                                                Installed
-                                                            <?php else : ?>
-                                                                <?php echo esc_html(ucfirst($source)); ?>
-                                                            <?php endif; ?>
-                                                        </span>
-                                                    </button>
+                                                            $installed = !empty($font['installed']);
+                                                            ?>
 
-                                                <?php endforeach; ?>
+                                                            <button
+                                                                type="button"
+                                                                class="ecm-font-picker-option"
+                                                                role="option"
+                                                                data-font-family="<?php echo esc_attr($family); ?>"
+                                                                data-font-source="google"
+                                                                data-font-installed="<?php echo $installed ? '1' : '0'; ?>"
+                                                                data-font-preview-url="<?php echo esc_url(
+                                                                                            $font['preview_url'] ?? ''
+                                                                                        ); ?>"
+                                                                style="font-family:'<?php echo esc_attr($family); ?>', sans-serif;">
+                                                                <span class="ecm-font-option-preview">
+                                                                    <?php echo esc_html($family); ?>
+                                                                </span>
+
+                                                                <span class="ecm-font-option-source">
+                                                                    <?php echo $installed ? 'Installed' : 'Google'; ?>
+                                                                </span>
+                                                            </button>
+
+                                                        <?php endforeach; ?>
+
+                                                    <?php endforeach; ?>
+
+                                                <?php endif; ?>
 
                                             <?php endif; ?>
                                         </div>

@@ -88,17 +88,33 @@
         });
 
         picker
-            .find('.ecm-font-picker-group-label')
+            .find('.ecm-font-picker-category-label')
             .each(function () {
                 const label = $(this);
-                const source = label.data('font-group');
-
-                const visibleOptions = picker.find(
-                    '.ecm-font-picker-option' +
-                    '[data-font-source="' + source + '"]:visible'
+                const category = String(
+                    label.data('font-category') || ''
                 );
 
-                label.toggle(visibleOptions.length > 0);
+                let current = label.next();
+                let hasVisibleOption = false;
+
+                while (
+                    current.length &&
+                    !current.hasClass('ecm-font-picker-category-label') &&
+                    !current.hasClass('ecm-font-picker-group-label')
+                ) {
+                    if (
+                        current.hasClass('ecm-font-picker-option') &&
+                        current.is(':visible')
+                    ) {
+                        hasVisibleOption = true;
+                        break;
+                    }
+
+                    current = current.next();
+                }
+
+                label.toggle(hasVisibleOption);
             });
 
         let emptySearch = picker.find(

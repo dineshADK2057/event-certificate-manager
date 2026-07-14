@@ -651,4 +651,75 @@ class ECM_Google_Fonts
             }
         }
     }
+
+    /**
+     * Group fonts for the Builder picker.
+     *
+     * @param array $fonts Available fonts.
+     *
+     * @return array
+     */
+    public static function group_fonts_for_picker($fonts)
+    {
+        $groups = [
+            'builtin' => [],
+            'google'  => [
+                'Sans Serif' => [],
+                'Serif'      => [],
+                'Signature'  => [],
+                'Display'    => [],
+            ],
+        ];
+
+        foreach ($fonts as $font) {
+            $source   = $font['source'] ?? 'builtin';
+            $category = $font['category'] ?? 'sans-serif';
+
+            if ($source === 'builtin') {
+                $groups['builtin'][] = $font;
+                continue;
+            }
+
+            if ($source !== 'google') {
+                continue;
+            }
+
+            $category_map = [
+                'sans-serif'  => 'Sans Serif',
+                'serif'       => 'Serif',
+                'handwriting' => 'Signature',
+                'display'     => 'Display',
+            ];
+
+            $label = $category_map[$category] ?? 'Sans Serif';
+
+            $groups['google'][$label][] = $font;
+        }
+
+        foreach ($groups['google'] as $label => $category_fonts) {
+            usort(
+                $category_fonts,
+                static function ($first, $second) {
+                    return strcasecmp(
+                        $first['family'] ?? '',
+                        $second['family'] ?? ''
+                    );
+                }
+            );
+
+            $groups['google'][$label] = $category_fonts;
+        }
+
+        usort(
+            $groups['builtin'],
+            static function ($first, $second) {
+                return strcasecmp(
+                    $first['family'] ?? '',
+                    $second['family'] ?? ''
+                );
+            }
+        );
+
+        return $groups;
+    }
 }

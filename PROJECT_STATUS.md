@@ -54,3 +54,12 @@ includes/
     ├── certificates/
     ├── settings/
     └── shared/
+
+
+## Current Development Stage
+
+Sprint 05 — Template Builder completed
+
+## Next
+
+Sprint 06 — Certificate Generation Engine

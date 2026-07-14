@@ -1270,3 +1270,10 @@
 .ecm-font-picker-option:disabled {
     cursor: wait;
 }
+
+.ecm-font-picker-category-label {
+    padding: 10px 8px 5px;
+    color: #1d2327;
+    font-size: 12px;
+    font-weight: 700;
+}
