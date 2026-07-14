@@ -60,6 +60,7 @@
         scheduleSave();
     });
 
+
     $('#ecm_properties_font_size').on('input change', function () {
         const value = Math.max(1, parseFloat($(this).val()) || 1);
         const element = Builder.getSelectedCanvasElement();

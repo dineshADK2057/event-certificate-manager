@@ -185,6 +185,19 @@ class ECM_Admin
             ECM_VERSION,
             true
         );
+
+        wp_enqueue_script(
+            'ecm-builder-font-picker',
+            ECM_PLUGIN_URL . 'admin/js/builder/builder-font-picker.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-selection',
+                'ecm-builder-properties',
+            ],
+            ECM_VERSION,
+            true
+        );
     }
 
     public function dashboard_page()

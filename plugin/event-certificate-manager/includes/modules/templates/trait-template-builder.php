@@ -16,8 +16,11 @@ if (!defined('ABSPATH')) {
 trait ECM_Template_Builder
 {
 
+
+
     private function render_template_builder_page($event_id, $template_id)
     {
+
         global $wpdb;
 
         $events_table    = $wpdb->prefix . 'ecm_events';
@@ -61,13 +64,31 @@ trait ECM_Template_Builder
         );
 
         $variables = $this->get_template_variables($event, $template);
-?>
 
+        /*
+        * Fonts available to the Builder.
+        */
+        $available_fonts = class_exists('ECM_Font_Manager')
+        ? ECM_Font_Manager::get_available_fonts()
+        : [];
 
+        /*
+        * Local @font-face declarations for installed Google/custom fonts.
+        */
+        $font_face_css = class_exists('ECM_Font_Manager')
+        ? ECM_Font_Manager::get_font_face_css()
+        : '';
 
-
+        ?>
 
         <div class="wrap ecm-wrap">
+
+            <?php if (!empty($font_face_css)) : ?>
+                <style id="ecm-builder-font-faces">
+                    <?php echo wp_strip_all_tags($font_face_css); ?>
+                </style>
+            <?php endif; ?>
+
             <div class="ecm-form-header">
                 <a href="<?php echo esc_url($back_url); ?>" class="button">
                     ← Back to Templates
@@ -125,7 +146,7 @@ trait ECM_Template_Builder
 
             <div class="ecm-builder-layout">
 
-                <div class="ecm-builder-workspace" >
+                <div class="ecm-builder-workspace">
 
                     <div class="ecm-builder-zoom-wrapper">
 
@@ -359,14 +380,116 @@ trait ECM_Template_Builder
                         </div>
 
                         <div class="ecm-property-field">
-                            <label for="ecm_properties_font_family">
+                            <label for="ecm_properties_font_search">
                                 Font Family
                             </label>
 
-                            <input
-                                type="text"
-                                id="ecm_properties_font_family"
-                                class="widefat">
+                            <div
+                                class="ecm-font-picker"
+                                id="ecm-properties-font-picker">
+                                <input
+                                    type="hidden"
+                                    id="ecm_properties_font_family"
+                                    value="Arial">
+
+                                <button
+                                    type="button"
+                                    class="ecm-font-picker-trigger"
+                                    aria-haspopup="listbox"
+                                    aria-expanded="false">
+                                    <span
+                                        class="ecm-font-picker-current"
+                                        style="font-family: Arial, sans-serif;">
+                                        Arial
+                                    </span>
+
+                                    <span
+                                        class="ecm-font-picker-arrow"
+                                        aria-hidden="true">
+                                        ▾
+                                    </span>
+                                </button>
+
+                                <div
+                                    class="ecm-font-picker-dropdown"
+                                    role="dialog"
+                                    aria-label="Choose font"
+                                    hidden>
+                                    <div class="ecm-font-picker-search-wrap">
+                                        <input
+                                            type="search"
+                                            id="ecm_properties_font_search"
+                                            class="ecm-font-picker-search"
+                                            placeholder="Search fonts..."
+                                            autocomplete="off">
+                                    </div>
+
+                                    <div
+                                        class="ecm-font-picker-options"
+                                        role="listbox">
+                                        <?php if (empty($available_fonts)) : ?>
+
+                                            <div class="ecm-font-picker-empty">
+                                                No fonts are available.
+                                            </div>
+
+                                        <?php else : ?>
+
+                                            <?php
+                                            $current_source = '';
+
+                                            foreach ($available_fonts as $font) :
+                                                $family = $font['family'] ?? '';
+                                                $source = $font['source'] ?? 'builtin';
+
+                                                if ($family === '') {
+                                                    continue;
+                                                }
+
+                                                if ($source !== $current_source) :
+                                                    $current_source = $source;
+
+                                                    $source_labels = [
+                                                        'builtin'   => 'Built-in Fonts',
+                                                        'google'    => 'Google Fonts',
+                                                        'custom'    => 'Custom Fonts',
+                                                        'wordpress' => 'Website Fonts',
+                                                    ];
+
+                                                    $source_label = $source_labels[$source]
+                                                        ?? ucfirst($source);
+                                            ?>
+
+                                                    <div
+                                                        class="ecm-font-picker-group-label"
+                                                        data-font-group="<?php echo esc_attr($source); ?>">
+                                                        <?php echo esc_html($source_label); ?>
+                                                    </div>
+
+                                                <?php endif; ?>
+
+                                                <button
+                                                    type="button"
+                                                    class="ecm-font-picker-option"
+                                                    role="option"
+                                                    data-font-family="<?php echo esc_attr($family); ?>"
+                                                    data-font-source="<?php echo esc_attr($source); ?>"
+                                                    style="font-family: '<?php echo esc_attr($family); ?>', sans-serif;">
+                                                    <span class="ecm-font-option-preview">
+                                                        <?php echo esc_html($family); ?>
+                                                    </span>
+
+                                                    <span class="ecm-font-option-source">
+                                                        <?php echo esc_html(ucfirst($source)); ?>
+                                                    </span>
+                                                </button>
+
+                                            <?php endforeach; ?>
+
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="ecm-property-field">

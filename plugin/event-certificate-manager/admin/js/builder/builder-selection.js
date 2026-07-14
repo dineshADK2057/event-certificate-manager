@@ -58,9 +58,20 @@
             '{' + placeholder + '}'
         );
 
+        const selectedFontFamily =
+            canvasElement.data('font-family') || 'Arial';
+
         $('#ecm_properties_font_family').val(
-            canvasElement.data('font-family')
+            selectedFontFamily
         );
+
+        if (typeof Builder.setFontPickerValue === 'function') {
+            Builder.setFontPickerValue(
+                'ecm-properties-font-picker',
+                selectedFontFamily,
+                false
+            );
+        }
 
         $('#ecm_properties_font_size').val(
             canvasElement.data('font-size')
@@ -96,7 +107,7 @@
         $('#ecm-elements-list-view').hide();
         $('#ecm-element-properties-view').show();
 
-        
+
 
         /*
          * Reset the autosave status for the newly selected element.
@@ -126,7 +137,7 @@
 
         $('#ecm_properties_element_id').val('');
 
-    
+
     };
 
     /**
