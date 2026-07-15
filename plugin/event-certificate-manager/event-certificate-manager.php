@@ -23,6 +23,16 @@ define('ECM_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('ECM_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 /*
+ * Composer dependencies.
+ *
+ * Loads tc-lib-pdf and its related packages.
+ */
+$ecm_composer_autoload = ECM_PLUGIN_PATH . 'vendor/autoload.php';
+
+if (file_exists($ecm_composer_autoload)) {
+    require_once $ecm_composer_autoload;
+}
+/*
  * Core classes.
  */
 require_once ECM_PLUGIN_PATH . 'includes/class-database.php';
@@ -34,6 +44,8 @@ require_once ECM_PLUGIN_PATH . 'includes/class-loader.php';
  * Font management.
  */
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-font-manager.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-google-fonts.php';
+
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-google-fonts.php';
 
 /*
