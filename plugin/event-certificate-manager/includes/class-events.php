@@ -4,6 +4,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+
+
 require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-events-page.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-crud.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-workspace.php';
@@ -11,7 +13,17 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/overview/trait-event-overview.p
 
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
-require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-participants.php';
+
+/*
+ * Participants module.
+ */
+require_once ECM_PLUGIN_PATH . 'includes/modules/participants/trait-event-participants.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/participants/trait-participant-ui.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/participants/trait-participant-crud.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/participants/trait-participant-import.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/participants/trait-participant-export.php';
+
+
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-helpers.php';
 
 require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-event-templates.php';
@@ -26,14 +38,21 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/trait-certificate-
 
 class ECM_Events
 {
+
+
     use ECM_Events_Page;
     use ECM_Event_CRUD;
     use ECM_Event_Workspace;
     use ECM_Event_Overview;
 
+    use ECM_Event_Participants;
+    use ECM_Participant_UI;
+    use ECM_Participant_CRUD;
+    use ECM_Participant_Import;
+    use ECM_Participant_Export;
+
     use ECM_Event_Sessions;
     use ECM_Event_Settings;
-    use ECM_Event_Participants;
     use ECM_Event_Helpers;
 
     use ECM_Event_Templates;
@@ -105,11 +124,11 @@ class ECM_Events
 
 
 
-    
+
 
     private function tab_logs($event)
     {
-    ?>
+?>
         <h2>Certificate Logs</h2>
         <p>Generated certificate history, email status, downloads, and resend actions will be built here.</p>
     <?php

@@ -323,29 +323,14 @@
             $('#ecm-add-element-modal').fadeIn(150);
         });
 
-
         $('select[name="placeholder_key"]').on('change', function () {
             let selected = $(this).find(':selected');
             $('#ecm_element_source_type').val(selected.data('source-type'));
         });
 
-
-
     });
 
     let ecmElementSaveTimer = null;
     let ecmElementSaveRequest = null;
-
-   
-
-    
-
-    
-
-    
-
-    
-
-    
 
 })(jQuery);
