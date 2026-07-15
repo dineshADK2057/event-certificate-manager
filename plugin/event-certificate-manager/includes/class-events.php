@@ -11,8 +11,18 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-crud.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-workspace.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/overview/trait-event-overview.php';
 
-require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
+
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
+
+/*
+ * Sessions module.
+ */
+require_once ECM_PLUGIN_PATH . 'includes/modules/sessions/trait-event-sessions.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/sessions/trait-session-ui.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/sessions/trait-session-crud.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/sessions/trait-session-participants-ui.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/sessions/trait-session-participants.php';
+
 
 /*
  * Participants module.
@@ -52,6 +62,13 @@ class ECM_Events
     use ECM_Participant_Export;
 
     use ECM_Event_Sessions;
+    use ECM_Session_UI;
+    use ECM_Session_CRUD;
+    use ECM_Session_Participants_UI;
+    use ECM_Session_Participants;
+
+
+
     use ECM_Event_Settings;
     use ECM_Event_Helpers;
 
@@ -120,12 +137,6 @@ class ECM_Events
     }
 
 
-
-
-
-
-
-
     private function tab_logs($event)
     {
 ?>
@@ -155,73 +166,4 @@ class ECM_Events
 <?php
     }
 
-    public function handle_add_session()
-    {
-        if (isset($_POST['ecm_update_session_submit'])) {
-            return;
-        }
-
-        if (!isset($_POST['ecm_add_session_submit'])) {
-            return;
-        }
-
-        if (
-            !isset($_POST['ecm_add_session_nonce']) ||
-            !wp_verify_nonce($_POST['ecm_add_session_nonce'], 'ecm_add_session')
-        ) {
-            wp_die('Security check failed.');
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_die('You do not have permission to perform this action.');
-        }
-
-        $event_id     = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-        $session_name = sanitize_text_field($_POST['session_name'] ?? '');
-        $tutor_name   = sanitize_text_field($_POST['tutor_name'] ?? '');
-        $session_date = sanitize_text_field($_POST['session_date'] ?? '');
-        $status       = sanitize_text_field($_POST['status'] ?? 'active');
-
-        if (!$event_id) {
-            wp_die('Invalid event.');
-        }
-
-        if (empty($session_name)) {
-            wp_die('Session name is required.');
-        }
-
-        $allowed_statuses = ['draft', 'active', 'closed'];
-
-        if (!in_array($status, $allowed_statuses, true)) {
-            $status = 'active';
-        }
-
-        global $wpdb;
-
-        $sessions_table = $wpdb->prefix . 'ecm_sessions';
-
-        $session_code = $this->generate_session_code($event_id);
-
-        $inserted = $wpdb->insert(
-            $sessions_table,
-            [
-                'event_id'     => $event_id,
-                'session_code' => $session_code,
-                'session_name' => $session_name,
-                'tutor_name'   => $tutor_name,
-                'session_date' => $session_date ?: null,
-                'status'       => $status,
-            ],
-            ['%d', '%s', '%s', '%s', '%s', '%s']
-        );
-
-        if (!$inserted) {
-            wp_die('Failed to add session.');
-        }
-
-        wp_safe_redirect(
-            admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=sessions&session_added=1')
-        );
-        exit;
-    }
 }

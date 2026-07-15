@@ -66,3 +66,8 @@ All notable changes to Event Certificate Manager will be documented here.
 - Added live Google Font previews.
 - Added secure local installation of selected Google Fonts.
 - Added local stylesheet reuse for installed fonts.
+
+### Changed
+- Refactored the Participants module into dedicated UI, CRUD, CSV import, and CSV export traits.
+- Added reusable participant field validation and participant-tab URL helpers.
+- Improved participant action sanitization and module documentation.
