@@ -4,11 +4,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/events/trait-events-page.php';
-
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/events/trait-event-crud.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-events-page.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-crud.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-workspace.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/overview/trait-event-overview.php';
 
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-sessions.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
@@ -24,11 +23,14 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-render
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/trait-font-ajax.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/trait-certificate-pdf-test.php';
 
+
 class ECM_Events
 {
     use ECM_Events_Page;
     use ECM_Event_CRUD;
-    
+    use ECM_Event_Workspace;
+    use ECM_Event_Overview;
+
     use ECM_Event_Sessions;
     use ECM_Event_Settings;
     use ECM_Event_Participants;
@@ -99,148 +101,11 @@ class ECM_Events
     }
 
 
-    private function manage_event_page($event_id)
-    {
-        global $wpdb;
 
-        $table = $wpdb->prefix . 'ecm_events';
 
-        $event = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM $table WHERE id = %d", $event_id)
-        );
 
-        if (!$event) {
-            echo '<div class="notice notice-error"><p>Event not found.</p></div>';
-            return;
-        }
 
-        $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'overview';
-
-        $tabs = [
-            'overview'     => 'Overview',
-            'participants' => 'Participants',
-            'sessions'     => 'Sessions',
-            'templates'    => 'Templates',
-            'certificates' => 'Certificates',
-            'logs'         => 'Logs',
-            'settings'     => 'Settings',
-        ];
-
-    ?>
-        <div class="ecm-form-header">
-            <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events')); ?>" class="button">
-                ← Back to Event List
-            </a>
-        </div>
-
-        <div class="ecm-event-heading">
-            <div>
-                <h2><?php echo esc_html($event->event_name); ?></h2>
-                <p>
-                    <strong>Event Code:</strong> <?php echo esc_html($event->event_code); ?>
-                    &nbsp; | &nbsp;
-                    <strong>Status:</strong>
-                    <span class="ecm-status ecm-status-<?php echo esc_attr($event->status); ?>">
-                        <?php echo esc_html(ucfirst($event->status)); ?>
-                    </span>
-                </p>
-            </div>
-
-            <a href="<?php echo esc_url(admin_url('admin.php?page=ecm-events&action=edit&event_id=' . absint($event->id))); ?>" class="button">
-                Edit Event
-            </a>
-        </div>
-
-        <nav class="nav-tab-wrapper ecm-tabs">
-            <?php foreach ($tabs as $tab_key => $tab_label) : ?>
-                <?php
-                $tab_url = admin_url(
-                    'admin.php?page=ecm-events&action=manage&event_id=' . absint($event->id) . '&tab=' . $tab_key
-                );
-                ?>
-                <a href="<?php echo esc_url($tab_url); ?>"
-                    class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
-                    <?php echo esc_html($tab_label); ?>
-                </a>
-            <?php endforeach; ?>
-        </nav>
-
-        <div class="ecm-panel ecm-panel-full ecm-tab-content">
-            <?php $this->render_event_tab($current_tab, $event); ?>
-        </div>
-    <?php
-    }
-
-    private function render_event_tab($tab, $event)
-    {
-        switch ($tab) {
-            case 'participants':
-                $this->tab_participants($event);
-                break;
-
-            case 'sessions':
-                $this->tab_sessions($event);
-                break;
-
-            case 'templates':
-                $this->tab_templates($event);
-                break;
-
-            case 'certificates':
-                $this->tab_certificates($event);
-                break;
-
-            case 'logs':
-                $this->tab_logs($event);
-                break;
-
-            case 'settings':
-                $this->tab_settings($event);
-                break;
-
-            case 'overview':
-            default:
-                $this->tab_overview($event);
-                break;
-        }
-    }
-
-    private function tab_overview($event)
-    {
-    ?>
-        <h2>Overview</h2>
-        <p>This is the main control center for this event.</p>
-
-        <table class="widefat striped ecm-details-table">
-            <tbody>
-                <tr>
-                    <th>Event Name</th>
-                    <td><?php echo esc_html($event->event_name); ?></td>
-                </tr>
-                <tr>
-                    <th>Event Code</th>
-                    <td><?php echo esc_html($event->event_code); ?></td>
-                </tr>
-                <tr>
-                    <th>Type</th>
-                    <td><?php echo esc_html($event->event_type); ?></td>
-                </tr>
-                <tr>
-                    <th>Venue</th>
-                    <td><?php echo esc_html($event->venue); ?></td>
-                </tr>
-                <tr>
-                    <th>Start Date</th>
-                    <td><?php echo esc_html($event->start_date); ?></td>
-                </tr>
-                <tr>
-                    <th>End Date</th>
-                    <td><?php echo esc_html($event->end_date); ?></td>
-                </tr>
-            </tbody>
-        </table>
-    <?php
-    }
+    
 
     private function tab_logs($event)
     {
