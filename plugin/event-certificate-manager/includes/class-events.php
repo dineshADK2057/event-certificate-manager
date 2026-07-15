@@ -43,7 +43,21 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-previe
 require_once ECM_PLUGIN_PATH . 'includes/modules/templates/trait-template-renderer.php';
 
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/trait-font-ajax.php';
-require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/trait-certificate-pdf-test.php';
+
+/*
+ * Certificates module.
+ */
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/trait-event-certificates.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/trait-certificate-pdf-test.php';
+
+/*
+ * Logs module.
+ */
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/logs/trait-event-logs.php';
 
 
 class ECM_Events
@@ -72,6 +86,9 @@ class ECM_Events
     use ECM_Event_Settings;
     use ECM_Event_Helpers;
 
+    /*
+    * Templates module.
+    */
     use ECM_Event_Templates;
     use ECM_Template_Builder;
     use ECM_Template_Elements;
@@ -80,7 +97,16 @@ class ECM_Events
 
     use ECM_Font_Ajax;
 
+    /*
+    * Certificates module.
+    */
+    use ECM_Event_Certificates;
     use ECM_Certificate_PDF_Test;
+
+    /*
+    * Logs module.
+    */
+    use ECM_Event_Logs;
 
 
     public function __construct()
@@ -137,33 +163,6 @@ class ECM_Events
     }
 
 
-    private function tab_logs($event)
-    {
-?>
-        <h2>Certificate Logs</h2>
-        <p>Generated certificate history, email status, downloads, and resend actions will be built here.</p>
-    <?php
-    }
 
-
-    private function tab_certificates($event)
-    {
-    ?>
-        <h2>Certificates</h2>
-        <p>This module will manage generated certificates, downloads, email sending, QR verification, and resend actions.</p>
-
-        <div class="ecm-panel ecm-panel-full">
-            <h3>Certificate Engine</h3>
-            <p>Coming soon:</p>
-            <ul class="ul-disc">
-                <li>Generated certificate list</li>
-                <li>Certificate ID management</li>
-                <li>Download certificate PDF</li>
-                <li>Resend email</li>
-                <li>QR verification status</li>
-            </ul>
-        </div>
-<?php
-    }
-
+    
 }

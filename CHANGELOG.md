@@ -71,3 +71,9 @@ All notable changes to Event Certificate Manager will be documented here.
 - Refactored the Participants module into dedicated UI, CRUD, CSV import, and CSV export traits.
 - Added reusable participant field validation and participant-tab URL helpers.
 - Improved participant action sanitization and module documentation.
+
+### Changed
+- Refactored the Sessions module into dedicated event UI, CRUD, session-participant UI, and participant-assignment traits.
+- Moved session creation out of the central event controller.
+- Added reusable session URL and request-sanitization helpers.
+- Improved session module documentation and responsibility separation.
