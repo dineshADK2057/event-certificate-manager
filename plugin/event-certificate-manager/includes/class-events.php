@@ -12,7 +12,14 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/events/trait-event-workspace.ph
 require_once ECM_PLUGIN_PATH . 'includes/modules/overview/trait-event-overview.php';
 
 
-require_once ECM_PLUGIN_PATH . 'includes/modules/trait-event-settings.php';
+/*
+ * Settings module.
+ */
+require_once ECM_PLUGIN_PATH . 'includes/modules/settings/trait-event-settings.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/settings/trait-participant-fields-ui.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/settings/trait-participant-fields-actions.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/settings/trait-session-settings-ui.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/settings/trait-session-settings-actions.php';
 
 /*
  * Sessions module.
@@ -47,17 +54,13 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/trait-font-ajax.php';
 /*
  * Certificates module.
  */
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/certificates/trait-event-certificates.php';
-
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/certificates/trait-certificate-pdf-test.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/trait-event-certificates.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/trait-certificate-pdf-test.php';
 
 /*
  * Logs module.
  */
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/logs/trait-event-logs.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/logs/trait-event-logs.php';
 
 
 class ECM_Events
@@ -83,7 +86,17 @@ class ECM_Events
 
 
 
+    /*
+    * Settings module.
+    */
     use ECM_Event_Settings;
+    use ECM_Participant_Fields_UI;
+    use ECM_Participant_Fields_Actions;
+    use ECM_Session_Settings_UI;
+    use ECM_Session_Settings_Actions;
+
+
+
     use ECM_Event_Helpers;
 
     /*
@@ -161,8 +174,4 @@ class ECM_Events
             [$this, 'handle_pdf_compatibility_test']
         );
     }
-
-
-
-    
 }

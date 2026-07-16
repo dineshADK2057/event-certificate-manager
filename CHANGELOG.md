@@ -77,3 +77,8 @@ All notable changes to Event Certificate Manager will be documented here.
 - Moved session creation out of the central event controller.
 - Added reusable session URL and request-sanitization helpers.
 - Improved session module documentation and responsibility separation.
+
+### Changed
+- Extracted the event Certificates tab into its own module trait.
+- Extracted the event Logs tab into its own module trait.
+- Further reduced responsibilities inside the central event controller.
