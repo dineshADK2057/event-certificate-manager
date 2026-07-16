@@ -1,21 +1,97 @@
 <?php
 
+/**
+ * ECM Admin Controller
+ *
+ * Registers the WordPress admin menu and loads ECM admin assets.
+ *
+ * Page rendering is delegated to dedicated module traits.
+ *
+ * @package EventCertificateManager
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
+/*
+ * Global admin page modules.
+ */
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/dashboard/trait-dashboard-page.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/participants/trait-global-participants.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/templates/trait-global-templates.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/trait-global-certificates.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/logs/trait-global-logs.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/settings/trait-global-settings.php';
+
 class ECM_Admin
 {
+    use ECM_Dashboard_Page;
+    use ECM_Global_Participants;
+    use ECM_Global_Templates;
+    use ECM_Global_Certificates;
+    use ECM_Global_Logs;
+    use ECM_Global_Settings;
 
-    public function init()
+    /**
+     * Shared Event Workspace controller.
+     *
+     * The same instance is used for menu callbacks and action hooks,
+     * preventing duplicate hook registration.
+     *
+     * @var ECM_Events
+     */
+    private $events;
+
+    /**
+     * Create the ECM Admin controller.
+     *
+     * @param ECM_Events $events Event Workspace controller.
+     */
+    public function __construct($events)
     {
-        add_action('admin_menu', [$this, 'register_menu']);
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
+        $this->events = $events;
     }
 
+    /**
+     * Register WordPress admin hooks.
+     *
+     * @return void
+     */
+    public function init()
+    {
+        add_action(
+            'admin_menu',
+            [$this, 'register_menu']
+        );
+
+        add_action(
+            'admin_enqueue_scripts',
+            [$this, 'enqueue_assets']
+        );
+    }
+
+    /**
+     * Register the ECM top-level menu and submenu pages.
+     *
+     * Global submenu pages provide cross-event views.
+     * Event-specific work remains inside the Events workspace.
+     *
+     * @return void
+     */
     public function register_menu()
     {
-
         add_menu_page(
             'Event Certificate Manager',
             'ECM',
@@ -35,15 +111,13 @@ class ECM_Admin
             [$this, 'dashboard_page']
         );
 
-        $events = new ECM_Events();
-
         add_submenu_page(
             'ecm-dashboard',
             'Events',
             'Events',
             'manage_options',
             'ecm-events',
-            [$events, 'events_page']
+            [$this->events, 'events_page']
         );
 
         add_submenu_page(
@@ -52,7 +126,7 @@ class ECM_Admin
             'Participants',
             'manage_options',
             'ecm-participants',
-            [$this, 'placeholder_page']
+            [$this, 'global_participants_page']
         );
 
         add_submenu_page(
@@ -61,7 +135,7 @@ class ECM_Admin
             'Templates',
             'manage_options',
             'ecm-templates',
-            [$this, 'placeholder_page']
+            [$this, 'global_templates_page']
         );
 
         add_submenu_page(
@@ -70,7 +144,7 @@ class ECM_Admin
             'Certificates',
             'manage_options',
             'ecm-certificates',
-            [$this, 'placeholder_page']
+            [$this, 'global_certificates_page']
         );
 
         add_submenu_page(
@@ -79,7 +153,7 @@ class ECM_Admin
             'Logs',
             'manage_options',
             'ecm-logs',
-            [$this, 'placeholder_page']
+            [$this, 'global_logs_page']
         );
 
         add_submenu_page(
@@ -88,10 +162,20 @@ class ECM_Admin
             'Settings',
             'manage_options',
             'ecm-settings',
-            [$this, 'placeholder_page']
+            [$this, 'global_settings_page']
         );
     }
 
+    /**
+     * Load ECM admin styles and scripts.
+     *
+     * Builder-specific modules are loaded only when the Template
+     * Builder screen is active.
+     *
+     * @param string $hook Current WordPress admin screen hook.
+     *
+     * @return void
+     */
     public function enqueue_assets($hook)
     {
         if (strpos($hook, 'ecm') === false) {
@@ -106,9 +190,9 @@ class ECM_Admin
         );
 
         /*
-     * General ECM admin functionality:
-     * modals, participants, sessions, templates list, etc.
-     */
+         * Shared ECM admin functionality:
+         * modals, participants, sessions, templates, and settings.
+         */
         wp_enqueue_script(
             'ecm-admin',
             ECM_PLUGIN_URL . 'admin/js/ecm-admin.js',
@@ -117,9 +201,6 @@ class ECM_Admin
             true
         );
 
-        /*
-     * Load Builder modules only on the Template Builder screen.
-     */
         $action = isset($_GET['action'])
             ? sanitize_key(wp_unslash($_GET['action']))
             : '';
@@ -128,9 +209,20 @@ class ECM_Admin
             return;
         }
 
+        $this->enqueue_builder_assets();
+    }
+
+    /**
+     * Load modular Template Builder JavaScript.
+     *
+     * @return void
+     */
+    private function enqueue_builder_assets()
+    {
         wp_enqueue_script(
             'ecm-builder-core',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-core.js',
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-core.js',
             ['jquery'],
             ECM_VERSION,
             true
@@ -138,31 +230,46 @@ class ECM_Admin
 
         wp_enqueue_script(
             'ecm-builder-selection',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-selection.js',
-            ['jquery', 'ecm-builder-core'],
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-selection.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+            ],
             ECM_VERSION,
             true
         );
 
         wp_enqueue_script(
             'ecm-builder-properties',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-properties.js',
-            ['jquery', 'ecm-builder-core', 'ecm-builder-selection'],
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-properties.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-selection',
+            ],
             ECM_VERSION,
             true
         );
 
         wp_enqueue_script(
             'ecm-builder-autosave',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-autosave.js',
-            ['jquery', 'ecm-builder-core', 'ecm-builder-properties'],
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-autosave.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+                'ecm-builder-properties',
+            ],
             ECM_VERSION,
             true
         );
 
         wp_enqueue_script(
             'ecm-builder-interaction',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-interaction.js',
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-interaction.js',
             [
                 'jquery',
                 'ecm-builder-core',
@@ -174,10 +281,10 @@ class ECM_Admin
             true
         );
 
-
         wp_enqueue_script(
             'ecm-builder-zoom',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-zoom.js',
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-zoom.js',
             [
                 'jquery',
                 'ecm-builder-core',
@@ -188,7 +295,8 @@ class ECM_Admin
 
         wp_enqueue_script(
             'ecm-builder-font-picker',
-            ECM_PLUGIN_URL . 'admin/js/builder/builder-font-picker.js',
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-font-picker.js',
             [
                 'jquery',
                 'ecm-builder-core',
@@ -198,71 +306,5 @@ class ECM_Admin
             ECM_VERSION,
             true
         );
-    }
-
-    public function dashboard_page()
-    {
-
-        global $wpdb;
-
-        $events_table       = $wpdb->prefix . 'ecm_events';
-        $participants_table = $wpdb->prefix . 'ecm_participants';
-        $templates_table    = $wpdb->prefix . 'ecm_templates';
-        $certificates_table = $wpdb->prefix . 'ecm_certificates';
-
-        $events_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $events_table");
-        $participants_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $participants_table");
-        $templates_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $templates_table");
-        $certificates_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $certificates_table");
-
-?>
-        <div class="wrap ecm-wrap">
-            <h1>Event Certificate Manager</h1>
-            <p class="ecm-subtitle">Manage events, participants, templates, certificates, QR verification, and email automation.</p>
-
-            <div class="ecm-dashboard-grid">
-                <div class="ecm-card">
-                    <span class="ecm-card-label">Events</span>
-                    <strong><?php echo esc_html($events_count); ?></strong>
-                </div>
-
-                <div class="ecm-card">
-                    <span class="ecm-card-label">Participants</span>
-                    <strong><?php echo esc_html($participants_count); ?></strong>
-                </div>
-
-                <div class="ecm-card">
-                    <span class="ecm-card-label">Templates</span>
-                    <strong><?php echo esc_html($templates_count); ?></strong>
-                </div>
-
-                <div class="ecm-card">
-                    <span class="ecm-card-label">Certificates</span>
-                    <strong><?php echo esc_html($certificates_count); ?></strong>
-                </div>
-            </div>
-
-            <div class="ecm-panel">
-                <h2>Getting Started</h2>
-                <ol>
-                    <li>Create an event.</li>
-                    <li>Define participant fields for that event.</li>
-                    <li>Add participants manually or upload a CSV file.</li>
-                    <li>Upload a certificate template and place dynamic elements.</li>
-                    <li>Publish a certificate request form.</li>
-                </ol>
-            </div>
-        </div>
-    <?php
-    }
-
-    public function placeholder_page()
-    {
-    ?>
-        <div class="wrap ecm-wrap">
-            <h1>Coming Soon</h1>
-            <p>This ECM module will be built in the next sprint.</p>
-        </div>
-<?php
     }
 }

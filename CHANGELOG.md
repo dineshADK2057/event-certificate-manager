@@ -82,3 +82,9 @@ All notable changes to Event Certificate Manager will be documented here.
 - Extracted the event Certificates tab into its own module trait.
 - Extracted the event Logs tab into its own module trait.
 - Further reduced responsibilities inside the central event controller.
+
+### Changed
+- Refactored Event Settings into dedicated orchestration, participant-field UI, participant-field actions, session-settings UI, and session-settings action traits.
+- Removed duplicate Edit Field modal markup from participant-field rows.
+- Added shared field validation, nonce verification, URL generation, and protected-field helpers.
+- Added event/session ownership validation before saving session settings.
