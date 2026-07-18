@@ -560,4 +560,5 @@ class ECM_Events
             [$this, 'handle_pdf_compatibility_test']
         );
     }
+
 }

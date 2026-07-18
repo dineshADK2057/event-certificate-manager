@@ -88,3 +88,9 @@ All notable changes to Event Certificate Manager will be documented here.
 - Removed duplicate Edit Field modal markup from participant-field rows.
 - Added shared field validation, nonce verification, URL generation, and protected-field helpers.
 - Added event/session ownership validation before saving session settings.
+
+### Added
+- Installed and bootstrapped tc-lib-pdf through Composer.
+- Generated tc-lib-pdf font definitions and font assets.
+- Added the ECM PDF bootstrap class.
+- Confirmed successful PDF generation and inline browser rendering.

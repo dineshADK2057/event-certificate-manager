@@ -21,7 +21,7 @@ trait ECM_Global_Certificates
      */
     public function global_certificates_page()
     {
-        ?>
+?>
         <div class="wrap ecm-wrap">
             <div class="ecm-page-header">
                 <div>
@@ -48,6 +48,8 @@ trait ECM_Global_Certificates
                 </p>
             </div>
         </div>
+
         <?php
+
     }
 }

@@ -32,6 +32,15 @@ $ecm_composer_autoload = ECM_PLUGIN_PATH . 'vendor/autoload.php';
 if (file_exists($ecm_composer_autoload)) {
     require_once $ecm_composer_autoload;
 }
+
+/*
+ * PDF engine bootstrap.
+ */
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/engine/class-pdf-bootstrap.php';
+
+/*
+
 /*
  * Core classes.
  */
@@ -39,6 +48,8 @@ require_once ECM_PLUGIN_PATH . 'includes/class-database.php';
 require_once ECM_PLUGIN_PATH . 'includes/class-activator.php';
 require_once ECM_PLUGIN_PATH . 'includes/class-deactivator.php';
 require_once ECM_PLUGIN_PATH . 'includes/class-loader.php';
+
+
 
 /*
  * Font management.
