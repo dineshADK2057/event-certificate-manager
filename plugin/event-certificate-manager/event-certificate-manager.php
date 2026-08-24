@@ -34,12 +34,18 @@ if (file_exists($ecm_composer_autoload)) {
 }
 
 /*
- * PDF engine bootstrap.
- */
-require_once ECM_PLUGIN_PATH
-    . 'includes/modules/certificates/engine/class-pdf-bootstrap.php';
+ * Certificate Engine
+*/
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/bootstrap/class-pdf-bootstrap.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/context/class-render-context.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/context/class-certificate-data-loader.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-background-renderer.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-element-renderer.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-text-renderer.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-placeholder-resolver.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-certificate-renderer.php';
 
-/*
+
 
 /*
  * Core classes.
@@ -56,8 +62,8 @@ require_once ECM_PLUGIN_PATH . 'includes/class-loader.php';
  */
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-font-manager.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-google-fonts.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-pdf-font-manager.php';
 
-require_once ECM_PLUGIN_PATH . 'includes/modules/fonts/class-google-fonts.php';
 
 /*
  * Plugin lifecycle hooks.

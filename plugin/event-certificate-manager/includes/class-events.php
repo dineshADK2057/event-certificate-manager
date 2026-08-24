@@ -168,6 +168,8 @@ require_once ECM_PLUGIN_PATH
 |
 */
 
+
+
 require_once ECM_PLUGIN_PATH
     . 'includes/modules/certificates/trait-event-certificates.php';
 
@@ -381,6 +383,11 @@ class ECM_Events
             'admin_init',
             [$this, 'handle_export_participants_csv']
         );
+
+        add_action(
+            'admin_post_ecm_pdf_font_test',
+            [$this, 'handle_pdf_font_test']
+        );
     }
 
     /*
@@ -553,12 +560,31 @@ class ECM_Events
      *
      * @return void
      */
+    /**
+     * Register certificate-engine hooks.
+     *
+     * @return void
+     */
     private function register_certificate_hooks()
     {
         add_action(
             'admin_post_ecm_pdf_compatibility_test',
             [$this, 'handle_pdf_compatibility_test']
         );
-    }
 
+        add_action(
+            'admin_post_ecm_certificate_context_test',
+            [$this, 'handle_certificate_context_test']
+        );
+
+        add_action(
+            'admin_post_ecm_pdf_render_playground',
+            [$this, 'handle_pdf_render_playground']
+        );
+
+        add_action(
+            'admin_notices',
+            [$this, 'render_certificate_engine_test_notice']
+        );
+    }
 }

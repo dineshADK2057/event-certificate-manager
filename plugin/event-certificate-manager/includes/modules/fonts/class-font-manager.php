@@ -42,6 +42,22 @@ class ECM_Font_Manager
     }
 
     /**
+     * Return the absolute PDF font assets directory.
+     *
+     * @return string
+     */
+    public static function get_pdf_fonts_directory()
+    {
+        $fonts_directory = self::get_fonts_directory();
+
+        if (!$fonts_directory) {
+            return '';
+        }
+
+        return trailingslashit($fonts_directory) . 'pdf/';
+    }
+
+    /**
      * Return the public URL for the ECM fonts directory.
      *
      * @return string
@@ -93,6 +109,7 @@ class ECM_Font_Manager
         $subdirectories = [
             $directory . 'google/',
             $directory . 'custom/',
+            $directory . 'pdf/',
         ];
 
         foreach ($subdirectories as $subdirectory) {

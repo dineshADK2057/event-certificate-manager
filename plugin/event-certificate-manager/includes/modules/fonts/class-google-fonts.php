@@ -356,6 +356,68 @@ class ECM_Google_Fonts
         $registered_files['stylesheet'] =
             $relative_directory . $css_filename;
 
+        /*
+        * Download a PDF-compatible font source.
+        *
+        * A legacy browser user-agent encourages Google Fonts
+        * to return a TTF-compatible source instead of WOFF2.
+        */
+        $pdf_css_url = self::get_pdf_install_css_url(
+            $family
+        );
+
+        $pdf_css_response = wp_safe_remote_get(
+            $pdf_css_url,
+            [
+                'timeout'     => 30,
+                'redirection' => 3,
+                'user-agent'  =>
+                'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)',
+            ]
+        );
+
+        if (!is_wp_error($pdf_css_response)) {
+            $pdf_css = wp_remote_retrieve_body(
+                $pdf_css_response
+            );
+
+            if (trim($pdf_css) !== '') {
+                $pdf_font_urls = self::extract_font_urls(
+                    $pdf_css
+                );
+
+                if (!empty($pdf_font_urls)) {
+                    $pdf_download = self::download_font_file(
+                        $pdf_font_urls[0],
+                        $absolute_directory,
+                        $catalogue_font['slug'] . '-pdf',
+                        1
+                    );
+
+                    if (!is_wp_error($pdf_download)) {
+                        $registered_files['pdf-source'] =
+                            $relative_directory
+                            . $pdf_download['filename'];
+
+                        /*
+                        * Convert the downloaded PDF source into
+                        * tc-lib-pdf compatible font assets.
+                        */
+                        if (class_exists('ECM_PDF_Font_Manager')) {
+                            $pdf_font_name = ECM_PDF_Font_Manager::import_font(
+                                $pdf_download['local_path']
+                            );
+
+                            if (!is_wp_error($pdf_font_name)) {
+                                $registered_files['pdf-font-name'] =
+                                    $pdf_font_name;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         $registered = ECM_Font_Manager::register_font(
             [
                 'family'   => $catalogue_font['family'],
@@ -414,6 +476,156 @@ class ECM_Google_Fonts
     }
 
     /**
+     * Prepare PDF assets for an already installed Google Font.
+     *
+     * @param string $family Font family.
+     *
+     * @return string|WP_Error
+     */
+    public static function prepare_pdf_font($family)
+    {
+        $family = sanitize_text_field($family);
+
+        if ($family === '') {
+            return new WP_Error(
+                'ecm_google_pdf_font_missing',
+                'A Google Font family is required.'
+            );
+        }
+
+        $catalogue_font = self::get_catalogue_font($family);
+
+        if (!$catalogue_font) {
+            return new WP_Error(
+                'ecm_google_pdf_font_not_allowed',
+                'This font is not available in the ECM Google Fonts catalogue.'
+            );
+        }
+
+        if (
+            !class_exists('ECM_Font_Manager') ||
+            !class_exists('ECM_PDF_Font_Manager')
+        ) {
+            return new WP_Error(
+                'ecm_pdf_font_manager_missing',
+                'The ECM PDF font system is unavailable.'
+            );
+        }
+
+        $existing = ECM_Font_Manager::get_font(
+            $catalogue_font['slug'],
+            'google'
+        );
+
+        if (!$existing) {
+            return new WP_Error(
+                'ecm_google_font_not_installed',
+                'The Google Font must be installed before PDF assets can be prepared.'
+            );
+        }
+
+        /*
+        * Already prepared.
+        */
+        if (!empty($existing['files']['pdf-font-name'])) {
+            return $existing['files']['pdf-font-name'];
+        }
+
+        $fonts_directory = ECM_Font_Manager::get_fonts_directory();
+
+        if (!$fonts_directory) {
+            return new WP_Error(
+                'ecm_fonts_directory_missing',
+                'The ECM fonts directory is unavailable.'
+            );
+        }
+
+        $relative_directory =
+            'google/' . $catalogue_font['slug'] . '/';
+
+        $absolute_directory =
+            trailingslashit($fonts_directory)
+            . $relative_directory;
+
+        $pdf_css_response = wp_safe_remote_get(
+            self::get_pdf_install_css_url($family),
+            [
+                'timeout'     => 30,
+                'redirection' => 3,
+                'user-agent' =>
+                'Mozilla/5.0 (Linux; U; Android 4.0.3; en-us; '
+                    . 'Nexus One Build/FRF91) AppleWebKit/533.1 '
+                    . '(KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
+            ]
+        );
+
+        if (is_wp_error($pdf_css_response)) {
+            return $pdf_css_response;
+        }
+
+        $pdf_css = wp_remote_retrieve_body(
+            $pdf_css_response
+        );
+
+        $pdf_font_urls = self::extract_font_urls(
+            $pdf_css
+        );
+
+        if (empty($pdf_font_urls)) {
+            return new WP_Error(
+                'ecm_google_pdf_source_missing',
+                'Google Fonts did not return a PDF-compatible font source.'
+            );
+        }
+
+        $pdf_download = self::download_font_file(
+            $pdf_font_urls[0],
+            $absolute_directory,
+            $catalogue_font['slug'] . '-pdf',
+            1
+        );
+
+        if (is_wp_error($pdf_download)) {
+            return $pdf_download;
+        }
+
+        $pdf_font_name = ECM_PDF_Font_Manager::import_font(
+            $pdf_download['local_path']
+        );
+
+        if (is_wp_error($pdf_font_name)) {
+            return $pdf_font_name;
+        }
+
+        /*
+        * Preserve all existing web-font files and add
+        * the PDF-specific information.
+        */
+        $files = isset($existing['files'])
+            && is_array($existing['files'])
+            ? $existing['files']
+            : [];
+
+        $files['pdf-source'] =
+            $relative_directory
+            . $pdf_download['filename'];
+
+        $files['pdf-font-name'] = $pdf_font_name;
+
+        $existing['files'] = $files;
+
+        $registered = ECM_Font_Manager::register_font(
+            $existing
+        );
+
+        if (is_wp_error($registered)) {
+            return $registered;
+        }
+
+        return $pdf_font_name;
+    }
+
+    /**
      * Return the CSS2 URL used for local installation.
      *
      * @param string $family Font family.
@@ -428,6 +640,36 @@ class ECM_Google_Fonts
      * @return string
      */
     private static function get_install_css_url($family)
+    {
+        $family = sanitize_text_field($family);
+
+        if ($family === '') {
+            return '';
+        }
+
+        $encoded_family = str_replace(
+            '%20',
+            '+',
+            rawurlencode(trim($family))
+        );
+
+        return 'https://fonts.googleapis.com/css2?family='
+            . $encoded_family
+            . ':wght@400&display=swap';
+    }
+
+    /**
+     * Return a Google Fonts CSS URL intended for PDF font installation.
+     *
+     * A legacy browser user-agent is used later when requesting this URL
+     * so Google returns TTF-compatible font sources instead of WOFF2.
+     *
+     * @param string $family Font family.
+     *
+     * @return string
+     */
+
+    private static function get_pdf_install_css_url($family)
     {
         $family = sanitize_text_field($family);
 

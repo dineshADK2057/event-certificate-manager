@@ -189,28 +189,36 @@ class ECM_Database
         ) {$charset_collate};";
 
         /*
-         * Template elements
-         *
-         * Stores placeholders and their visual properties on a template.
-         * Font files themselves are managed through the filesystem.
-         */
+ * Template elements
+ *
+ * Stores placeholders and their visual properties on a template.
+ * Font files themselves are managed through the filesystem.
+ */
         $sql[] = "CREATE TABLE {$template_elements} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             template_id BIGINT(20) UNSIGNED NOT NULL,
+
+            element_type VARCHAR(30) NOT NULL DEFAULT 'text',
+            text_value LONGTEXT DEFAULT NULL,
+
             placeholder_key VARCHAR(100) NOT NULL,
             source_type VARCHAR(50) NOT NULL DEFAULT 'participant',
+
             x_position FLOAT NOT NULL DEFAULT 0,
             y_position FLOAT NOT NULL DEFAULT 0,
             width FLOAT DEFAULT NULL,
             height FLOAT DEFAULT NULL,
+
             font_family VARCHAR(150) NOT NULL DEFAULT 'Arial',
             font_size FLOAT NOT NULL DEFAULT 18,
             font_style VARCHAR(30) NOT NULL DEFAULT '',
             font_color VARCHAR(20) NOT NULL DEFAULT '#000000',
             alignment VARCHAR(20) NOT NULL DEFAULT 'left',
             rotation FLOAT NOT NULL DEFAULT 0,
+
             element_order INT(11) NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
             PRIMARY KEY (id),
             KEY template_id (template_id),
             KEY placeholder_key (placeholder_key),
