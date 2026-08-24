@@ -73,6 +73,33 @@ class ECM_Text_Renderer
                 $font['out']
             );
 
+
+            /*
+            * Apply the configured text color.
+            */
+            $font_color = !empty($element->font_color)
+                ? trim((string) $element->font_color)
+                : '#000000';
+
+            try {
+                $color_command = $pdf->color->getPdfFillColor(
+                    $font_color
+                );
+
+                $pdf->page->addContent(
+                    $color_command
+                );
+            } catch (Throwable $exception) {
+                /*
+                * Invalid or unsupported colors fall back to black.
+                */
+                $pdf->page->addContent(
+                    $pdf->color->getPdfFillColor(
+                        '#000000'
+                    )
+                );
+            }
+
             /*
              * Template Builder coordinates are stored in CSS pixels.
              * tc-lib-pdf currently uses millimetres.
@@ -129,6 +156,32 @@ class ECM_Text_Renderer
              */
             $pid = (int) $pdf->page->getPageID();
 
+            /*
+            * Apply element rotation around the center of its bounding box.
+            */
+            $rotation = isset($element->rotation)
+                ? (float) $element->rotation
+                : 0;
+
+            if ($rotation != 0) {
+                $rotation_center_x = $x + ($width / 2);
+                $rotation_center_y = $y + ($height / 2);
+
+                $pdf->page->addContent(
+                    $pdf->graph->getStartTransform(),
+                    $pid
+                );
+
+                $pdf->page->addContent(
+                    $pdf->graph->getRotation(
+                        -$rotation,
+                        $rotation_center_x,
+                        $rotation_center_y
+                    ),
+                    $pid
+                );
+            }
+
             $pdf->addTextCell(
                 $text,
                 $pid,
@@ -155,6 +208,17 @@ class ECM_Text_Renderer
                 false,
                 false
             );
+
+            /*
+            * Close the transformation so rotation does not affect
+            * any following certificate elements.
+            */
+            if ($rotation != 0) {
+                $pdf->page->addContent(
+                    $pdf->graph->getStopTransform(),
+                    $pid
+                );
+            }
 
             return true;
         } catch (Throwable $exception) {
