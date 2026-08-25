@@ -41,13 +41,12 @@ trait ECM_Participant_UI
                 wp_unslash($_GET['participant_search'])
             )
             : '';
-        ?>
+?>
         <div class="ecm-list-toolbar">
             <form
                 method="post"
                 class="ecm-list-toolbar-left"
-                id="ecm-bulk-participant-form"
-            >
+                id="ecm-bulk-participant-form">
                 <?php
                 wp_nonce_field(
                     'ecm_bulk_participant_action',
@@ -58,8 +57,7 @@ trait ECM_Participant_UI
                 <input
                     type="hidden"
                     name="event_id"
-                    value="<?php echo esc_attr($event->id); ?>"
-                >
+                    value="<?php echo esc_attr($event->id); ?>">
 
                 <select name="bulk_action">
                     <option value="">Bulk actions</option>
@@ -69,68 +67,59 @@ trait ECM_Participant_UI
                 <button
                     type="submit"
                     name="ecm_bulk_participant_submit"
-                    class="button"
-                >
+                    class="button">
                     Apply
                 </button>
             </form>
 
             <form
                 method="get"
-                class="ecm-list-toolbar-right"
-            >
+                class="ecm-list-toolbar-right">
                 <input
                     type="hidden"
                     name="page"
-                    value="ecm-events"
-                >
+                    value="ecm-events">
 
                 <input
                     type="hidden"
                     name="action"
-                    value="manage"
-                >
+                    value="manage">
 
                 <input
                     type="hidden"
                     name="event_id"
-                    value="<?php echo esc_attr($event->id); ?>"
-                >
+                    value="<?php echo esc_attr($event->id); ?>">
 
                 <input
                     type="hidden"
                     name="tab"
-                    value="participants"
-                >
+                    value="participants">
 
                 <input
                     type="search"
                     name="participant_search"
                     value="<?php echo esc_attr($search); ?>"
                     placeholder="Search participants..."
-                    class="regular-text"
-                >
+                    class="regular-text">
 
                 <button
                     type="submit"
-                    class="button"
-                >
+                    class="button">
                     Search
                 </button>
 
                 <?php if ($search !== '') : ?>
                     <a
                         href="<?php echo esc_url(
-                            admin_url(
-                                'admin.php?page=ecm-events'
-                                . '&action=manage'
-                                . '&event_id='
-                                . absint($event->id)
-                                . '&tab=participants'
-                            )
-                        ); ?>"
-                        class="button"
-                    >
+                                    admin_url(
+                                        'admin.php?page=ecm-events'
+                                            . '&action=manage'
+                                            . '&event_id='
+                                            . absint($event->id)
+                                            . '&tab=participants'
+                                    )
+                                ); ?>"
+                        class="button">
                         Clear
                     </a>
                 <?php endif; ?>
@@ -154,22 +143,20 @@ trait ECM_Participant_UI
     {
         global $wpdb;
 
-        $participants_table =
-            $wpdb->prefix . 'ecm_participants';
-
-        $meta_table =
-            $wpdb->prefix . 'ecm_participant_meta';
+        $participants_table       = $wpdb->prefix . 'ecm_participants';
+        $event_participants_table = $wpdb->prefix . 'ecm_event_participants';
+        $meta_table               = $wpdb->prefix . 'ecm_participant_meta';
 
         $fields = $this->get_event_fields($event->id);
 
         if (empty($fields)) {
-            ?>
+        ?>
             <div class="notice notice-warning inline">
                 <p>
                     Participant fields are not configured for this event.
                 </p>
             </div>
-            <?php
+        <?php
 
             return;
         }
@@ -186,15 +173,18 @@ trait ECM_Participant_UI
             $participants = $wpdb->get_results(
                 $wpdb->prepare(
                     "SELECT DISTINCT p.*
-                    FROM {$participants_table} p
-                    LEFT JOIN {$meta_table} m
-                        ON p.id = m.participant_id
-                    WHERE p.event_id = %d
+                    FROM $participants_table p
+                    INNER JOIN $event_participants_table ep
+                        ON ep.participant_id = p.id
+                    LEFT JOIN $meta_table m
+                        ON m.participant_id = p.id
+                    WHERE ep.event_id = %d
                     AND (
                         p.member_id LIKE %s
                         OR m.meta_value LIKE %s
                     )
                     ORDER BY p.id DESC",
+
                     $event->id,
                     $like,
                     $like
@@ -203,17 +193,19 @@ trait ECM_Participant_UI
         } else {
             $participants = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT *
-                    FROM {$participants_table}
-                    WHERE event_id = %d
-                    ORDER BY id DESC",
+                    "SELECT p.*
+                    FROM $participants_table p
+                    INNER JOIN $event_participants_table ep
+                        ON ep.participant_id = p.id
+                    WHERE ep.event_id = %d
+                    ORDER BY p.id DESC",
                     $event->id
                 )
             );
         }
 
         if (empty($participants)) {
-            ?>
+        ?>
             <div class="ecm-elements-empty-state">
                 <h4>No participants found</h4>
 
@@ -224,12 +216,11 @@ trait ECM_Participant_UI
 
                 <button
                     type="button"
-                    class="button button-primary ecm-open-participant-modal"
-                >
+                    class="button button-primary ecm-open-participant-modal">
                     + Add Participant
                 </button>
             </div>
-            <?php
+        <?php
 
             return;
         }
@@ -241,8 +232,7 @@ trait ECM_Participant_UI
                     <th width="35">
                         <input
                             type="checkbox"
-                            id="ecm-select-all-participants"
-                        >
+                            id="ecm-select-all-participants">
                     </th>
 
                     <?php foreach ($fields as $field) : ?>
@@ -274,14 +264,14 @@ trait ECM_Participant_UI
                     $delete_url = wp_nonce_url(
                         admin_url(
                             'admin.php?page=ecm-events'
-                            . '&action=delete_participant'
-                            . '&event_id='
-                            . absint($event->id)
-                            . '&participant_id='
-                            . absint($participant->id)
+                                . '&action=delete_participant'
+                                . '&event_id='
+                                . absint($event->id)
+                                . '&participant_id='
+                                . absint($participant->id)
                         ),
                         'ecm_delete_participant_'
-                        . absint($participant->id)
+                            . absint($participant->id)
                     );
                     ?>
 
@@ -291,11 +281,10 @@ trait ECM_Participant_UI
                                 type="checkbox"
                                 name="participant_ids[]"
                                 value="<?php echo esc_attr(
-                                    $participant->id
-                                ); ?>"
+                                            $participant->id
+                                        ); ?>"
                                 class="ecm-participant-checkbox"
-                                form="ecm-bulk-participant-form"
-                            >
+                                form="ecm-bulk-participant-form">
                         </td>
 
                         <?php foreach ($fields as $field) : ?>
@@ -306,9 +295,7 @@ trait ECM_Participant_UI
                                 $value = isset(
                                     $meta_rows[$field->field_key]
                                 )
-                                    ? $meta_rows[
-                                        $field->field_key
-                                    ]->meta_value
+                                    ? $meta_rows[$field->field_key]->meta_value
                                     : '';
                             }
                             ?>
@@ -329,10 +316,10 @@ trait ECM_Participant_UI
                                 href="#"
                                 class="ecm-edit-participant"
                                 data-participant-id="<?php
-                                echo esc_attr($participant->id);
-                                ?>"
+                                                        echo esc_attr($participant->id);
+                                                        ?>"
                                 <?php foreach ($fields as $field) : ?>
-                                    <?php
+                                <?php
                                     if (
                                         $field->field_key ===
                                         'member_id'
@@ -341,26 +328,21 @@ trait ECM_Participant_UI
                                             $participant->member_id;
                                     } else {
                                         $data_value = isset(
-                                            $meta_rows[
-                                                $field->field_key
-                                            ]
+                                            $meta_rows[$field->field_key]
                                         )
-                                            ? $meta_rows[
-                                                $field->field_key
-                                            ]->meta_value
+                                            ? $meta_rows[$field->field_key]->meta_value
                                             : '';
                                     }
-                                    ?>
+                                ?>
 
-                                    data-<?php
-                                    echo esc_attr(
-                                        $field->field_key
-                                    );
-                                    ?>="<?php
-                                    echo esc_attr($data_value);
-                                    ?>"
-                                <?php endforeach; ?>
-                            >
+                                data-<?php
+                                        echo esc_attr(
+                                            $field->field_key
+                                        );
+                                        ?>="<?php
+                                        echo esc_attr($data_value);
+                                        ?>"
+                                <?php endforeach; ?>>
                                 Edit
                             </a>
 
@@ -368,11 +350,10 @@ trait ECM_Participant_UI
 
                             <a
                                 href="<?php echo esc_url(
-                                    $delete_url
-                                ); ?>"
+                                            $delete_url
+                                        ); ?>"
                                 onclick="return confirm('Are you sure you want to delete this participant?');"
-                                class="ecm-danger-link"
-                            >
+                                class="ecm-danger-link">
                                 Delete
                             </a>
                         </td>
@@ -380,7 +361,7 @@ trait ECM_Participant_UI
                 <?php endforeach; ?>
             </tbody>
         </table>
-        <?php
+    <?php
     }
 
     /* -------------------------------------------------------------------------
@@ -401,12 +382,11 @@ trait ECM_Participant_UI
         if (empty($fields)) {
             return;
         }
-        ?>
+    ?>
         <div
             id="ecm-add-participant-modal"
             class="ecm-modal"
-            style="display:none;"
-        >
+            style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
                     <h2 id="ecm-participant-modal-title">
@@ -416,16 +396,14 @@ trait ECM_Participant_UI
                     <button
                         type="button"
                         class="ecm-modal-close"
-                        aria-label="Close participant form"
-                    >
+                        aria-label="Close participant form">
                         &times;
                     </button>
                 </div>
 
                 <form
                     method="post"
-                    id="ecm-participant-form"
-                >
+                    id="ecm-participant-form">
                     <?php
                     wp_nonce_field(
                         'ecm_add_participant',
@@ -441,33 +419,29 @@ trait ECM_Participant_UI
                     <input
                         type="hidden"
                         name="event_id"
-                        value="<?php echo esc_attr($event->id); ?>"
-                    >
+                        value="<?php echo esc_attr($event->id); ?>">
 
                     <input
                         type="hidden"
                         name="participant_id"
                         id="ecm_participant_id"
-                        value=""
-                    >
+                        value="">
 
                     <input
                         type="hidden"
                         name="ecm_form_mode"
                         id="ecm_form_mode"
-                        value="add"
-                    >
+                        value="add">
 
                     <div class="ecm-modal-body">
                         <?php foreach ($fields as $field) : ?>
                             <p>
                                 <label
                                     for="ecm_modal_field_<?php
-                                    echo esc_attr(
-                                        $field->field_key
-                                    );
-                                    ?>"
-                                >
+                                                            echo esc_attr(
+                                                                $field->field_key
+                                                            );
+                                                            ?>">
                                     <strong>
                                         <?php echo esc_html(
                                             $field->field_label
@@ -485,32 +459,31 @@ trait ECM_Participant_UI
 
                                 <input
                                     type="<?php
-                                    echo $field->field_type === 'number'
-                                        ? 'number'
-                                        : 'text';
-                                    ?>"
+                                            echo $field->field_type === 'number'
+                                                ? 'number'
+                                                : 'text';
+                                            ?>"
                                     id="ecm_modal_field_<?php
-                                    echo esc_attr(
-                                        $field->field_key
-                                    );
-                                    ?>"
+                                                        echo esc_attr(
+                                                            $field->field_key
+                                                        );
+                                                        ?>"
                                     data-field-key="<?php
-                                    echo esc_attr(
-                                        $field->field_key
-                                    );
-                                    ?>"
+                                                    echo esc_attr(
+                                                        $field->field_key
+                                                    );
+                                                    ?>"
                                     name="participant_fields[<?php
-                                    echo esc_attr(
-                                        $field->field_key
-                                    );
-                                    ?>]"
+                                                                echo esc_attr(
+                                                                    $field->field_key
+                                                                );
+                                                                ?>]"
                                     class="widefat ecm-participant-field"
                                     <?php
                                     echo (int) $field->is_required === 1
                                         ? 'required'
                                         : '';
-                                    ?>
-                                >
+                                    ?>>
                             </p>
                         <?php endforeach; ?>
                     </div>
@@ -520,8 +493,7 @@ trait ECM_Participant_UI
                             type="submit"
                             name="ecm_add_participant_submit"
                             id="ecm_add_participant_submit"
-                            class="button button-primary"
-                        >
+                            class="button button-primary">
                             Save Participant
                         </button>
 
@@ -530,22 +502,20 @@ trait ECM_Participant_UI
                             name="ecm_update_participant_submit"
                             id="ecm_update_participant_submit"
                             class="button button-primary"
-                            style="display:none;"
-                        >
+                            style="display:none;">
                             Update Participant
                         </button>
 
                         <button
                             type="button"
-                            class="button ecm-modal-cancel"
-                        >
+                            class="button ecm-modal-cancel">
                             Cancel
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-        <?php
+    <?php
     }
 
     /* -------------------------------------------------------------------------
@@ -574,12 +544,11 @@ trait ECM_Participant_UI
         }
 
         $csv_format = implode(',', $headers);
-        ?>
+    ?>
         <div
             id="ecm-csv-upload-modal"
             class="ecm-modal"
-            style="display:none;"
-        >
+            style="display:none;">
             <div class="ecm-modal-content">
                 <div class="ecm-modal-header">
                     <h2>Upload Participants CSV</h2>
@@ -587,16 +556,14 @@ trait ECM_Participant_UI
                     <button
                         type="button"
                         class="ecm-modal-close"
-                        aria-label="Close CSV upload form"
-                    >
+                        aria-label="Close CSV upload form">
                         &times;
                     </button>
                 </div>
 
                 <form
                     method="post"
-                    enctype="multipart/form-data"
-                >
+                    enctype="multipart/form-data">
                     <?php
                     wp_nonce_field(
                         'ecm_import_participants_csv',
@@ -607,8 +574,7 @@ trait ECM_Participant_UI
                     <input
                         type="hidden"
                         name="event_id"
-                        value="<?php echo esc_attr($event->id); ?>"
-                    >
+                        value="<?php echo esc_attr($event->id); ?>">
 
                     <div class="ecm-modal-body">
                         <p>
@@ -616,8 +582,8 @@ trait ECM_Participant_UI
                         </p>
 
                         <pre class="ecm-code-preview"><?php
-                        echo esc_html($csv_format);
-                        ?></pre>
+                                                        echo esc_html($csv_format);
+                                                        ?></pre>
 
                         <p class="description">
                             The first CSV row must match this header
@@ -629,8 +595,7 @@ trait ECM_Participant_UI
                                 type="file"
                                 name="participants_csv"
                                 accept=".csv,text/csv"
-                                required
-                            >
+                                required>
                         </p>
                     </div>
 
@@ -638,21 +603,19 @@ trait ECM_Participant_UI
                         <button
                             type="submit"
                             name="ecm_import_csv_submit"
-                            class="button button-primary"
-                        >
+                            class="button button-primary">
                             Upload CSV
                         </button>
 
                         <button
                             type="button"
-                            class="button ecm-modal-cancel"
-                        >
+                            class="button ecm-modal-cancel">
                             Cancel
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-        <?php
+<?php
     }
 }

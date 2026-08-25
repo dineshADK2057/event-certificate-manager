@@ -25,6 +25,14 @@ trait ECM_Participant_CRUD
     /**
      * Add a participant to an event.
      *
+     * Participants are global identities. Event membership is stored
+     * separately in the event-participants association table.
+     *
+     * During the foundation migration, the legacy event_id column on the
+     * participant record is still populated when a participant is first
+     * created so older ECM components remain operational until their
+     * queries are refactored.
+     *
      * @return void
      */
     public function handle_add_participant()
@@ -88,69 +96,167 @@ trait ECM_Participant_CRUD
         $participants_table =
             $wpdb->prefix . 'ecm_participants';
 
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
+
         $meta_table =
             $wpdb->prefix . 'ecm_participant_meta';
 
         /*
-         * Member IDs must be unique inside the same event.
-         */
-        $existing_participant_id = $wpdb->get_var(
+     * Look for the participant globally.
+     *
+     * Member ID represents the participant identity and therefore
+     * must no longer be scoped to one event.
+     */
+        $participant_id = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT id
-                FROM {$participants_table}
-                WHERE event_id = %d
-                AND member_id = %s",
-                $event_id,
+            FROM {$participants_table}
+            WHERE member_id = %s
+            ORDER BY id ASC
+            LIMIT 1",
                 $clean_data['member_id']
             )
         );
 
-        if ($existing_participant_id) {
-            wp_die(
-                'This Member ID already exists for this event.'
+        /*
+     * If the participant already exists globally, ensure that they
+     * are not already assigned to this event.
+     */
+        if ($participant_id) {
+            $existing_association = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id
+                FROM {$event_participants_table}
+                WHERE event_id = %d
+                AND participant_id = %d
+                LIMIT 1",
+                    $event_id,
+                    $participant_id
+                )
             );
+
+            if ($existing_association) {
+                wp_die(
+                    'This participant is already assigned to this event.'
+                );
+            }
+        } else {
+            /*
+         * Create the global participant.
+         *
+         * event_id remains temporarily populated as a compatibility
+         * value for ECM components that have not yet been migrated
+         * away from the legacy participant architecture.
+         */
+            $inserted = $wpdb->insert(
+                $participants_table,
+                [
+                    'event_id'  => $event_id,
+                    'member_id' => $clean_data['member_id'],
+                ],
+                [
+                    '%d',
+                    '%s',
+                ]
+            );
+
+            if (!$inserted) {
+                wp_die('Failed to create participant.');
+            }
+
+            $participant_id = (int) $wpdb->insert_id;
         }
 
-        $inserted = $wpdb->insert(
-            $participants_table,
+        /*
+     * Associate the global participant with this event.
+     */
+        $association_inserted = $wpdb->insert(
+            $event_participants_table,
             [
-                'event_id'  => $event_id,
-                'member_id' => $clean_data['member_id'],
+                'event_id'       => $event_id,
+                'participant_id' => $participant_id,
+                'created_at'     => current_time('mysql'),
             ],
             [
+                '%d',
                 '%d',
                 '%s',
             ]
         );
 
-        if (!$inserted) {
-            wp_die('Failed to add participant.');
+        if (!$association_inserted) {
+            /*
+         * Do not delete the participant here.
+         *
+         * An existing global participant may legitimately belong to
+         * other events, so removing the participant record would be
+         * destructive.
+         */
+            wp_die(
+                'Failed to assign participant to this event.'
+            );
         }
 
-        $participant_id = (int) $wpdb->insert_id;
-
         /*
-         * Member ID lives in the primary participant table.
-         * All other dynamic fields are stored as participant metadata.
-         */
+     * Store participant metadata.
+     *
+     * Metadata belongs to the global participant rather than to an
+     * individual event association.
+     *
+     * Existing metadata is updated when a known participant is
+     * assigned to another event. Missing metadata is inserted.
+     */
         foreach ($clean_data as $key => $value) {
             if ($key === 'member_id') {
                 continue;
             }
 
-            $wpdb->insert(
-                $meta_table,
-                [
-                    'participant_id' => $participant_id,
-                    'meta_key'       => $key,
-                    'meta_value'     => $value,
-                ],
-                [
-                    '%d',
-                    '%s',
-                    '%s',
-                ]
+            $existing_meta_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id
+                FROM {$meta_table}
+                WHERE participant_id = %d
+                AND meta_key = %s
+                LIMIT 1",
+                    $participant_id,
+                    $key
+                )
             );
+
+            if ($existing_meta_id) {
+                $wpdb->update(
+                    $meta_table,
+                    [
+                        'meta_value' => $value,
+                    ],
+                    [
+                        'participant_id' => $participant_id,
+                        'meta_key'       => $key,
+                    ],
+                    [
+                        '%s',
+                    ],
+                    [
+                        '%d',
+                        '%s',
+                    ]
+                );
+            } else {
+                $wpdb->insert(
+                    $meta_table,
+                    [
+                        'participant_id' => $participant_id,
+                        'meta_key'       => $key,
+                        'meta_value'     => $value,
+                    ],
+                    [
+                        '%d',
+                        '%s',
+                        '%s',
+                    ]
+                );
+            }
         }
 
         wp_safe_redirect(
@@ -678,7 +784,7 @@ trait ECM_Participant_CRUD
             ) {
                 wp_die(
                     esc_html($field->field_label)
-                    . ' is required.'
+                        . ' is required.'
                 );
             }
 
@@ -689,7 +795,7 @@ trait ECM_Participant_CRUD
             ) {
                 wp_die(
                     esc_html($field->field_label)
-                    . ' must contain numbers only.'
+                        . ' must contain numbers only.'
                 );
             }
 
@@ -713,10 +819,10 @@ trait ECM_Participant_CRUD
     ) {
         $base_url = admin_url(
             'admin.php?page=ecm-events'
-            . '&action=manage'
-            . '&event_id='
-            . absint($event_id)
-            . '&tab=participants'
+                . '&action=manage'
+                . '&event_id='
+                . absint($event_id)
+                . '&tab=participants'
         );
 
         if (empty($args)) {

@@ -17,6 +17,81 @@ if (!defined('ABSPATH')) {
 
 class ECM_Database
 {
+
+
+    /**
+     * Backfill event-participant associations.
+     *
+     * Existing ECM installations store the event relationship directly
+     * on the participant record. During the participant architecture
+     * transition, preserve those relationships inside the new
+     * event-participants association table.
+     *
+     * INSERT IGNORE makes this migration idempotent because the
+     * event_participant unique key prevents duplicate associations.
+     *
+     * @return void
+     */
+    private static function migrate_event_participant_associations()
+    {
+        global $wpdb;
+
+        $participants = $wpdb->prefix . 'ecm_participants';
+
+        $event_participants =
+            $wpdb->prefix . 'ecm_event_participants';
+
+        /*
+     * Ensure both tables exist before attempting the migration.
+     */
+        $participants_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                'SHOW TABLES LIKE %s',
+                $participants
+            )
+        );
+
+        $event_participants_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                'SHOW TABLES LIKE %s',
+                $event_participants
+            )
+        );
+
+        if (
+            $participants_exists !== $participants ||
+            $event_participants_exists !== $event_participants
+        ) {
+            return;
+        }
+
+        /*
+     * Preserve every existing participant-to-event relationship.
+     *
+     * We deliberately do not delete, merge, or modify participant
+     * records at this stage.
+     */
+        $wpdb->query(
+            "
+        INSERT IGNORE INTO {$event_participants}
+            (
+                event_id,
+                participant_id,
+                created_at,
+                updated_at
+            )
+        SELECT
+            event_id,
+            id,
+            created_at,
+            updated_at
+        FROM {$participants}
+        WHERE event_id > 0
+        "
+        );
+    }
+
+    
     /**
      * Create or update all plugin database tables.
      *
@@ -39,6 +114,7 @@ class ECM_Database
         $events               = $wpdb->prefix . 'ecm_events';
         $fields               = $wpdb->prefix . 'ecm_event_fields';
         $participants         = $wpdb->prefix . 'ecm_participants';
+        $event_participants   = $wpdb->prefix . 'ecm_event_participants';
         $participant_meta     = $wpdb->prefix . 'ecm_participant_meta';
         $sessions             = $wpdb->prefix . 'ecm_sessions';
         $session_participants = $wpdb->prefix . 'ecm_session_participants';
@@ -126,6 +202,30 @@ class ECM_Database
             UNIQUE KEY participant_meta_key (participant_id, meta_key),
             KEY participant_id (participant_id),
             KEY meta_key (meta_key)
+        ) {$charset_collate};";
+
+
+        /*
+        * Event participants
+        *
+        * Associates global participant records with events.
+        *
+        * A participant exists once in the participants table and may
+        * subsequently be associated with multiple events through this table.
+        */
+        $sql[] = "CREATE TABLE {$event_participants} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id BIGINT(20) UNSIGNED NOT NULL,
+            participant_id BIGINT(20) UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT NULL,
+
+            PRIMARY KEY (id),
+
+            UNIQUE KEY event_participant (event_id, participant_id),
+
+            KEY event_id (event_id),
+            KEY participant_id (participant_id)
         ) {$charset_collate};";
 
         /*
@@ -298,6 +398,12 @@ class ECM_Database
         foreach ($sql as $query) {
             dbDelta($query);
         }
+
+        /*
+        * Backfill event-participant associations from the
+        * legacy event-owned participant structure.
+        */
+        self::migrate_event_participant_associations();
 
         /*
          * Prepare the filesystem directories used by ECM.
