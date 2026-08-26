@@ -61,7 +61,7 @@ trait ECM_Participant_UI
 
                 <select name="bulk_action">
                     <option value="">Bulk actions</option>
-                    <option value="delete">Delete</option>
+                    <option value="delete">Remove from Event</option>
                 </select>
 
                 <button
@@ -352,7 +352,7 @@ trait ECM_Participant_UI
                                 href="<?php echo esc_url(
                                             $delete_url
                                         ); ?>"
-                                onclick="return confirm('Are you sure you want to delete this participant?');"
+                                onclick="return confirm('Are you sure you want to remove this participant from this event?');"
                                 class="ecm-danger-link">
                                 Delete
                             </a>

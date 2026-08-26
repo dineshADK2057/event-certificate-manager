@@ -280,6 +280,15 @@ trait ECM_Participant_CRUD
      *
      * @return void
      */
+    /**
+     * Update an existing global participant.
+     *
+     * Event membership is verified through the event-participants
+     * association table rather than the legacy participant.event_id
+     * column.
+     *
+     * @return void
+     */
     public function handle_update_participant()
     {
         if (!isset($_POST['ecm_update_participant_submit'])) {
@@ -345,66 +354,78 @@ trait ECM_Participant_CRUD
         $participants_table =
             $wpdb->prefix . 'ecm_participants';
 
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
+
         $meta_table =
             $wpdb->prefix . 'ecm_participant_meta';
 
         /*
-         * Confirm the participant belongs to the submitted event.
-         */
-        $participant_exists = $wpdb->get_var(
+     * Confirm that this global participant is actually
+     * associated with the submitted event.
+     */
+        $association_exists = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT id
-                FROM {$participants_table}
-                WHERE id = %d
-                AND event_id = %d",
-                $participant_id,
-                $event_id
+            FROM {$event_participants_table}
+            WHERE event_id = %d
+            AND participant_id = %d
+            LIMIT 1",
+                $event_id,
+                $participant_id
             )
         );
 
-        if (!$participant_exists) {
-            wp_die('Participant not found.');
+        if (!$association_exists) {
+            wp_die(
+                'This participant is not assigned to this event.'
+            );
         }
 
         /*
-         * Reject duplicate Member IDs while ignoring the record
-         * currently being updated.
-         */
-        $duplicate = $wpdb->get_var(
+     * Member ID represents the participant's global identity.
+     *
+     * Therefore another global participant must not already
+     * use the submitted Member ID.
+     */
+        $duplicate_participant = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT id
-                FROM {$participants_table}
-                WHERE event_id = %d
-                AND member_id = %s
-                AND id != %d",
-                $event_id,
+            FROM {$participants_table}
+            WHERE member_id = %s
+            AND id != %d
+            LIMIT 1",
                 $clean_data['member_id'],
                 $participant_id
             )
         );
 
-        if ($duplicate) {
+        if ($duplicate_participant) {
             wp_die(
-                'This Member ID already exists for this event.'
+                'Another participant already uses this Member ID.'
             );
         }
 
+        /*
+     * Update the global participant record.
+     *
+     * Do not use the legacy event_id column as a condition.
+     * Event membership now belongs to ecm_event_participants.
+     */
         $updated = $wpdb->update(
             $participants_table,
             [
-                'member_id' => $clean_data['member_id'],
+                'member_id'  => $clean_data['member_id'],
                 'updated_at' => current_time('mysql'),
             ],
             [
-                'id'       => $participant_id,
-                'event_id' => $event_id,
+                'id' => $participant_id,
             ],
             [
                 '%s',
                 '%s',
             ],
             [
-                '%d',
                 '%d',
             ]
         );
@@ -413,6 +434,9 @@ trait ECM_Participant_CRUD
             wp_die('Failed to update participant.');
         }
 
+        /*
+     * Update global participant metadata.
+     */
         foreach ($clean_data as $key => $value) {
             if ($key === 'member_id') {
                 continue;
@@ -421,9 +445,10 @@ trait ECM_Participant_CRUD
             $meta_id = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT id
-                    FROM {$meta_table}
-                    WHERE participant_id = %d
-                    AND meta_key = %s",
+                FROM {$meta_table}
+                WHERE participant_id = %d
+                AND meta_key = %s
+                LIMIT 1",
                     $participant_id,
                     $key
                 )
@@ -481,7 +506,13 @@ trait ECM_Participant_CRUD
      * ---------------------------------------------------------------------- */
 
     /**
-     * Delete one participant and their metadata.
+     * Remove one participant from an event.
+     *
+     * The participant remains a global identity. Only the event
+     * association and event-specific session assignments are removed.
+     *
+     * Global participant metadata and historical certificates are
+     * deliberately preserved.
      *
      * @return void
      */
@@ -527,45 +558,69 @@ trait ECM_Participant_CRUD
 
         global $wpdb;
 
-        $participants_table =
-            $wpdb->prefix . 'ecm_participants';
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
 
-        $meta_table =
-            $wpdb->prefix . 'ecm_participant_meta';
+        $sessions_table =
+            $wpdb->prefix . 'ecm_sessions';
 
-        $participant = $wpdb->get_row(
+        $session_participants_table =
+            $wpdb->prefix . 'ecm_session_participants';
+
+        /*
+     * Confirm that the participant is actually associated
+     * with the submitted event.
+     */
+        $association_id = $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT id
-                FROM {$participants_table}
-                WHERE id = %d
-                AND event_id = %d",
+            FROM {$event_participants_table}
+            WHERE event_id = %d
+            AND participant_id = %d
+            LIMIT 1",
+                $event_id,
+                $participant_id
+            )
+        );
+
+        if (!$association_id) {
+            wp_die(
+                'This participant is not assigned to this event.'
+            );
+        }
+
+        /*
+     * Remove session assignments belonging only to this event.
+     *
+     * Session assignments from other events must remain intact.
+     */
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE sp
+            FROM {$session_participants_table} sp
+            INNER JOIN {$sessions_table} s
+                ON s.id = sp.session_id
+            WHERE sp.participant_id = %d
+            AND s.event_id = %d",
                 $participant_id,
                 $event_id
             )
         );
 
-        if (!$participant) {
-            wp_die('Participant not found.');
-        }
-
         /*
-         * Remove metadata before removing the primary participant row.
-         */
-        $wpdb->delete(
-            $meta_table,
-            [
-                'participant_id' => $participant_id,
-            ],
-            [
-                '%d',
-            ]
-        );
-
+     * Remove only the participant-to-event association.
+     *
+     * Do not delete:
+     * - the global participant record,
+     * - participant metadata,
+     * - certificates,
+     * - associations with other events.
+     */
         $deleted = $wpdb->delete(
-            $participants_table,
+            $event_participants_table,
             [
-                'id'       => $participant_id,
-                'event_id' => $event_id,
+                'event_id'       => $event_id,
+                'participant_id' => $participant_id,
             ],
             [
                 '%d',
@@ -574,7 +629,9 @@ trait ECM_Participant_CRUD
         );
 
         if ($deleted === false) {
-            wp_die('Failed to delete participant.');
+            wp_die(
+                'Failed to remove participant from this event.'
+            );
         }
 
         wp_safe_redirect(
@@ -596,7 +653,11 @@ trait ECM_Participant_CRUD
     /**
      * Process participant bulk actions.
      *
-     * Version 1 currently supports bulk deletion only.
+     * Version 1 currently supports removing selected participants
+     * from the current event.
+     *
+     * Global participant records, participant metadata, certificates,
+     * and associations with other events are preserved.
      *
      * @return void
      */
@@ -676,6 +737,11 @@ trait ECM_Participant_CRUD
             exit;
         }
 
+        /*
+     * During this refactor, the existing UI still submits
+     * "delete". Semantically, the action now means:
+     * remove selected participants from this event.
+     */
         if ($bulk_action !== 'delete') {
             wp_safe_redirect(
                 $this->get_participants_tab_url(
@@ -691,46 +757,67 @@ trait ECM_Participant_CRUD
 
         global $wpdb;
 
-        $participants_table =
-            $wpdb->prefix . 'ecm_participants';
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
 
-        $meta_table =
-            $wpdb->prefix . 'ecm_participant_meta';
+        $sessions_table =
+            $wpdb->prefix . 'ecm_sessions';
+
+        $session_participants_table =
+            $wpdb->prefix . 'ecm_session_participants';
 
         foreach ($participant_ids as $participant_id) {
             /*
-             * Only act on participant IDs belonging to this event.
-             */
-            $belongs_to_event = $wpdb->get_var(
+         * Confirm that the selected global participant is
+         * actually associated with the current event.
+         */
+            $association_exists = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT id
-                    FROM {$participants_table}
-                    WHERE id = %d
-                    AND event_id = %d",
+                FROM {$event_participants_table}
+                WHERE event_id = %d
+                AND participant_id = %d
+                LIMIT 1",
+                    $event_id,
+                    $participant_id
+                )
+            );
+
+            if (!$association_exists) {
+                continue;
+            }
+
+            /*
+         * Remove session assignments belonging only to
+         * sessions inside the current event.
+         */
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE sp
+                FROM {$session_participants_table} sp
+                INNER JOIN {$sessions_table} s
+                    ON s.id = sp.session_id
+                WHERE sp.participant_id = %d
+                AND s.event_id = %d",
                     $participant_id,
                     $event_id
                 )
             );
 
-            if (!$belongs_to_event) {
-                continue;
-            }
-
+            /*
+         * Remove only the event association.
+         *
+         * Preserve:
+         * - ecm_participants
+         * - ecm_participant_meta
+         * - certificates
+         * - other event associations
+         */
             $wpdb->delete(
-                $meta_table,
+                $event_participants_table,
                 [
+                    'event_id'       => $event_id,
                     'participant_id' => $participant_id,
-                ],
-                [
-                    '%d',
-                ]
-            );
-
-            $wpdb->delete(
-                $participants_table,
-                [
-                    'id'       => $participant_id,
-                    'event_id' => $event_id,
                 ],
                 [
                     '%d',
