@@ -73,15 +73,27 @@ trait ECM_Participant_Export
         $participants_table =
             $wpdb->prefix . 'ecm_participants';
 
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
+
         $meta_table =
             $wpdb->prefix . 'ecm_participant_meta';
 
+        /*
+        * Retrieve global participants associated with this event.
+        *
+        * Event membership is determined through the dedicated
+        * event-participants association table rather than the
+        * legacy participants.event_id column.
+        */
         $participants = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT *
-                FROM {$participants_table}
-                WHERE event_id = %d
-                ORDER BY id ASC",
+                "SELECT p.*
+        FROM {$participants_table} p
+        INNER JOIN {$event_participants_table} ep
+            ON ep.participant_id = p.id
+        WHERE ep.event_id = %d
+        ORDER BY p.id ASC",
                 $event_id
             )
         );
@@ -115,8 +127,8 @@ trait ECM_Participant_Export
 
         header(
             'Content-Disposition: attachment; filename="'
-            . sanitize_file_name($filename)
-            . '"'
+                . sanitize_file_name($filename)
+                . '"'
         );
 
         $output = fopen('php://output', 'w');
@@ -149,9 +161,7 @@ trait ECM_Participant_Export
                 $row[] = isset(
                     $meta_rows[$field->field_key]
                 )
-                    ? $meta_rows[
-                        $field->field_key
-                    ]->meta_value
+                    ? $meta_rows[$field->field_key]->meta_value
                     : '';
             }
 
