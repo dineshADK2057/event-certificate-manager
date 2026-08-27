@@ -427,6 +427,10 @@ class ECM_Events
             'admin_init',
             [$this, 'handle_remove_session_participant']
         );
+        add_action(
+            'admin_init',
+            [$this, 'handle_bulk_remove_session_participants']
+        );
 
         add_action(
             'wp_ajax_ecm_search_session_available_participants',
@@ -437,6 +441,7 @@ class ECM_Events
             'wp_ajax_ecm_add_session_participants_ajax',
             [$this, 'ajax_add_session_participants']
         );
+        
     }
 
     /*

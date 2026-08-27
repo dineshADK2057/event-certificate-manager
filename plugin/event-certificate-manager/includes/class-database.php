@@ -178,7 +178,7 @@ class ECM_Database
         $sql[] = "CREATE TABLE {$participants} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             event_id BIGINT(20) UNSIGNED NOT NULL,
-            member_id VARCHAR(100) NOT NULL,
+            member_id BIGINT(20) NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT NULL,
             PRIMARY KEY (id),
