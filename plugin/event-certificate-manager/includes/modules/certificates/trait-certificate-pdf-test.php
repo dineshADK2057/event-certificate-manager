@@ -503,6 +503,8 @@ trait ECM_Certificate_PDF_Test
 
         $templates_table = $wpdb->prefix . 'ecm_templates';
         $participants_table = $wpdb->prefix . 'ecm_participants';
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
 
         $templates = $wpdb->get_results(
             "SELECT *
@@ -529,10 +531,15 @@ trait ECM_Certificate_PDF_Test
 
             $participant = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT *
-                FROM {$participants_table}
-                WHERE event_id = %d
-                ORDER BY id ASC
+                    "SELECT p.*
+                FROM {$participants_table} p
+
+                INNER JOIN {$event_participants_table} ep
+                    ON ep.participant_id = p.id
+
+                WHERE ep.event_id = %d
+
+                ORDER BY p.id ASC
                 LIMIT 1",
                     $event_id
                 )

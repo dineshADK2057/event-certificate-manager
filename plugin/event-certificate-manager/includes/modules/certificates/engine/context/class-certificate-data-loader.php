@@ -197,7 +197,10 @@ class ECM_Certificate_Data_Loader
     }
 
     /**
-     * Load a participant belonging to an event.
+     * Load a global participant and validate their event association.
+     *
+     * The participant record itself is global. Event membership is
+     * determined exclusively through ecm_event_participants.
      *
      * @param wpdb $wpdb           WordPress database instance.
      * @param int  $participant_id Participant ID.
@@ -210,14 +213,29 @@ class ECM_Certificate_Data_Loader
         $participant_id,
         $event_id
     ) {
-        $table = $wpdb->prefix . 'ecm_participants';
+        $participants_table =
+            $wpdb->prefix . 'ecm_participants';
 
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
+
+        /*
+        * Load the canonical global participant record while
+        * simultaneously establishing that the participant is
+        * associated with the requested event.
+        */
         $participant = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT *
-                FROM {$table}
-                WHERE id = %d
-                AND event_id = %d",
+                "SELECT p.*
+            FROM {$participants_table} p
+
+            INNER JOIN {$event_participants_table} ep
+                ON ep.participant_id = p.id
+
+            WHERE p.id = %d
+            AND ep.event_id = %d
+
+            LIMIT 1",
                 $participant_id,
                 $event_id
             )
@@ -357,9 +375,7 @@ class ECM_Certificate_Data_Loader
         $metadata = [];
 
         foreach ($rows as $row) {
-            $metadata[
-                sanitize_key($row->meta_key)
-            ] = $row->meta_value;
+            $metadata[sanitize_key($row->meta_key)] = $row->meta_value;
         }
 
         return $metadata;
