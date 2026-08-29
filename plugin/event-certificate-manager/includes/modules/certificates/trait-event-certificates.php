@@ -549,6 +549,82 @@ trait ECM_Event_Certificates
 
         <?php endif; ?>
 
+        <?php if (
+            isset($_GET['bulk_certificates_regenerated'])
+        ) : ?>
+
+            <?php
+            $bulk_regenerated =
+                absint(
+                    $_GET['bulk_certificates_regenerated']
+                );
+
+            $bulk_failed =
+                isset($_GET['bulk_certificates_failed'])
+                ? absint(
+                    $_GET['bulk_certificates_failed']
+                )
+                : 0;
+            ?>
+
+            <div class="notice notice-success is-dismissible">
+                <p>
+                    <strong>
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                '%d certificate(s) regenerated successfully.',
+                                $bulk_regenerated
+                            )
+                        );
+                        ?>
+                    </strong>
+
+                    <?php if ($bulk_failed > 0) : ?>
+
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                ' %d certificate(s) could not be regenerated.',
+                                $bulk_failed
+                            )
+                        );
+                        ?>
+
+                    <?php endif; ?>
+                </p>
+            </div>
+
+        <?php endif; ?>
+
+        <?php if (
+            isset($_GET['bulk_certificate_no_selection'])
+        ) : ?>
+
+            <div class="notice notice-error is-dismissible">
+                <p>
+                    <strong>
+                        Select at least one certificate recipient.
+                    </strong>
+                </p>
+            </div>
+
+        <?php endif; ?>
+
+        <?php if (
+            isset($_GET['bulk_certificate_none_found'])
+        ) : ?>
+
+            <div class="notice notice-warning is-dismissible">
+                <p>
+                    <strong>
+                        No certificates were found for the selected recipients.
+                    </strong>
+                </p>
+            </div>
+
+        <?php endif; ?>
+
         <div class="ecm-panel ecm-panel-full">
 
             <h3>Generate Certificate</h3>
@@ -1717,9 +1793,72 @@ trait ECM_Event_Certificates
                         }
 
                         if (action === 'regenerate') {
-                            window.alert(
-                                'Bulk regeneration will be enabled after the individual regeneration workflow is completed.'
+
+                            if (
+                                !window.confirm(
+                                    'Regenerate all certificates for the selected recipients? Existing PDF files will be replaced.'
+                                )
+                            ) {
+                                return;
+                            }
+
+                            const form =
+                                document.createElement('form');
+
+                            form.method = 'post';
+
+                            form.action =
+                                '<?php echo esc_url(
+                                        admin_url('admin-post.php')
+                                    ); ?>';
+
+                            function addField(name, value) {
+
+                                const input =
+                                    document.createElement('input');
+
+                                input.type = 'hidden';
+                                input.name = name;
+                                input.value = value;
+
+                                form.appendChild(input);
+                            }
+
+                            addField(
+                                'action',
+                                'ecm_bulk_regenerate_event_certificates'
                             );
+
+                            addField(
+                                'event_id',
+                                '<?php echo esc_js(
+                                        (string) absint($event->id)
+                                    ); ?>'
+                            );
+
+                            addField(
+                                'ecm_bulk_regenerate_nonce',
+                                '<?php echo esc_js(
+                                        wp_create_nonce(
+                                            'ecm_bulk_regenerate_certificates_'
+                                                . absint($event->id)
+                                        )
+                                    ); ?>'
+                            );
+
+                            selected.forEach(
+                                function(checkbox) {
+
+                                    addField(
+                                        'participant_ids[]',
+                                        checkbox.value
+                                    );
+                                }
+                            );
+
+                            document.body.appendChild(form);
+
+                            form.submit();
 
                             return;
                         }
@@ -2069,6 +2208,155 @@ trait ECM_Event_Certificates
             add_query_arg(
                 [
                     'certificate_emailed' => 1,
+                ],
+                $redirect_url
+            )
+        );
+
+        exit;
+    }
+
+    /**
+     * Regenerate all certificates belonging to selected recipients.
+     *
+     * @return void
+     */
+    public function handle_bulk_regenerate_event_certificates()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(
+                'You do not have permission to regenerate certificates.'
+            );
+        }
+
+        $event_id = isset($_POST['event_id'])
+            ? absint($_POST['event_id'])
+            : 0;
+
+        $participant_ids = (
+            isset($_POST['participant_ids']) &&
+            is_array($_POST['participant_ids'])
+        )
+            ? array_values(
+                array_filter(
+                    array_map(
+                        'absint',
+                        wp_unslash(
+                            $_POST['participant_ids']
+                        )
+                    )
+                )
+            )
+            : [];
+
+        if (!$event_id) {
+            wp_die('Invalid event.');
+        }
+
+        check_admin_referer(
+            'ecm_bulk_regenerate_certificates_' . $event_id,
+            'ecm_bulk_regenerate_nonce'
+        );
+
+        $redirect_url =
+            admin_url(
+                'admin.php?page=ecm-events'
+                    . '&action=manage'
+                    . '&event_id=' . $event_id
+                    . '&tab=certificates'
+            );
+
+        if (empty($participant_ids)) {
+            wp_safe_redirect(
+                add_query_arg(
+                    [
+                        'bulk_certificate_no_selection' => 1,
+                    ],
+                    $redirect_url
+                )
+            );
+
+            exit;
+        }
+
+        global $wpdb;
+
+        $certificates_table =
+            $wpdb->prefix . 'ecm_certificates';
+
+        /*
+     * Retrieve every certificate belonging to the selected
+     * participants within this event.
+     */
+        $participant_placeholders =
+            implode(
+                ',',
+                array_fill(
+                    0,
+                    count($participant_ids),
+                    '%d'
+                )
+            );
+
+        $query =
+            "SELECT id
+        FROM {$certificates_table}
+        WHERE event_id = %d
+        AND participant_id IN ({$participant_placeholders})
+        ORDER BY id ASC";
+
+        $query_values =
+            array_merge(
+                [$event_id],
+                $participant_ids
+            );
+
+        $certificate_ids =
+            $wpdb->get_col(
+                $wpdb->prepare(
+                    $query,
+                    ...$query_values
+                )
+            );
+
+        if (empty($certificate_ids)) {
+            wp_safe_redirect(
+                add_query_arg(
+                    [
+                        'bulk_certificate_none_found' => 1,
+                    ],
+                    $redirect_url
+                )
+            );
+
+            exit;
+        }
+
+        $regenerated = 0;
+        $failed = 0;
+
+        foreach ($certificate_ids as $certificate_id) {
+            $result =
+                ECM_Certificate_Generator::regenerate(
+                    absint($certificate_id)
+                );
+
+            if (is_wp_error($result)) {
+                $failed++;
+                continue;
+            }
+
+            $regenerated++;
+        }
+
+        wp_safe_redirect(
+            add_query_arg(
+                [
+                    'bulk_certificates_regenerated' =>
+                    $regenerated,
+
+                    'bulk_certificates_failed' =>
+                    $failed,
                 ],
                 $redirect_url
             )
