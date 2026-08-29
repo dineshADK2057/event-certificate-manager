@@ -441,7 +441,6 @@ class ECM_Events
             'wp_ajax_ecm_add_session_participants_ajax',
             [$this, 'ajax_add_session_participants']
         );
-        
     }
 
     /*
@@ -590,6 +589,18 @@ class ECM_Events
         add_action(
             'admin_notices',
             [$this, 'render_certificate_engine_test_notice']
+        );
+        add_action(
+            'admin_post_ecm_generate_event_certificate',
+            [$this, 'handle_generate_event_certificate']
+        );
+        add_action(
+            'admin_post_ecm_regenerate_event_certificate',
+            [$this, 'handle_regenerate_event_certificate']
+        );
+        add_action(
+            'admin_post_ecm_send_event_certificate_email',
+            [$this, 'handle_send_event_certificate_email']
         );
     }
 }

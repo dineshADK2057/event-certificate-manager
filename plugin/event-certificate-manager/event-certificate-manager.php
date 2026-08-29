@@ -44,6 +44,8 @@ require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/cl
 require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-text-renderer.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-placeholder-resolver.php';
 require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/renderer/class-certificate-renderer.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/generation/class-certificate-generator.php';
+require_once ECM_PLUGIN_PATH . 'includes/modules/certificates/engine/delivery/class-certificate-email-delivery.php';
 
 
 

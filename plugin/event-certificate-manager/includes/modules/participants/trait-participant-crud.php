@@ -152,11 +152,9 @@ trait ECM_Participant_CRUD
             $inserted = $wpdb->insert(
                 $participants_table,
                 [
-                    'event_id'  => $event_id,
                     'member_id' => $clean_data['member_id'],
                 ],
                 [
-                    '%d',
                     '%s',
                 ]
             );

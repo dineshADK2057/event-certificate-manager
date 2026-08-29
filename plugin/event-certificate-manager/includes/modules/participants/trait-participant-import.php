@@ -185,9 +185,9 @@ trait ECM_Participant_Import
          */
             if (
                 empty(array_filter(
-                        $row,
-                        'strlen'
-                    )) ||
+                    $row,
+                    'strlen'
+                )) ||
                 count($row) <
                 count($expected_headers)
             ) {
@@ -262,21 +262,20 @@ trait ECM_Participant_Import
             } else {
 
                 /*
-             * Create a new global participant.
-             *
-             * The legacy event_id column remains populated
-             * temporarily until the migration is complete.
-             */
+                * Create a new canonical global participant.
+                *
+                * Event membership is stored separately in
+                * ecm_event_participants.
+                */
+
                 $inserted_participant =
                     $wpdb->insert(
                         $participants_table,
                         [
-                            'event_id'  => $event_id,
                             'member_id' =>
                             $row_data['member_id'],
                         ],
                         [
-                            '%d',
                             '%s',
                         ]
                     );

@@ -20,30 +20,31 @@ class ECM_Database
 
 
     /**
-     * Backfill event-participant associations.
+     * Migrate the legacy event-owned participant structure
+     * to the global participant architecture.
      *
-     * Existing ECM installations store the event relationship directly
-     * on the participant record. During the participant architecture
-     * transition, preserve those relationships inside the new
-     * event-participants association table.
+     * Existing event relationships are preserved in the dedicated
+     * event-participants association table before the obsolete
+     * participants.event_id column is removed.
      *
-     * INSERT IGNORE makes this migration idempotent because the
-     * event_participant unique key prevents duplicate associations.
+     * This migration is intentionally idempotent. Once event_id has
+     * been removed, subsequent executions return immediately.
      *
      * @return void
      */
-    private static function migrate_event_participant_associations()
+    private static function migrate_global_participant_schema()
     {
         global $wpdb;
 
-        $participants = $wpdb->prefix . 'ecm_participants';
+        $participants =
+            $wpdb->prefix . 'ecm_participants';
 
         $event_participants =
             $wpdb->prefix . 'ecm_event_participants';
 
         /*
-     * Ensure both tables exist before attempting the migration.
-     */
+        * Ensure both tables exist.
+        */
         $participants_exists = $wpdb->get_var(
             $wpdb->prepare(
                 'SHOW TABLES LIKE %s',
@@ -66,20 +67,34 @@ class ECM_Database
         }
 
         /*
-     * Preserve every existing participant-to-event relationship.
-     *
-     * We deliberately do not delete, merge, or modify participant
-     * records at this stage.
-     */
+        * Determine whether the legacy event_id column still exists.
+        */
+        $event_id_column = $wpdb->get_var(
+            $wpdb->prepare(
+                "SHOW COLUMNS
+            FROM {$participants}
+            LIKE %s",
+                'event_id'
+            )
+        );
+
+        if (!$event_id_column) {
+            return;
+        }
+
+        /*
+        * Preserve every legacy event-participant relationship before
+        * modifying the participants table.
+        */
         $wpdb->query(
             "
         INSERT IGNORE INTO {$event_participants}
-            (
-                event_id,
-                participant_id,
-                created_at,
-                updated_at
-            )
+        (
+            event_id,
+            participant_id,
+            created_at,
+            updated_at
+        )
         SELECT
             event_id,
             id,
@@ -89,9 +104,98 @@ class ECM_Database
         WHERE event_id > 0
         "
         );
+
+        /*
+        * Verify that every legacy relationship now exists in the
+        * association table. Never remove the legacy column if the
+        * backfill is incomplete.
+        */
+        $missing_associations = (int) $wpdb->get_var(
+            "
+        SELECT COUNT(*)
+        FROM {$participants} p
+
+        LEFT JOIN {$event_participants} ep
+            ON ep.event_id = p.event_id
+            AND ep.participant_id = p.id
+
+        WHERE p.event_id > 0
+        AND ep.id IS NULL
+        "
+        );
+
+        if ($missing_associations > 0) {
+            return;
+        }
+
+        /*
+        * Remove the legacy composite unique index first.
+        */
+        $event_member_index = $wpdb->get_var(
+            $wpdb->prepare(
+                "SHOW INDEX
+            FROM {$participants}
+            WHERE Key_name = %s",
+                'event_member'
+            )
+        );
+
+        if ($event_member_index) {
+            $wpdb->query(
+                "ALTER TABLE {$participants}
+            DROP INDEX event_member"
+            );
+        }
+
+        /*
+        * Remove the standalone legacy event_id index if present.
+        */
+        $event_id_index = $wpdb->get_var(
+            $wpdb->prepare(
+                "SHOW INDEX
+            FROM {$participants}
+            WHERE Key_name = %s",
+                'event_id'
+            )
+        );
+
+        if ($event_id_index) {
+            $wpdb->query(
+                "ALTER TABLE {$participants}
+            DROP INDEX event_id"
+            );
+        }
+
+        /*
+        * The participant identity is now global, so event_id no longer
+        * belongs on the canonical participant record.
+        */
+        $wpdb->query(
+            "ALTER TABLE {$participants}
+        DROP COLUMN event_id"
+        );
+
+        /*
+        * Enforce one canonical participant record per member ID.
+        */
+        $member_unique_index = $wpdb->get_var(
+            $wpdb->prepare(
+                "SHOW INDEX
+            FROM {$participants}
+            WHERE Key_name = %s",
+                'member_id_unique'
+            )
+        );
+
+        if (!$member_unique_index) {
+            $wpdb->query(
+                "ALTER TABLE {$participants}
+            ADD UNIQUE KEY member_id_unique (member_id)"
+            );
+        }
     }
 
-    
+
     /**
      * Create or update all plugin database tables.
      *
@@ -170,22 +274,23 @@ class ECM_Database
         ) {$charset_collate};";
 
         /*
-         * Event participants
-         *
-         * Stores the primary participant record for each event.
-         * Additional dynamic values are stored in participant meta.
-         */
+        * Global participants
+        *
+        * Stores one canonical participant record per member ID.
+        * Event membership is maintained independently through the
+        * event-participants association table.
+        *
+        * Additional dynamic values are stored in participant meta.
+        */
         $sql[] = "CREATE TABLE {$participants} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            event_id BIGINT(20) UNSIGNED NOT NULL,
             member_id BIGINT(20) NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT NULL,
             PRIMARY KEY (id),
-            UNIQUE KEY event_member (event_id, member_id),
-            KEY event_id (event_id),
-            KEY member_id (member_id)
+            UNIQUE KEY member_id_unique (member_id)
         ) {$charset_collate};";
+
 
         /*
          * Participant metadata
@@ -400,10 +505,10 @@ class ECM_Database
         }
 
         /*
-        * Backfill event-participant associations from the
-        * legacy event-owned participant structure.
+        * Migrate legacy event-owned participants to the
+        * canonical global participant architecture.
         */
-        self::migrate_event_participant_associations();
+        self::migrate_global_participant_schema();
 
         /*
          * Prepare the filesystem directories used by ECM.
