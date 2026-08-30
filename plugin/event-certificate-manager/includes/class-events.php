@@ -606,5 +606,9 @@ class ECM_Events
             'admin_post_ecm_bulk_regenerate_event_certificates',
             [$this, 'handle_bulk_regenerate_event_certificates']
         );
+        add_action(
+            'admin_post_ecm_bulk_send_event_certificate_emails',
+            [$this, 'handle_bulk_send_event_certificate_emails']
+        );
     }
 }
