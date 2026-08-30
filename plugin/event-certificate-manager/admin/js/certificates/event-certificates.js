@@ -194,20 +194,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 );
 
-                const emptyRows =
-                    document.querySelectorAll(
-                        '#ecm-certificate-search-empty'
+                const emptyRow =
+                    document.getElementById(
+                        'ecm-certificate-search-empty'
                     );
 
                 const noResults =
                     getVisibleRows().length === 0;
 
-                emptyRows.forEach(
-                    function (emptyRow) {
-                        emptyRow.hidden =
-                            !noResults;
-                    }
-                );
+                if (emptyRow) {
+                    emptyRow.hidden =
+                        !noResults;
+                }
 
                 updateSelectionUI();
             }
