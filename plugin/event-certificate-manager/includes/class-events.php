@@ -181,6 +181,12 @@ require_once ECM_PLUGIN_PATH
 require_once ECM_PLUGIN_PATH
     . 'includes/modules/certificates/trait-certificate-bulk-actions.php';
 
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/trait-certificate-notices.php';
+
+require_once ECM_PLUGIN_PATH
+    . 'includes/modules/certificates/trait-certificate-data.php';
+
 /*
 |--------------------------------------------------------------------------
 | Logs Module
@@ -281,6 +287,8 @@ class ECM_Events
     */
 
     use ECM_Event_Certificates;
+    use ECM_Certificate_Data;
+    use ECM_Certificate_Notices;
     use ECM_Certificate_PDF_Test;
     use ECM_Certificate_Actions;
     use ECM_Certificate_Bulk_Actions;
