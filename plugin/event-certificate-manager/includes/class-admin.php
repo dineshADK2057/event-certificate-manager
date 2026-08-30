@@ -205,9 +205,47 @@ class ECM_Admin
             ? sanitize_key(wp_unslash($_GET['action']))
             : '';
 
+        
+        /*
+        * Event Certificates assets.
+        */
+
+        $page = isset($_GET['page'])
+            ? sanitize_key(
+                wp_unslash($_GET['page'])
+            )
+            : '';
+
+        $tab = isset($_GET['tab'])
+            ? sanitize_key(
+                wp_unslash($_GET['tab'])
+            )
+            : '';
+
+        if (
+            $page === 'ecm-events' &&
+            $action === 'manage' &&
+            $tab === 'certificates'
+        ) {
+            wp_enqueue_script(
+                'ecm-event-certificates',
+                ECM_PLUGIN_URL
+                    . 'admin/js/certificates/event-certificates.js',
+                [],
+                ECM_VERSION,
+                true
+            );
+        }
+
+        /*
+        * Template Builder assets.
+        */
+
         if ($action !== 'template_builder') {
             return;
         }
+
+
 
         $this->enqueue_builder_assets();
     }
