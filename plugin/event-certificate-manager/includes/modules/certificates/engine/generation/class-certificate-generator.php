@@ -368,31 +368,66 @@ class ECM_Certificate_Generator
                 );
 
             if (!$inserted) {
+
                 /*
-                 * Avoid leaving an orphaned PDF when the database
-                 * record could not be created.
-                 */
-                if (!$inserted) {
-                    if (file_exists($absolute_path)) {
-                        unlink($absolute_path);
-                    }
+     * Never leave the rendered PDF behind when its
+     * certificate database record could not be created.
+     */
+                if (file_exists($absolute_path)) {
+                    unlink($absolute_path);
+                }
 
-                    error_log(
-                        'ECM certificate insert error: '
-                            . $wpdb->last_error
-                    );
+                $database_error =
+                    (string) $wpdb->last_error;
 
-                    error_log(
-                        'ECM certificate last query: '
-                            . $wpdb->last_query
-                    );
-
+                /*
+                * The application-level duplicate check normally prevents
+                * duplicate generation.
+                *
+                * The unique certificate_identity_unique index provides the
+                * final safeguard when two requests pass that check at nearly
+                * the same time.
+                */
+                if (
+                    stripos(
+                        $database_error,
+                        'certificate_identity_unique'
+                    ) !== false ||
+                    (
+                        stripos(
+                            $database_error,
+                            'duplicate entry'
+                        ) !== false &&
+                        stripos(
+                            $database_error,
+                            'certificate_identity'
+                        ) !== false
+                    )
+                ) {
                     return new WP_Error(
-                        'ecm_certificate_record_creation_failed',
-                        'Certificate database insert failed: '
-                            . $wpdb->last_error
+                        'ecm_certificate_already_exists',
+                        'A certificate has already been generated for this participant using this template.'
                     );
                 }
+
+                /*
+                * Unexpected database failures remain distinct from
+                * legitimate duplicate protection.
+                */
+                error_log(
+                    'ECM certificate insert error: '
+                        . $database_error
+                );
+
+                error_log(
+                    'ECM certificate last query: '
+                        . $wpdb->last_query
+                );
+
+                return new WP_Error(
+                    'ecm_certificate_record_creation_failed',
+                    'The certificate PDF was generated, but its database record could not be created.'
+                );
             }
 
             $certificate_record_id =

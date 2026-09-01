@@ -195,6 +195,71 @@ class ECM_Database
         }
     }
 
+    /**
+     * Add database-level duplicate protection for certificates.
+     *
+     * Event-wide certificates use a NULL session_id. Because MySQL
+     * unique indexes allow multiple NULL values, a generated column
+     * normalizes NULL to 0 before applying the unique identity index.
+     *
+     * @return void
+     */
+    private static function migrate_certificate_identity_schema()
+    {
+        global $wpdb;
+
+        $certificates =
+            $wpdb->prefix . 'ecm_certificates';
+
+        /*
+     * Add the normalized session identity column when missing.
+     */
+        $scope_column =
+            $wpdb->get_var(
+                $wpdb->prepare(
+                    "SHOW COLUMNS
+                FROM {$certificates}
+                LIKE %s",
+                    'certificate_scope_id'
+                )
+            );
+
+        if (!$scope_column) {
+            $wpdb->query(
+                "ALTER TABLE {$certificates}
+            ADD COLUMN certificate_scope_id BIGINT(20) UNSIGNED
+            GENERATED ALWAYS AS (
+                IFNULL(session_id, 0)
+            ) STORED"
+            );
+        }
+
+        /*
+     * Add the certificate identity constraint when missing.
+     */
+        $identity_index =
+            $wpdb->get_var(
+                $wpdb->prepare(
+                    "SHOW INDEX
+                FROM {$certificates}
+                WHERE Key_name = %s",
+                    'certificate_identity_unique'
+                )
+            );
+
+        if (!$identity_index) {
+            $wpdb->query(
+                "ALTER TABLE {$certificates}
+            ADD UNIQUE KEY certificate_identity_unique (
+                event_id,
+                participant_id,
+                template_id,
+                certificate_scope_id
+            )"
+            );
+        }
+    }
+
 
     /**
      * Create or update all plugin database tables.
@@ -509,6 +574,7 @@ class ECM_Database
         * canonical global participant architecture.
         */
         self::migrate_global_participant_schema();
+        self::migrate_certificate_identity_schema();
 
         /*
          * Prepare the filesystem directories used by ECM.
