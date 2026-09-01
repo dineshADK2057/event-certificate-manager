@@ -173,9 +173,6 @@ require_once ECM_PLUGIN_PATH
     . 'includes/modules/certificates/trait-event-certificates.php';
 
 require_once ECM_PLUGIN_PATH
-    . 'includes/modules/certificates/trait-certificate-pdf-test.php';
-
-require_once ECM_PLUGIN_PATH
     . 'includes/modules/certificates/trait-certificate-actions.php';
 
 require_once ECM_PLUGIN_PATH
@@ -295,7 +292,6 @@ class ECM_Events
     use ECM_Event_Certificates;
     use ECM_Certificate_Data;
     use ECM_Certificate_Notices;
-    use ECM_Certificate_PDF_Test;
     use ECM_Certificate_Actions;
     use ECM_Certificate_Bulk_Actions;
     use ECM_Certificate_UI;
@@ -407,10 +403,6 @@ class ECM_Events
             [$this, 'handle_export_participants_csv']
         );
 
-        add_action(
-            'admin_post_ecm_pdf_font_test',
-            [$this, 'handle_pdf_font_test']
-        );
     }
 
     /*
@@ -594,25 +586,7 @@ class ECM_Events
      */
     private function register_certificate_hooks()
     {
-        add_action(
-            'admin_post_ecm_pdf_compatibility_test',
-            [$this, 'handle_pdf_compatibility_test']
-        );
-
-        add_action(
-            'admin_post_ecm_certificate_context_test',
-            [$this, 'handle_certificate_context_test']
-        );
-
-        add_action(
-            'admin_post_ecm_pdf_render_playground',
-            [$this, 'handle_pdf_render_playground']
-        );
-
-        add_action(
-            'admin_notices',
-            [$this, 'render_certificate_engine_test_notice']
-        );
+        
         add_action(
             'admin_post_ecm_generate_event_certificate',
             [$this, 'handle_generate_event_certificate']
