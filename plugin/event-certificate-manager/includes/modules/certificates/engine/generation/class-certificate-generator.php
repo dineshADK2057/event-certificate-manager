@@ -30,7 +30,6 @@ class ECM_Certificate_Generator
      * Optional:
      *
      * - session_id
-     * - force
      *
      * @param array $request Certificate generation request.
      *
@@ -109,38 +108,37 @@ class ECM_Certificate_Generator
         }
 
         /*
-         * Prevent accidental duplicate generation unless force=true.
-         */
-        $normalized_request =
-            $context->get_request();
-
-        $force =
-            !empty($normalized_request['force']);
-
+        * Prevent duplicate certificate records.
+        *
+        * New certificate generation must always create only one
+        * certificate for the same event, participant, template,
+        * and session identity.
+        *
+        * Existing certificates must be updated through regenerate()
+        * rather than bypassing duplicate protection.
+        */
         global $wpdb;
 
         $certificates_table =
             $wpdb->prefix . 'ecm_certificates';
 
-        if (!$force) {
-            $existing_certificate =
-                self::find_existing_certificate(
-                    $wpdb,
-                    $certificates_table,
-                    (int) $event->id,
-                    (int) $participant->id,
-                    (int) $template->id,
-                    $session
-                        ? (int) $session->id
-                        : null
-                );
+        $existing_certificate =
+            self::find_existing_certificate(
+                $wpdb,
+                $certificates_table,
+                (int) $event->id,
+                (int) $participant->id,
+                (int) $template->id,
+                $session
+                    ? (int) $session->id
+                    : null
+            );
 
-            if ($existing_certificate) {
-                return new WP_Error(
-                    'ecm_certificate_already_exists',
-                    'A certificate has already been generated for this participant using this template.'
-                );
-            }
+        if ($existing_certificate) {
+            return new WP_Error(
+                'ecm_certificate_already_exists',
+                'A certificate has already been generated for this participant using this template.'
+            );
         }
 
         /*
@@ -536,9 +534,6 @@ class ECM_Certificate_Generator
                     !empty($certificate->session_id)
                         ? (int) $certificate->session_id
                         : null,
-
-                    'force' =>
-                    true,
                 ]
             );
 
@@ -700,7 +695,7 @@ class ECM_Certificate_Generator
                 );
             }
 
-            
+
             /*
             * Update only regeneration-related information.
             *
@@ -715,7 +710,9 @@ class ECM_Certificate_Generator
                         $relative_path,
 
                         'status' =>
-                        'generated',
+                        !empty($certificate->emailed_at)
+                            ? 'emailed'
+                            : 'generated',
 
                         'generated_at' =>
                         current_time('mysql'),

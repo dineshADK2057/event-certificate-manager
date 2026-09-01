@@ -557,8 +557,6 @@ trait ECM_Certificate_PDF_Test
                 'session_id' => !empty($template->session_id)
                     ? absint($template->session_id)
                     : null,
-
-                'force' => false,
             ];
         }
 

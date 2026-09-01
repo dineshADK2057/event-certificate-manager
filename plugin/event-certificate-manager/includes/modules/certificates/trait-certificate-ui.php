@@ -253,11 +253,15 @@ trait ECM_Certificate_UI
 
                                 <td>
 
-                                    <span class="ecm-status ecm-status-generated">
-                                        Generated
-                                    </span>
-
                                     <?php if (
+                                        !empty($recipient->has_verified)
+                                    ) : ?>
+
+                                        <span class="ecm-status ecm-status-verified">
+                                            Verified
+                                        </span>
+
+                                    <?php elseif (
                                         !empty($recipient->has_emailed)
                                     ) : ?>
 
@@ -265,14 +269,10 @@ trait ECM_Certificate_UI
                                             Mailed
                                         </span>
 
-                                    <?php endif; ?>
+                                    <?php else : ?>
 
-                                    <?php if (
-                                        !empty($recipient->has_verified)
-                                    ) : ?>
-
-                                        <span class="ecm-status ecm-status-verified">
-                                            Verified
+                                        <span class="ecm-status ecm-status-generated">
+                                            Generated
                                         </span>
 
                                     <?php endif; ?>

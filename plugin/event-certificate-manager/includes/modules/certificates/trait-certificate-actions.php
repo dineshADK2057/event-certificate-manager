@@ -103,8 +103,6 @@ trait ECM_Certificate_Actions
                 'session_id' =>
                 $session_id,
 
-                'force' =>
-                false,
             ]
         );
 

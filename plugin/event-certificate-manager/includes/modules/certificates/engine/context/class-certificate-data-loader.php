@@ -28,7 +28,6 @@ class ECM_Certificate_Data_Loader
      * Optional:
      *
      * - session_id
-     * - force
      *
      * @param array $request Generation request.
      *
@@ -137,8 +136,6 @@ class ECM_Certificate_Data_Loader
             'session_id' => !empty($request['session_id'])
                 ? absint($request['session_id'])
                 : null,
-
-            'force' => !empty($request['force']),
         ];
 
         if (!$normalized['event_id']) {

@@ -374,35 +374,47 @@ document.addEventListener('DOMContentLoaded', function () {
                     .map(
                         function (certificate) {
 
-                            const emailed =
-                                certificate
-                                    .emailed_at
-                                    ? (
-                                        '<span ' +
-                                        'class="' +
-                                        'ecm-status ' +
-                                        'ecm-status-emailed' +
-                                        '">' +
-                                        'Mailed' +
-                                        '</span>'
-                                    )
-                                    : '';
+                            let certificateStatus = '';
 
-                            const verified =
+                            if (
                                 Number(
-                                    certificate
-                                        .verification_count
+                                    certificate.verification_count
                                 ) > 0
-                                    ? (
-                                        '<span ' +
-                                        'class="' +
-                                        'ecm-status ' +
-                                        'ecm-status-verified' +
-                                        '">' +
-                                        'Verified' +
-                                        '</span>'
-                                    )
-                                    : '';
+                            ) {
+
+                                certificateStatus =
+                                    '<span ' +
+                                    'class="' +
+                                    'ecm-status ' +
+                                    'ecm-status-verified' +
+                                    '">' +
+                                    'Verified' +
+                                    '</span>';
+
+                            } else if (
+                                certificate.emailed_at
+                            ) {
+
+                                certificateStatus =
+                                    '<span ' +
+                                    'class="' +
+                                    'ecm-status ' +
+                                    'ecm-status-emailed' +
+                                    '">' +
+                                    'Mailed' +
+                                    '</span>';
+
+                            } else {
+
+                                certificateStatus =
+                                    '<span ' +
+                                    'class="' +
+                                    'ecm-status ' +
+                                    'ecm-status-generated' +
+                                    '">' +
+                                    'Generated' +
+                                    '</span>';
+                            }
 
                             const viewPdf =
                                 certificate.pdf_url
@@ -488,18 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                 '<div>' +
 
-                                '<span ' +
-                                'class="' +
-                                'ecm-status ' +
-                                'ecm-status-generated' +
-                                '"' +
-                                '>' +
-                                'Generated' +
-                                '</span> ' +
-
-                                emailed +
-                                ' ' +
-                                verified +
+                                certificateStatus +
 
                                 '</div>' +
 
