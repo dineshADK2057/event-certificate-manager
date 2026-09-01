@@ -281,14 +281,28 @@ trait ECM_Certificate_Data
                 !empty($certificate->pdf_file) &&
                 empty($upload_dir['error'])
             ) {
-                $pdf_url =
-                    trailingslashit(
-                        $upload_dir['baseurl']
-                    )
-                    . ltrim(
-                        $certificate->pdf_file,
+                $relative_pdf_path =
+                    ltrim(
+                        (string) $certificate->pdf_file,
                         '/'
                     );
+
+                $absolute_pdf_path =
+                    trailingslashit(
+                        $upload_dir['basedir']
+                    )
+                    . $relative_pdf_path;
+
+                if (
+                    is_file($absolute_pdf_path) &&
+                    is_readable($absolute_pdf_path)
+                ) {
+                    $pdf_url =
+                        trailingslashit(
+                            $upload_dir['baseurl']
+                        )
+                        . $relative_pdf_path;
+                }
             }
 
             $certificate_details[$participant_id][] = [
@@ -356,8 +370,8 @@ trait ECM_Certificate_Data
             ];
         }
 
-        
-        
+
+
         return [
             'event_templates' =>
             $event_templates,
