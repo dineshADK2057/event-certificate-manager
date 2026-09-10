@@ -471,6 +471,25 @@ trait ECM_Event_Templates
         $certificates_table =
             $wpdb->prefix . 'ecm_certificates';
 
+        $elements_table =
+            $wpdb->prefix . 'ecm_template_elements';
+
+        $template =
+            $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT id, background_file
+            FROM {$templates_table}
+            WHERE id = %d
+            AND event_id = %d",
+                    $template_id,
+                    $event_id
+                )
+            );
+
+        if (!$template) {
+            wp_die('Template not found.');
+        }
+
         $certificate_count =
             (int) $wpdb->get_var(
                 $wpdb->prepare(
@@ -492,6 +511,27 @@ trait ECM_Event_Templates
             );
         }
 
+        /*
+        * Remove builder elements belonging to this template before
+        * deleting the template itself.
+        */
+        $elements_deleted =
+            $wpdb->delete(
+                $elements_table,
+                [
+                    'template_id' => $template_id,
+                ],
+                [
+                    '%d',
+                ]
+            );
+
+        if ($elements_deleted === false) {
+            wp_die(
+                'Failed to delete template elements.'
+            );
+        }
+
         $deleted =
             $wpdb->delete(
                 $templates_table,
@@ -504,6 +544,54 @@ trait ECM_Event_Templates
 
         if ($deleted === false) {
             wp_die('Failed to delete template.');
+        }
+
+        /*
+        * Remove the template background and its generated PDF preview
+        * after the database deletion has succeeded.
+        */
+        if (!empty($template->background_file)) {
+            $upload_dir =
+                wp_upload_dir();
+
+            $background_path =
+                trailingslashit($upload_dir['basedir']) .
+                ltrim($template->background_file, '/');
+
+            if (
+                is_file($background_path) &&
+                is_writable($background_path)
+            ) {
+                unlink($background_path);
+            }
+
+            /*
+            * PDF backgrounds may have a generated preview image:
+            * original-name-preview.png
+            */
+            if (
+                strtolower(
+                    pathinfo(
+                        $background_path,
+                        PATHINFO_EXTENSION
+                    )
+                ) === 'pdf'
+            ) {
+                $preview_path =
+                    dirname($background_path) . '/' .
+                    pathinfo(
+                        $background_path,
+                        PATHINFO_FILENAME
+                    ) .
+                    '-preview.png';
+
+                if (
+                    is_file($preview_path) &&
+                    is_writable($preview_path)
+                ) {
+                    unlink($preview_path);
+                }
+            }
         }
 
         wp_safe_redirect(
