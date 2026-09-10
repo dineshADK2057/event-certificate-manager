@@ -209,7 +209,81 @@ trait ECM_Event_CRUD
 
         global $wpdb;
 
-        $table = $wpdb->prefix . 'ecm_events';
+        $table =
+            $wpdb->prefix . 'ecm_events';
+
+        $event_participants_table =
+            $wpdb->prefix . 'ecm_event_participants';
+
+        $sessions_table =
+            $wpdb->prefix . 'ecm_sessions';
+
+        $templates_table =
+            $wpdb->prefix . 'ecm_templates';
+
+        $certificates_table =
+            $wpdb->prefix . 'ecm_certificates';
+
+        $logs_table =
+            $wpdb->prefix . 'ecm_logs';
+
+        /*
+ * Hard deletion is allowed only for a completely empty event.
+ *
+ * Once operational data exists, deleting only the event row
+ * would leave orphaned records and could destroy certificate
+ * history relationships.
+ */
+        $related_record_count =
+            (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT (
+                (
+                    SELECT COUNT(*)
+                    FROM {$event_participants_table}
+                    WHERE event_id = %d
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM {$sessions_table}
+                    WHERE event_id = %d
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM {$templates_table}
+                    WHERE event_id = %d
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM {$certificates_table}
+                    WHERE event_id = %d
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM {$logs_table}
+                    WHERE event_id = %d
+                )
+            )",
+                    $event_id,
+                    $event_id,
+                    $event_id,
+                    $event_id,
+                    $event_id
+                )
+            );
+
+        if ($related_record_count > 0) {
+            wp_die(
+                esc_html__(
+                    'This event cannot be deleted because it already contains participants, sessions, templates, certificates, or activity history.',
+                    'event-certificate-manager'
+                )
+            );
+        }
 
         $deleted = $wpdb->delete(
             $table,

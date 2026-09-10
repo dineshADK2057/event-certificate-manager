@@ -264,6 +264,53 @@ trait ECM_Session_CRUD
         $session_participants_table =
             $wpdb->prefix . 'ecm_session_participants';
 
+        $templates_table =
+            $wpdb->prefix . 'ecm_templates';
+
+        $certificates_table =
+            $wpdb->prefix . 'ecm_certificates';
+
+
+        /*
+ * Prevent deletion of a session that is already part of
+ * certificate history or template configuration.
+ */
+        $template_count =
+            (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*)
+            FROM {$templates_table}
+            WHERE event_id = %d
+            AND session_id = %d",
+                    $event_id,
+                    $session_id
+                )
+            );
+
+        $certificate_count =
+            (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*)
+            FROM {$certificates_table}
+            WHERE event_id = %d
+            AND session_id = %d",
+                    $event_id,
+                    $session_id
+                )
+            );
+
+        if (
+            $template_count > 0 ||
+            $certificate_count > 0
+        ) {
+            wp_die(
+                esc_html__(
+                    'This session cannot be deleted because it is already used by a certificate template or issued certificate.',
+                    'event-certificate-manager'
+                )
+            );
+        }
+
         /*
          * Remove participant assignments before deleting the session.
          */
@@ -404,10 +451,10 @@ trait ECM_Session_CRUD
     ) {
         $base_url = admin_url(
             'admin.php?page=ecm-events'
-            . '&action=manage'
-            . '&event_id='
-            . absint($event_id)
-            . '&tab=sessions'
+                . '&action=manage'
+                . '&event_id='
+                . absint($event_id)
+                . '&tab=sessions'
         );
 
         return empty($args)

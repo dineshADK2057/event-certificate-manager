@@ -21,7 +21,7 @@ trait ECM_Event_Templates
 
     private function tab_templates($event)
     {
-    ?>
+?>
         <div class="ecm-tab-header">
             <div>
                 <h2>Templates</h2>
@@ -468,14 +468,43 @@ trait ECM_Event_Templates
 
         $templates_table = $wpdb->prefix . 'ecm_templates';
 
-        $wpdb->delete(
-            $templates_table,
-            [
-                'id'       => $template_id,
-                'event_id' => $event_id,
-            ],
-            ['%d', '%d']
-        );
+        $certificates_table =
+            $wpdb->prefix . 'ecm_certificates';
+
+        $certificate_count =
+            (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*)
+                    FROM {$certificates_table}
+                    WHERE event_id = %d
+                    AND template_id = %d",
+                    $event_id,
+                    $template_id
+                )
+            );
+
+        if ($certificate_count > 0) {
+            wp_die(
+                esc_html__(
+                    'This template cannot be deleted because certificates have already been generated from it.',
+                    'event-certificate-manager'
+                )
+            );
+        }
+
+        $deleted =
+            $wpdb->delete(
+                $templates_table,
+                [
+                    'id'       => $template_id,
+                    'event_id' => $event_id,
+                ],
+                ['%d', '%d']
+            );
+
+        if ($deleted === false) {
+            wp_die('Failed to delete template.');
+        }
 
         wp_safe_redirect(
             admin_url('admin.php?page=ecm-events&action=manage&event_id=' . $event_id . '&tab=templates&template_deleted=1')
@@ -668,8 +697,6 @@ trait ECM_Event_Templates
                 </div>
             </div>
         </div>
-    <?php
+<?php
     }
-
-    
 }
