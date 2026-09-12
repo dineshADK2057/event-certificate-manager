@@ -203,23 +203,62 @@ trait ECM_Template_Builder
                                     $template
                                 );
 
-                                $style = sprintf(
-                                    'left:%spx; top:%spx; font-family:%s; font-size:%spx; color:%s; text-align:%s; transform:rotate(%sdeg);',
-                                    esc_attr($element->x_position),
-                                    esc_attr($element->y_position),
-                                    esc_attr($element->font_family),
-                                    esc_attr($element->font_size),
-                                    esc_attr($element->font_color),
-                                    esc_attr($element->alignment),
-                                    esc_attr($element->rotation)
-                                );
+                                $element_type = !empty($element->element_type)
+                                    ? strtolower((string) $element->element_type)
+                                    : 'text';
+
+                                $width = isset($element->width) && $element->width !== null
+                                    ? (float) $element->width
+                                    : null;
+
+                                $height = isset($element->height) && $element->height !== null
+                                    ? (float) $element->height
+                                    : null;
+
+                                $style_parts = [
+                                    'left:' . esc_attr($element->x_position) . 'px',
+                                    'top:' . esc_attr($element->y_position) . 'px',
+                                    'transform:rotate(' . esc_attr($element->rotation) . 'deg)',
+                                ];
+
+                                if ($element_type === 'text') {
+                                    $style_parts[] =
+                                        'font-family:' . esc_attr($element->font_family);
+
+                                    $style_parts[] =
+                                        'font-size:' . esc_attr($element->font_size) . 'px';
+
+                                    $style_parts[] =
+                                        'color:' . esc_attr($element->font_color);
+
+                                    $style_parts[] =
+                                        'text-align:' . esc_attr($element->alignment);
+                                }
+
+                                if ($width !== null && $width > 0) {
+                                    $style_parts[] =
+                                        'width:' . esc_attr($width) . 'px';
+                                }
+
+                                if ($height !== null && $height > 0) {
+                                    $style_parts[] =
+                                        'height:' . esc_attr($height) . 'px';
+                                }
+
+                                $style = implode('; ', $style_parts) . ';';
                                 ?>
 
                                 <div
                                     class="ecm-builder-element
-                           ecm-builder-element-frame
-                           ecm-selectable-builder-element"
+                                    ecm-builder-element-frame
+                                    ecm-selectable-builder-element"
+
                                     data-element-id="<?php echo esc_attr($element->id); ?>"
+
+                                    data-element-type="<?php echo esc_attr($element_type); ?>"
+                                    data-width="<?php echo esc_attr($width !== null ? $width : ''); ?>"
+                                    data-height="<?php echo esc_attr($height !== null ? $height : ''); ?>"
+
                                     data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
                                     data-source-type="<?php echo esc_attr($element->source_type); ?>"
                                     data-font-family="<?php echo esc_attr($element->font_family); ?>"
@@ -400,27 +439,24 @@ trait ECM_Template_Builder
                             value="">
 
                         <!-- Content -->
-                        <section class="ecm-property-card">
-                            <div class="ecm-property-card-header">
-                                <h4>Content</h4>
-                                <p>Dynamic value used on the certificate.</p>
-                            </div>
 
-                            <div class="ecm-property-field">
-                                <label for="ecm_properties_placeholder">
-                                    Placeholder
-                                </label>
+                        <div class="ecm-property-field">
+                            <label for="ecm_properties_placeholder">
+                                Placeholder
+                            </label>
 
-                                <input
-                                    type="text"
-                                    id="ecm_properties_placeholder"
-                                    class="widefat"
-                                    readonly>
-                            </div>
-                        </section>
+                            <input
+                                type="text"
+                                id="ecm_properties_placeholder"
+                                class="widefat"
+                                readonly>
+                        </div>
+
 
                         <!-- Typography -->
-                        <section class="ecm-property-card">
+                        <section
+                            class="ecm-property-card ecm-text-element-properties"
+                            data-element-properties-for="text">
                             <div class="ecm-property-card-header">
                                 <h4>Typography</h4>
                                 <p>Control the appearance of this text.</p>
@@ -431,11 +467,6 @@ trait ECM_Template_Builder
                                 <label for="ecm_properties_font_search">
                                     Font Family
                                 </label>
-                                <p class="ecm-font-picker-help">
-                                    Google Font previews require an internet connection.
-                                    Selected Google Fonts will be installed locally before
-                                    final certificate generation.
-                                </p>
 
                                 <div
                                     class="ecm-font-picker"
@@ -683,18 +714,132 @@ trait ECM_Template_Builder
                             </div>
 
                             <div class="ecm-property-field">
-                                <label for="ecm_properties_alignment">
-                                    Alignment
+                                <label>
+                                    Text Alignment
                                 </label>
 
-                                <select
+                                <input
+                                    type="hidden"
                                     id="ecm_properties_alignment"
-                                    class="widefat">
-                                    <option value="left">Left</option>
-                                    <option value="center">Center</option>
-                                    <option value="right">Right</option>
-                                </select>
+                                    value="left">
+
+                                <div
+                                    class="ecm-alignment-control"
+                                    role="group"
+                                    aria-label="Text alignment">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-alignment-button is-active"
+                                        data-text-alignment="left"
+                                        aria-label="Align text left"
+                                        title="Align Left">
+
+                                        <span class="dashicons dashicons-editor-alignleft"></span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="ecm-alignment-button"
+                                        data-text-alignment="center"
+                                        aria-label="Align text center"
+                                        title="Align Center">
+
+                                        <span class="dashicons dashicons-editor-aligncenter"></span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="ecm-alignment-button"
+                                        data-text-alignment="right"
+                                        aria-label="Align text right"
+                                        title="Align Right">
+
+                                        <span class="dashicons dashicons-editor-alignright"></span>
+                                    </button>
+
+                                </div>
                             </div>
+                        </section>
+
+                        <!-- QR Code -->
+
+                        <section
+                            class="ecm-property-card ecm-qr-element-properties"
+                            data-element-properties-for="qr"
+                            style="display:none;">
+
+                            <div class="ecm-property-card-header">
+                                <h4>QR Code</h4>
+                                <p>Control the dimensions of the verification QR code.</p>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_width">
+                                    Width
+                                </label>
+
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_width"
+                                        data-stepper-direction="-1"
+                                        aria-label="Decrease QR width">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_width"
+                                        min="20"
+                                        step="1"
+                                        value="120">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_width"
+                                        data-stepper-direction="1"
+                                        aria-label="Increase QR width">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_height">
+                                    Height
+                                </label>
+
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_height"
+                                        data-stepper-direction="-1"
+                                        aria-label="Decrease QR height">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_height"
+                                        min="20"
+                                        step="1"
+                                        value="120">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_height"
+                                        data-stepper-direction="1"
+                                        aria-label="Increase QR height">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
                         </section>
 
                         <!-- Position -->
@@ -705,9 +850,44 @@ trait ECM_Template_Builder
                             </div>
 
                             <div class="ecm-property-field">
-                                <label for="ecm_properties_x_position">
-                                    Horizontal Position
-                                </label>
+                                <div class="ecm-property-label-row">
+                                    <label for="ecm_properties_x_position">
+                                        Horizontal Position
+                                    </label>
+
+                                    <div
+                                        class="ecm-inline-alignment-control"
+                                        role="group"
+                                        aria-label="Horizontal element alignment">
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="left"
+                                            aria-label="Align element left"
+                                            title="Align Left">
+                                            <span class="dashicons dashicons-align-left"></span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="center"
+                                            aria-label="Align element center"
+                                            title="Align Center">
+                                            <span class="dashicons dashicons-align-center"></span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="right"
+                                            aria-label="Align element right"
+                                            title="Align Right">
+                                            <span class="dashicons dashicons-align-right"></span>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div class="ecm-number-stepper">
                                     <button
@@ -736,9 +916,44 @@ trait ECM_Template_Builder
                             </div>
 
                             <div class="ecm-property-field">
-                                <label for="ecm_properties_y_position">
-                                    Vertical Position
-                                </label>
+                                <div class="ecm-property-label-row">
+                                    <label for="ecm_properties_y_position">
+                                        Vertical Position
+                                    </label>
+
+                                    <div
+                                        class="ecm-inline-alignment-control"
+                                        role="group"
+                                        aria-label="Vertical element alignment">
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="top"
+                                            aria-label="Align element top"
+                                            title="Align Top">
+                                            <span class="ecm-vertical-align-icon ecm-align-top-icon"></span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="middle"
+                                            aria-label="Align element middle"
+                                            title="Align Middle">
+                                            <span class="ecm-vertical-align-icon ecm-align-middle-icon"></span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="ecm-inline-alignment-button"
+                                            data-element-align="bottom"
+                                            aria-label="Align element bottom"
+                                            title="Align Bottom">
+                                            <span class="ecm-vertical-align-icon ecm-align-bottom-icon"></span>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div class="ecm-number-stepper">
                                     <button

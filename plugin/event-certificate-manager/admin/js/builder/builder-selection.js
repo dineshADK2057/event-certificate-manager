@@ -26,6 +26,10 @@
 
         const placeholder = canvasElement.data('placeholder-key');
 
+        const elementType =
+            String(canvasElement.data('element-type') || 'text')
+                .toLowerCase();
+
         /*
          * Store the selected element in shared Builder state.
          */
@@ -54,6 +58,9 @@
          */
         $('#ecm_properties_element_id').val(elementId);
 
+        $('#ecm-element-properties-view')
+            .attr('data-element-type', elementType);
+
         $('#ecm_properties_placeholder').val(
             '{' + placeholder + '}'
         );
@@ -81,9 +88,25 @@
             canvasElement.data('font-color')
         );
 
+        const selectedAlignment =
+            String(
+                canvasElement.data('alignment') || 'left'
+            ).toLowerCase();
+
         $('#ecm_properties_alignment').val(
-            canvasElement.data('alignment')
+            selectedAlignment
         );
+
+        $('.ecm-alignment-button')
+            .removeClass('is-active');
+
+        $('.ecm-alignment-button')
+            .filter(
+                '[data-text-alignment="' +
+                selectedAlignment +
+                '"]'
+            )
+            .addClass('is-active');
 
         $('#ecm_properties_x_position').val(
             canvasElement.data('x-position')
@@ -140,6 +163,9 @@
         $('#ecm-elements-list-view').show();
 
         $('#ecm_properties_element_id').val('');
+
+        $('#ecm-element-properties-view')
+            .removeAttr('data-element-type');
 
 
     };
