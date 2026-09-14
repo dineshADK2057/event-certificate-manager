@@ -292,6 +292,8 @@ class ECM_Admin
 
 
 
+
+
         $this->enqueue_builder_assets();
     }
 
@@ -307,6 +309,18 @@ class ECM_Admin
             ECM_PLUGIN_URL
                 . 'admin/js/builder/builder-core.js',
             ['jquery'],
+            ECM_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
+            'ecm-builder-participant-preview',
+            ECM_PLUGIN_URL
+                . 'admin/js/builder/builder-participant-preview.js',
+            [
+                'jquery',
+                'ecm-builder-core',
+            ],
             ECM_VERSION,
             true
         );
