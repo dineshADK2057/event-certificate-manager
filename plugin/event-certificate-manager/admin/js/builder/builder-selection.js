@@ -65,6 +65,99 @@
             '{' + placeholder + '}'
         );
 
+        /*
+ * Switch the properties panel according to element type.
+ */
+        if (elementType === 'qr') {
+
+            /*
+             * QR elements do not use typography controls.
+             */
+            $('.ecm-text-element-properties')
+                .hide();
+
+            /*
+             * Show QR-specific controls.
+             */
+            $('.ecm-qr-element-properties')
+                .show();
+
+            /*
+             * Dimensions.
+             */
+            $('#ecm_properties_width').val(
+                parseFloat(
+                    canvasElement.data('width')
+                ) || 120
+            );
+
+            $('#ecm_properties_height').val(
+                parseFloat(
+                    canvasElement.data('height')
+                ) || 120
+            );
+
+            /*
+             * QR foreground color.
+             */
+            $('#ecm_properties_qr_foreground_color').val(
+                String(
+                    canvasElement.data('qr-foreground-color') ||
+                    '#000000'
+                )
+            );
+
+            /*
+             * QR background color.
+             */
+            $('#ecm_properties_qr_background_color').val(
+                String(
+                    canvasElement.data('qr-background-color') ||
+                    '#FFFFFF'
+                )
+            );
+
+            /*
+             * QR border color.
+             */
+            $('#ecm_properties_qr_border_color').val(
+                String(
+                    canvasElement.data('qr-border-color') ||
+                    '#000000'
+                )
+            );
+
+            /*
+             * QR border width.
+             */
+            $('#ecm_properties_qr_border_width').val(
+                parseFloat(
+                    canvasElement.data('qr-border-width')
+                ) || 0
+            );
+
+            /*
+             * QR border radius.
+             */
+            $('#ecm_properties_qr_border_radius').val(
+                parseFloat(
+                    canvasElement.data('qr-border-radius')
+                ) || 0
+            );
+
+        } else {
+
+            /*
+             * Text elements use typography controls.
+             */
+            $('.ecm-text-element-properties').show();
+
+            /*
+             * Hide QR-specific controls.
+             */
+            $('.ecm-qr-element-properties').hide();
+        }
+
         const selectedFontFamily =
             canvasElement.data('font-family') || 'Arial';
 

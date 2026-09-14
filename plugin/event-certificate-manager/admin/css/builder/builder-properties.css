@@ -1,0 +1,643 @@
+/**
+ * Event Certificate Manager
+ * Template Builder — Properties
+ *
+ * Handles:
+ * - Properties sidebar
+ * - Property cards
+ * - Numeric steppers
+ * - Colors
+ * - Alignment controls
+ * - Autosave state
+ * - Empty elements state
+ */
+
+
+/* =========================================================
+ * Properties Panel Header
+ * ========================================================= */
+
+.ecm-builder-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 40px;
+}
+
+
+/* =========================================================
+ * Property Fields
+ * ========================================================= */
+
+.ecm-property-field {
+    margin-bottom: 15px;
+}
+
+.ecm-property-field label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-weight: 600;
+}
+
+.ecm-property-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+}
+
+
+/* =========================================================
+ * Property Cards
+ * ========================================================= */
+
+.ecm-property-card {
+    margin-bottom: 16px;
+    padding: 16px;
+
+    background: #f8f9fa;
+
+    border: 1px solid #e2e4e7;
+    border-radius: 10px;
+}
+
+.ecm-property-card-header {
+    margin-bottom: 15px;
+    padding-bottom: 11px;
+
+    border-bottom: 1px solid #dcdcde;
+}
+
+.ecm-property-card-header h4 {
+    margin: 0 0 3px;
+
+    color: #1d2327;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ecm-property-card-header p {
+    margin: 0;
+
+    color: #646970;
+
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.ecm-property-card .ecm-property-field:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+ * Numeric Steppers
+ * ========================================================= */
+
+.ecm-number-stepper {
+    display: grid;
+    grid-template-columns:
+        38px minmax(0, 1fr) 38px;
+
+    align-items: stretch;
+
+    width: 100%;
+}
+
+.ecm-number-stepper input {
+    width: 100%;
+    min-width: 0;
+
+    margin: 0;
+
+    border-radius: 0;
+
+    text-align: center;
+
+    -moz-appearance: textfield;
+}
+
+.ecm-number-stepper input::-webkit-inner-spin-button,
+.ecm-number-stepper input::-webkit-outer-spin-button {
+    margin: 0;
+
+    -webkit-appearance: none;
+}
+
+.ecm-stepper-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+
+    padding: 0;
+
+    background: #ffffff;
+
+    border: 1px solid #8c8f94;
+
+    color: #1d2327;
+
+    font-size: 18px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.ecm-stepper-button:first-child {
+    border-right: 0;
+    border-radius: 5px 0 0 5px;
+}
+
+.ecm-stepper-button:last-child {
+    border-left: 0;
+    border-radius: 0 5px 5px 0;
+}
+
+.ecm-stepper-button:hover,
+.ecm-stepper-button:focus {
+    z-index: 2;
+
+    background: #e7f3ff;
+
+    border-color: #2271b1;
+
+    color: #135e96;
+
+    outline: none;
+}
+
+.ecm-stepper-button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+}
+
+
+/* =========================================================
+ * Color Controls
+ * ========================================================= */
+
+.ecm-color-control {
+    display: flex;
+    flex-direction: column;
+
+    gap: 11px;
+}
+
+.ecm-color-presets {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+.ecm-color-preset {
+    position: relative;
+
+    width: 29px;
+    height: 29px;
+
+    padding: 0;
+
+    background: var(--ecm-preset-color);
+
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 1px #a7aaad;
+
+    cursor: pointer;
+}
+
+.ecm-color-preset:hover,
+.ecm-color-preset.is-selected {
+    box-shadow:
+        0 0 0 2px #2271b1,
+        0 0 0 4px #ffffff;
+}
+
+
+/**
+ * White color preview uses a checker pattern so it remains visible.
+ */
+.ecm-color-preset[data-color="#FFFFFF"] {
+    background-image:
+        linear-gradient(45deg,
+            #ececec 25%,
+            transparent 25%),
+        linear-gradient(-45deg,
+            #ececec 25%,
+            transparent 25%),
+        linear-gradient(45deg,
+            transparent 75%,
+            #ececec 75%),
+        linear-gradient(-45deg,
+            transparent 75%,
+            #ececec 75%);
+
+    background-position:
+        0 0,
+        0 5px,
+        5px -5px,
+        -5px 0;
+
+    background-size:
+        10px 10px;
+}
+
+.ecm-custom-color {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    color: #50575e;
+
+    font-size: 13px;
+}
+
+.ecm-custom-color input[type="color"],
+.ecm-qr-element-properties input[type="color"] {
+    width: 48px;
+    height: 34px;
+
+    padding: 3px;
+
+    background: #ffffff;
+
+    border: 1px solid #8c8f94;
+    border-radius: 5px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+ * Text Alignment
+ * ========================================================= */
+
+.ecm-alignment-control {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+}
+
+.ecm-alignment-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    padding: 0;
+    margin: 0;
+
+    background: transparent;
+
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.ecm-alignment-button:hover {
+    background: #f0f0f1;
+
+    border-color: transparent;
+}
+
+.ecm-alignment-button.is-active {
+    background: #dcdcde;
+
+    border-color: #8c8f94;
+}
+
+.ecm-alignment-button:focus {
+    outline: none;
+
+    box-shadow: none;
+}
+
+.ecm-alignment-button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.ecm-alignment-button .dashicons {
+    width: 22px;
+    height: 22px;
+
+    font-size: 22px;
+    line-height: 22px;
+}
+
+
+/* =========================================================
+ * Element Alignment
+ * ========================================================= */
+
+.ecm-property-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 8px;
+}
+
+.ecm-property-label-row label {
+    margin: 0;
+}
+
+.ecm-inline-alignment-control {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+}
+
+.ecm-inline-alignment-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    padding: 0;
+    margin: 0;
+
+    background: transparent;
+
+    border: 1px solid transparent;
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.ecm-inline-alignment-button:hover {
+    background: #f0f0f1;
+}
+
+.ecm-inline-alignment-button:focus {
+    outline: none;
+
+    box-shadow: none;
+}
+
+.ecm-inline-alignment-button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.ecm-inline-alignment-button .dashicons {
+    width: 18px;
+    height: 18px;
+
+    font-size: 18px;
+    line-height: 18px;
+}
+
+
+/* =========================================================
+ * Vertical Alignment Custom Icons
+ * ========================================================= */
+
+.ecm-vertical-align-icon {
+    position: relative;
+
+    display: block;
+
+    width: 20px;
+    height: 20px;
+}
+
+.ecm-vertical-align-icon::before {
+    content: "";
+
+    position: absolute;
+
+    left: 5px;
+
+    width: 10px;
+    height: 7px;
+
+    background: currentColor;
+}
+
+.ecm-vertical-align-icon::after {
+    content: "";
+
+    position: absolute;
+
+    left: 2px;
+
+    width: 16px;
+    height: 2px;
+
+    background: currentColor;
+}
+
+
+/* Top */
+
+.ecm-align-top-icon::before {
+    top: 4px;
+}
+
+.ecm-align-top-icon::after {
+    top: 1px;
+}
+
+
+/* Middle */
+
+.ecm-align-middle-icon::before {
+    top: 7px;
+}
+
+.ecm-align-middle-icon::after {
+    top: 9px;
+}
+
+
+/* Bottom */
+
+.ecm-align-bottom-icon::before {
+    bottom: 4px;
+}
+
+.ecm-align-bottom-icon::after {
+    bottom: 1px;
+}
+
+
+/* =========================================================
+ * Autosave Status
+ * ========================================================= */
+
+.ecm-auto-save-status {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 34px;
+
+    margin-top: 18px;
+    padding: 8px 10px;
+
+    background: #f6f7f7;
+
+    border-radius: 6px;
+
+    color: #646970;
+
+    font-size: 13px;
+
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+.ecm-auto-save-dot {
+    flex: 0 0 auto;
+
+    width: 8px;
+    height: 8px;
+
+    background: #8c8f94;
+
+    border-radius: 50%;
+}
+
+.ecm-auto-save-status.is-hidden {
+    display: none;
+}
+
+.ecm-auto-save-status.is-saving {
+    background: #fcf9e8;
+
+    color: #996800;
+}
+
+.ecm-auto-save-status.is-saving .ecm-auto-save-dot {
+    background: #dba617;
+
+    animation:
+        ecm-save-pulse 1s infinite;
+}
+
+.ecm-auto-save-status.is-saved {
+    background: #edfaef;
+
+    color: #116329;
+}
+
+.ecm-auto-save-status.is-saved .ecm-auto-save-dot {
+    background: #00a32a;
+}
+
+.ecm-auto-save-status.is-error {
+    background: #fcf0f1;
+
+    color: #8a2424;
+}
+
+.ecm-auto-save-status.is-error .ecm-auto-save-dot {
+    background: #d63638;
+}
+
+@keyframes ecm-save-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}
+
+
+/* =========================================================
+ * Elements Empty State
+ * ========================================================= */
+
+.ecm-elements-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 260px;
+
+    padding: 32px 20px;
+
+    background: #f8f9fa;
+
+    border: 1px dashed #c3c4c7;
+    border-radius: 10px;
+
+    text-align: center;
+}
+
+.ecm-elements-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 52px;
+
+    margin-bottom: 14px;
+
+    background: #e7f3ff;
+
+    border-radius: 50%;
+
+    color: #135e96;
+
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.ecm-elements-empty-state h4 {
+    margin: 0 0 7px;
+
+    color: #1d2327;
+
+    font-size: 16px;
+}
+
+.ecm-elements-empty-state p {
+    max-width: 230px;
+
+    margin: 0 0 17px;
+
+    color: #646970;
+
+    font-size: 13px;
+    line-height: 1.5;
+}

@@ -73,9 +73,28 @@
             font_size: $('#ecm_properties_font_size').val(),
             font_color: $('#ecm_properties_font_color').val(),
             alignment: $('#ecm_properties_alignment').val(),
+
             x_position: $('#ecm_properties_x_position').val(),
             y_position: $('#ecm_properties_y_position').val(),
-            rotation: $('#ecm_properties_rotation').val()
+            rotation: $('#ecm_properties_rotation').val(),
+
+            width: $('#ecm_properties_width').val(),
+            height: $('#ecm_properties_height').val(),
+
+            qr_foreground_color:
+                $('#ecm_properties_qr_foreground_color').val(),
+
+            qr_background_color:
+                $('#ecm_properties_qr_background_color').val(),
+
+            qr_border_color:
+                $('#ecm_properties_qr_border_color').val(),
+
+            qr_border_width:
+                $('#ecm_properties_qr_border_width').val(),
+
+            qr_border_radius:
+                $('#ecm_properties_qr_border_radius').val()
         };
     };
 
@@ -96,6 +115,41 @@
         canvasElement.attr('data-y-position', properties.y_position);
         canvasElement.attr('data-rotation', properties.rotation);
 
+        canvasElement.attr(
+            'data-width',
+            properties.width
+        );
+
+        canvasElement.attr(
+            'data-height',
+            properties.height
+        );
+
+        canvasElement.attr(
+            'data-qr-foreground-color',
+            properties.qr_foreground_color
+        );
+
+        canvasElement.attr(
+            'data-qr-background-color',
+            properties.qr_background_color
+        );
+
+        canvasElement.attr(
+            'data-qr-border-color',
+            properties.qr_border_color
+        );
+
+        canvasElement.attr(
+            'data-qr-border-width',
+            properties.qr_border_width
+        );
+
+        canvasElement.attr(
+            'data-qr-border-radius',
+            properties.qr_border_radius
+        );
+
         canvasElement.data('font-family', properties.font_family);
         canvasElement.data('font-size', properties.font_size);
         canvasElement.data('font-color', properties.font_color);
@@ -103,6 +157,41 @@
         canvasElement.data('x-position', properties.x_position);
         canvasElement.data('y-position', properties.y_position);
         canvasElement.data('rotation', properties.rotation);
+
+        canvasElement.data(
+            'width',
+            properties.width
+        );
+
+        canvasElement.data(
+            'height',
+            properties.height
+        );
+
+        canvasElement.data(
+            'qr-foreground-color',
+            properties.qr_foreground_color
+        );
+
+        canvasElement.data(
+            'qr-background-color',
+            properties.qr_background_color
+        );
+
+        canvasElement.data(
+            'qr-border-color',
+            properties.qr_border_color
+        );
+
+        canvasElement.data(
+            'qr-border-width',
+            properties.qr_border_width
+        );
+
+        canvasElement.data(
+            'qr-border-radius',
+            properties.qr_border_radius
+        );
 
         const listItem = Builder.getListItem(elementId);
 

@@ -245,6 +245,94 @@ trait ECM_Template_Builder
                                         'height:' . esc_attr($height) . 'px';
                                 }
 
+                                /*
+ * Apply QR-specific visual properties when the Builder
+ * is rendered after a page refresh.
+ */
+                                if ($element_type === 'qr') {
+
+                                    $qr_foreground_color =
+                                        !empty($element->qr_foreground_color)
+                                        ? sanitize_hex_color(
+                                            $element->qr_foreground_color
+                                        )
+                                        : '#000000';
+
+                                    $qr_background_color =
+                                        !empty($element->qr_background_color)
+                                        ? sanitize_hex_color(
+                                            $element->qr_background_color
+                                        )
+                                        : '#FFFFFF';
+
+                                    $qr_border_color =
+                                        !empty($element->qr_border_color)
+                                        ? sanitize_hex_color(
+                                            $element->qr_border_color
+                                        )
+                                        : '#000000';
+
+                                    $qr_border_width =
+                                        isset($element->qr_border_width)
+                                        ? max(
+                                            0,
+                                            (float) $element->qr_border_width
+                                        )
+                                        : 0;
+
+                                    $qr_border_radius =
+                                        isset($element->qr_border_radius)
+                                        ? max(
+                                            0,
+                                            (float) $element->qr_border_radius
+                                        )
+                                        : 0;
+
+                                    /*
+     * Defensive fallbacks in case invalid values somehow
+     * exist in the database.
+     */
+                                    if (!$qr_foreground_color) {
+                                        $qr_foreground_color = '#000000';
+                                    }
+
+                                    if (!$qr_background_color) {
+                                        $qr_background_color = '#FFFFFF';
+                                    }
+
+                                    if (!$qr_border_color) {
+                                        $qr_border_color = '#000000';
+                                    }
+
+                                    $style_parts[] =
+                                        'color:' .
+                                        esc_attr($qr_foreground_color);
+
+                                    $style_parts[] =
+                                        'background-color:' .
+                                        esc_attr($qr_background_color);
+
+                                    $style_parts[] =
+                                        'border-color:' .
+                                        esc_attr($qr_border_color);
+
+                                    $style_parts[] =
+                                        'border-width:' .
+                                        esc_attr($qr_border_width) .
+                                        'px';
+
+                                    $style_parts[] =
+                                        'border-style:' .
+                                        ($qr_border_width > 0
+                                            ? 'solid'
+                                            : 'none');
+
+                                    $style_parts[] =
+                                        'border-radius:' .
+                                        esc_attr($qr_border_radius) .
+                                        'px';
+                                }
+
                                 $style = implode('; ', $style_parts) . ';';
                                 ?>
 
@@ -258,6 +346,45 @@ trait ECM_Template_Builder
                                     data-element-type="<?php echo esc_attr($element_type); ?>"
                                     data-width="<?php echo esc_attr($width !== null ? $width : ''); ?>"
                                     data-height="<?php echo esc_attr($height !== null ? $height : ''); ?>"
+                                    data-qr-foreground-color="<?php
+                                                                echo esc_attr(
+                                                                    !empty($element->qr_foreground_color)
+                                                                        ? $element->qr_foreground_color
+                                                                        : '#000000'
+                                                                );
+                                                                ?>"
+
+                                    data-qr-background-color="<?php
+                                                                echo esc_attr(
+                                                                    !empty($element->qr_background_color)
+                                                                        ? $element->qr_background_color
+                                                                        : '#FFFFFF'
+                                                                );
+                                                                ?>"
+
+                                    data-qr-border-color="<?php
+                                                            echo esc_attr(
+                                                                !empty($element->qr_border_color)
+                                                                    ? $element->qr_border_color
+                                                                    : '#000000'
+                                                            );
+                                                            ?>"
+
+                                    data-qr-border-width="<?php
+                                                            echo esc_attr(
+                                                                isset($element->qr_border_width)
+                                                                    ? (float) $element->qr_border_width
+                                                                    : 0
+                                                            );
+                                                            ?>"
+
+                                    data-qr-border-radius="<?php
+                                                            echo esc_attr(
+                                                                isset($element->qr_border_radius)
+                                                                    ? (float) $element->qr_border_radius
+                                                                    : 0
+                                                            );
+                                                            ?>"
 
                                     data-placeholder-key="<?php echo esc_attr($element->placeholder_key); ?>"
                                     data-source-type="<?php echo esc_attr($element->source_type); ?>"
@@ -278,14 +405,7 @@ trait ECM_Template_Builder
                                         <?php echo esc_html($sample_value); ?>
                                     </div>
 
-                                    <div
-                                        class="ecm-builder-element-handles"
-                                        aria-hidden="true">
-                                        <span class="ecm-element-handle ecm-element-handle-nw"></span>
-                                        <span class="ecm-element-handle ecm-element-handle-ne"></span>
-                                        <span class="ecm-element-handle ecm-element-handle-sw"></span>
-                                        <span class="ecm-element-handle ecm-element-handle-se"></span>
-                                    </div>
+
                                 </div>
                             <?php endforeach; ?>
 
@@ -835,6 +955,105 @@ trait ECM_Template_Builder
                                         data-stepper-target="ecm_properties_height"
                                         data-stepper-direction="1"
                                         aria-label="Increase QR height">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_qr_foreground_color">
+                                    QR Color
+                                </label>
+
+                                <input
+                                    type="color"
+                                    id="ecm_properties_qr_foreground_color"
+                                    value="#000000">
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_qr_background_color">
+                                    Background
+                                </label>
+
+                                <input
+                                    type="color"
+                                    id="ecm_properties_qr_background_color"
+                                    value="#ffffff">
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_qr_border_color">
+                                    Border Color
+                                </label>
+
+                                <input
+                                    type="color"
+                                    id="ecm_properties_qr_border_color"
+                                    value="#000000">
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_qr_border_width">
+                                    Border Width
+                                </label>
+
+                                <div class="ecm-number-stepper">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_qr_border_width"
+                                        data-stepper-direction="-1"
+                                        aria-label="Decrease QR border width">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_qr_border_width"
+                                        min="0"
+                                        step="1"
+                                        value="0">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_qr_border_width"
+                                        data-stepper-direction="1"
+                                        aria-label="Increase QR border width">
+                                        +
+                                    </button>
+
+                                </div>
+                            </div>
+
+                            <div class="ecm-property-field">
+                                <label for="ecm_properties_qr_border_radius">
+                                    Border Radius
+                                </label>
+
+                                <div class="ecm-number-stepper">
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_qr_border_radius"
+                                        data-stepper-direction="-1">
+                                        −
+                                    </button>
+
+                                    <input
+                                        type="number"
+                                        id="ecm_properties_qr_border_radius"
+                                        value="0"
+                                        min="0"
+                                        step="1">
+
+                                    <button
+                                        type="button"
+                                        class="ecm-stepper-button"
+                                        data-stepper-target="ecm_properties_qr_border_radius"
+                                        data-stepper-direction="1">
                                         +
                                     </button>
                                 </div>

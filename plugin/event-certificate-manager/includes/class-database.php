@@ -459,11 +459,11 @@ class ECM_Database
         ) {$charset_collate};";
 
         /*
- * Template elements
- *
- * Stores placeholders and their visual properties on a template.
- * Font files themselves are managed through the filesystem.
- */
+        * Template elements
+        *
+        * Stores placeholders and their visual properties on a template.
+        * Font files themselves are managed through the filesystem.
+        */
         $sql[] = "CREATE TABLE {$template_elements} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             template_id BIGINT(20) UNSIGNED NOT NULL,
@@ -478,6 +478,19 @@ class ECM_Database
             y_position FLOAT NOT NULL DEFAULT 0,
             width FLOAT DEFAULT NULL,
             height FLOAT DEFAULT NULL,
+
+            qr_foreground_color VARCHAR(20) NOT NULL DEFAULT '#000000',
+            qr_background_color VARCHAR(20) NOT NULL DEFAULT '#FFFFFF',
+            qr_border_color VARCHAR(20) NOT NULL DEFAULT '#000000',
+            qr_border_width FLOAT NOT NULL DEFAULT 0,
+            qr_border_radius FLOAT NOT NULL DEFAULT 0,
+
+            font_family VARCHAR(150) NOT NULL DEFAULT 'Arial',
+            font_size FLOAT NOT NULL DEFAULT 18,
+            font_style VARCHAR(30) NOT NULL DEFAULT '',
+            font_color VARCHAR(20) NOT NULL DEFAULT '#000000',
+            alignment VARCHAR(20) NOT NULL DEFAULT 'left',
+            rotation FLOAT NOT NULL DEFAULT 0,
 
             font_family VARCHAR(150) NOT NULL DEFAULT 'Arial',
             font_size FLOAT NOT NULL DEFAULT 18,
@@ -575,6 +588,8 @@ class ECM_Database
         */
         self::migrate_global_participant_schema();
         self::migrate_certificate_identity_schema();
+
+        self::migrate_template_element_qr_style_schema();
 
         /*
          * Prepare the filesystem directories used by ECM.
@@ -733,5 +748,72 @@ class ECM_Database
             $encoded_manifest,
             LOCK_EX
         );
+    }
+
+    private static function migrate_template_element_qr_style_schema()
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ecm_template_elements';
+
+        $columns = [
+            'qr_foreground_color' => "
+            ALTER TABLE {$table}
+            ADD COLUMN qr_foreground_color VARCHAR(20)
+            NOT NULL DEFAULT '#000000'
+            AFTER height
+        ",
+
+            'qr_background_color' => "
+            ALTER TABLE {$table}
+            ADD COLUMN qr_background_color VARCHAR(20)
+            NOT NULL DEFAULT '#FFFFFF'
+            AFTER qr_foreground_color
+        ",
+
+            'qr_border_color' => "
+            ALTER TABLE {$table}
+            ADD COLUMN qr_border_color VARCHAR(20)
+            NOT NULL DEFAULT '#000000'
+            AFTER qr_background_color
+        ",
+
+            'qr_border_width' => "
+            ALTER TABLE {$table}
+            ADD COLUMN qr_border_width FLOAT
+            NOT NULL DEFAULT 0
+            AFTER qr_border_color
+        ",
+
+            'qr_border_radius' => "
+            ALTER TABLE {$table}
+            ADD COLUMN qr_border_radius FLOAT
+            NOT NULL DEFAULT 0
+            AFTER qr_border_width
+        ",
+        ];
+
+        foreach ($columns as $column => $sql) {
+
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = %s
+                ",
+                    $table,
+                    $column
+                )
+            );
+
+            if ($exists) {
+                continue;
+            }
+
+            $wpdb->query($sql);
+        }
     }
 }

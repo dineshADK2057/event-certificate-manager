@@ -205,7 +205,7 @@ class ECM_Admin
             ? sanitize_key(wp_unslash($_GET['action']))
             : '';
 
-        
+
         /*
         * Event Certificates assets.
         */
@@ -244,6 +244,51 @@ class ECM_Admin
         if ($action !== 'template_builder') {
             return;
         }
+
+
+        /*
+ * Template Builder styles.
+ */
+        wp_enqueue_style(
+            'ecm-builder-layout',
+            ECM_PLUGIN_URL
+                . 'admin/css/builder/builder-layout.css',
+            ['ecm-admin'],
+            ECM_VERSION
+        );
+
+        wp_enqueue_style(
+            'ecm-builder-elements',
+            ECM_PLUGIN_URL
+                . 'admin/css/builder/builder-elements.css',
+            [
+                'ecm-admin',
+                'ecm-builder-layout',
+            ],
+            ECM_VERSION
+        );
+
+        wp_enqueue_style(
+            'ecm-builder-properties',
+            ECM_PLUGIN_URL
+                . 'admin/css/builder/builder-properties.css',
+            [
+                'ecm-admin',
+                'ecm-builder-layout',
+            ],
+            ECM_VERSION
+        );
+
+        wp_enqueue_style(
+            'ecm-builder-font-picker',
+            ECM_PLUGIN_URL
+                . 'admin/css/builder/builder-font-picker.css',
+            [
+                'ecm-admin',
+                'ecm-builder-properties',
+            ],
+            ECM_VERSION
+        );
 
 
 

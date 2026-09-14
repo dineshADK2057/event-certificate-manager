@@ -34,6 +34,26 @@ trait ECM_Template_Elements
                     <div class="ecm-modal-body">
                         <p>
                             <label>
+                                <strong>Element Type</strong>
+
+                                <select
+                                    name="element_type"
+                                    id="ecm_element_type"
+                                    class="widefat">
+
+                                    <option value="text">
+                                        Text
+                                    </option>
+
+                                    <option value="qr">
+                                        QR Code
+                                    </option>
+
+                                </select>
+                            </label>
+                        </p>
+                        <p>
+                            <label>
                                 <strong>Placeholder</strong>
                                 <select name="placeholder_key" id="ecm_element_placeholder_key" class="widefat" required>
                                     <?php foreach ($variables as $group_label => $items) : ?>
@@ -65,37 +85,77 @@ trait ECM_Template_Elements
 
                         <input type="hidden" name="source_type" id="ecm_element_source_type" value="participant">
 
-                        <p>
-                            <label>
-                                <strong>Font Family</strong>
-                                <input type="text" name="font_family" id="ecm_element_font_family" class="widefat" value="Arial">
-                            </label>
-                        </p>
+                        <div id="ecm_add_text_element_fields">
 
-                        <p>
-                            <label>
-                                <strong>Font Size</strong>
-                                <input type="number" name="font_size" id="ecm_element_font_size" class="widefat" value="18" min="1">
-                            </label>
-                        </p>
+                            <p>
+                                <label>
+                                    <strong>Font Family</strong>
+                                    <input type="text" name="font_family" id="ecm_element_font_family" class="widefat" value="Arial">
+                                </label>
+                            </p>
 
-                        <p>
-                            <label>
-                                <strong>Font Color</strong>
-                                <input type="color" name="font_color" id="ecm_element_font_color" value="#000000">
-                            </label>
-                        </p>
+                            <p>
+                                <label>
+                                    <strong>Font Size</strong>
+                                    <input type="number" name="font_size" id="ecm_element_font_size" class="widefat" value="18" min="1">
+                                </label>
+                            </p>
 
-                        <p>
-                            <label>
-                                <strong>Alignment</strong>
-                                <select name="alignment" id="ecm_element_alignment" class="widefat">
-                                    <option value="left">Left</option>
-                                    <option value="center">Center</option>
-                                    <option value="right">Right</option>
-                                </select>
-                            </label>
-                        </p>
+                            <p>
+                                <label>
+                                    <strong>Font Color</strong>
+                                    <input type="color" name="font_color" id="ecm_element_font_color" value="#000000">
+                                </label>
+                            </p>
+
+                            <p>
+                                <label>
+                                    <strong>Alignment</strong>
+                                    <select name="alignment" id="ecm_element_alignment" class="widefat">
+                                        <option value="left">Left</option>
+                                        <option value="center">Center</option>
+                                        <option value="right">Right</option>
+                                    </select>
+                                </label>
+                            </p>
+
+                        </div>
+
+                        <div
+                            id="ecm_add_qr_element_fields"
+                            style="display:none;">
+
+                            <p>
+                                <label>
+                                    <strong>Width</strong>
+
+                                    <input
+                                        type="number"
+                                        name="width"
+                                        id="ecm_element_width"
+                                        class="widefat"
+                                        value="120"
+                                        min="20"
+                                        step="1">
+                                </label>
+                            </p>
+
+                            <p>
+                                <label>
+                                    <strong>Height</strong>
+
+                                    <input
+                                        type="number"
+                                        name="height"
+                                        id="ecm_element_height"
+                                        class="widefat"
+                                        value="120"
+                                        min="20"
+                                        step="1">
+                                </label>
+                            </p>
+
+                        </div>
 
                         <p>
                             <label>
@@ -152,20 +212,96 @@ trait ECM_Template_Elements
             wp_die('You do not have permission to perform this action.');
         }
 
-        $event_id       = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
-        $template_id    = isset($_POST['template_id']) ? absint($_POST['template_id']) : 0;
-        $placeholder    = sanitize_text_field($_POST['placeholder_key'] ?? '');
-        $source_type    = sanitize_text_field($_POST['source_type'] ?? 'participant');
-        $font_family    = sanitize_text_field($_POST['font_family'] ?? 'Arial');
-        $font_size      = isset($_POST['font_size']) ? absint($_POST['font_size']) : 18;
-        $font_color     = sanitize_hex_color($_POST['font_color'] ?? '#000000');
-        $alignment      = sanitize_text_field($_POST['alignment'] ?? 'left');
-        $x_position     = isset($_POST['x_position']) ? floatval($_POST['x_position']) : 0;
-        $y_position     = isset($_POST['y_position']) ? floatval($_POST['y_position']) : 0;
-        $rotation       = isset($_POST['rotation']) ? floatval($_POST['rotation']) : 0;
+        $event_id = isset($_POST['event_id'])
+            ? absint($_POST['event_id'])
+            : 0;
+
+        $template_id = isset($_POST['template_id'])
+            ? absint($_POST['template_id'])
+            : 0;
+
+        $element_type = sanitize_key(
+            wp_unslash($_POST['element_type'] ?? 'text')
+        );
+
+        $placeholder = sanitize_key(
+            wp_unslash($_POST['placeholder_key'] ?? '')
+        );
+
+        $source_type = sanitize_key(
+            wp_unslash($_POST['source_type'] ?? 'participant')
+        );
+
+        $font_family = sanitize_text_field(
+            wp_unslash($_POST['font_family'] ?? 'Arial')
+        );
+
+        $font_size = isset($_POST['font_size'])
+            ? max(1, floatval($_POST['font_size']))
+            : 18;
+
+        $font_color = sanitize_hex_color(
+            wp_unslash($_POST['font_color'] ?? '#000000')
+        );
+
+        $alignment = sanitize_key(
+            wp_unslash($_POST['alignment'] ?? 'left')
+        );
+
+        $x_position = isset($_POST['x_position'])
+            ? floatval($_POST['x_position'])
+            : 0;
+
+        $y_position = isset($_POST['y_position'])
+            ? floatval($_POST['y_position'])
+            : 0;
+
+        $width = isset($_POST['width'])
+            ? max(20, floatval($_POST['width']))
+            : null;
+
+        $height = isset($_POST['height'])
+            ? max(20, floatval($_POST['height']))
+            : null;
+
+        $rotation = isset($_POST['rotation'])
+            ? floatval($_POST['rotation'])
+            : 0;
 
         if (!$event_id || !$template_id || empty($placeholder)) {
             wp_die('Invalid element data.');
+        }
+
+        $allowed_element_types = [
+            'text',
+            'qr',
+        ];
+
+        if (!in_array($element_type, $allowed_element_types, true)) {
+            $element_type = 'text';
+        }
+
+        /*
+        * QR elements always use the system QR placeholder.
+        * Do not trust client-side values for this relationship.
+        */
+        if ($element_type === 'qr') {
+            $placeholder = 'qr_code';
+            $source_type = 'system';
+
+            $width = $width !== null
+                ? max(20, $width)
+                : 120;
+
+            $height = $height !== null
+                ? max(20, $height)
+                : 120;
+        } else {
+            /*
+            * Width and height are currently QR-specific.
+            */
+            $width = null;
+            $height = null;
         }
 
         $allowed_sources = ['participant', 'event', 'session', 'system'];
@@ -212,10 +348,13 @@ trait ECM_Template_Elements
             $elements_table,
             [
                 'template_id'     => $template_id,
+                'element_type'    => $element_type,
                 'placeholder_key' => $placeholder,
                 'source_type'     => $source_type,
                 'x_position'      => $x_position,
                 'y_position'      => $y_position,
+                'width'           => $width,
+                'height'          => $height,
                 'font_family'     => $font_family,
                 'font_size'       => $font_size,
                 'font_color'      => $font_color,
@@ -223,7 +362,22 @@ trait ECM_Template_Elements
                 'rotation'        => $rotation,
                 'element_order'   => $max_order + 1,
             ],
-            ['%d', '%s', '%s', '%f', '%f', '%s', '%d', '%s', '%s', '%f', '%d']
+            [
+                '%d',
+                '%s',
+                '%s',
+                '%s',
+                '%f',
+                '%f',
+                '%f',
+                '%f',
+                '%s',
+                '%f',
+                '%s',
+                '%s',
+                '%f',
+                '%d',
+            ]
         );
 
         if (!$inserted) {
@@ -367,8 +521,63 @@ trait ECM_Template_Elements
             ? floatval($_POST['rotation'])
             : 0;
 
+        $width = isset($_POST['width'])
+            ? max(20, floatval($_POST['width']))
+            : null;
+
+        $height = isset($_POST['height'])
+            ? max(20, floatval($_POST['height']))
+            : null;
+
+        $qr_foreground_color = sanitize_hex_color(
+            wp_unslash(
+                $_POST['qr_foreground_color']
+                    ?? '#000000'
+            )
+        );
+
+        $qr_background_color = sanitize_hex_color(
+            wp_unslash(
+                $_POST['qr_background_color']
+                    ?? '#FFFFFF'
+            )
+        );
+
+        $qr_border_color = sanitize_hex_color(
+            wp_unslash(
+                $_POST['qr_border_color']
+                    ?? '#000000'
+            )
+        );
+
+        $qr_border_width = isset($_POST['qr_border_width'])
+            ? max(
+                0,
+                floatval($_POST['qr_border_width'])
+            )
+            : 0;
+
+        $qr_border_radius = isset($_POST['qr_border_radius'])
+            ? max(
+                0,
+                floatval($_POST['qr_border_radius'])
+            )
+            : 0;
+
         if (!$font_color) {
             $font_color = '#000000';
+        }
+
+        if (!$qr_foreground_color) {
+            $qr_foreground_color = '#000000';
+        }
+
+        if (!$qr_background_color) {
+            $qr_background_color = '#FFFFFF';
+        }
+
+        if (!$qr_border_color) {
+            $qr_border_color = '#000000';
         }
 
         $allowed_alignments = ['left', 'center', 'right'];
@@ -383,12 +592,12 @@ trait ECM_Template_Elements
         $elements_table  = $wpdb->prefix . 'ecm_template_elements';
 
         /*
-     * Confirm that the element belongs to the requested template
-     * and that the template belongs to the requested event.
-     */
-        $element_exists = $wpdb->get_var(
+        * Confirm that the element belongs to the requested template
+        * and that the template belongs to the requested event.
+        */
+        $element = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT e.id
+                "SELECT e.id, e.element_type
              FROM {$elements_table} e
              INNER JOIN {$templates_table} t
                 ON e.template_id = t.id
@@ -401,36 +610,78 @@ trait ECM_Template_Elements
             )
         );
 
-        if (!$element_exists) {
+        if (!$element) {
             wp_send_json_error([
                 'message' => 'Template element not found.',
             ], 404);
         }
 
+        $update_data = [
+            'font_family' => $font_family,
+            'font_size'   => $font_size,
+            'font_color'  => $font_color,
+            'alignment'   => $alignment,
+            'x_position'  => $x_position,
+            'y_position'  => $y_position,
+            'rotation'    => $rotation,
+        ];
+
+        $update_format = [
+            '%s',
+            '%f',
+            '%s',
+            '%s',
+            '%f',
+            '%f',
+            '%f',
+        ];
+
+        if (
+            strtolower((string) $element->element_type)
+            === 'qr'
+        ) {
+            $update_data['width'] =
+                $width !== null
+                ? $width
+                : 120;
+
+            $update_data['height'] =
+                $height !== null
+                ? $height
+                : 120;
+
+            $update_data['qr_foreground_color'] =
+                $qr_foreground_color;
+
+            $update_data['qr_background_color'] =
+                $qr_background_color;
+
+            $update_data['qr_border_color'] =
+                $qr_border_color;
+
+            $update_data['qr_border_width'] =
+                $qr_border_width;
+
+            $update_data['qr_border_radius'] =
+                $qr_border_radius;
+
+            $update_format[] = '%f';
+            $update_format[] = '%f';
+            $update_format[] = '%s';
+            $update_format[] = '%s';
+            $update_format[] = '%s';
+            $update_format[] = '%f';
+            $update_format[] = '%f';
+        }
+
         $updated = $wpdb->update(
             $elements_table,
-            [
-                'font_family' => $font_family,
-                'font_size'   => $font_size,
-                'font_color'  => $font_color,
-                'alignment'   => $alignment,
-                'x_position'  => $x_position,
-                'y_position'  => $y_position,
-                'rotation'    => $rotation,
-            ],
+            $update_data,
             [
                 'id'          => $element_id,
                 'template_id' => $template_id,
             ],
-            [
-                '%s',
-                '%f',
-                '%s',
-                '%s',
-                '%f',
-                '%f',
-                '%f',
-            ],
+            $update_format,
             [
                 '%d',
                 '%d',
@@ -456,6 +707,13 @@ trait ECM_Template_Elements
                 'x_position'  => $x_position,
                 'y_position'  => $y_position,
                 'rotation'    => $rotation,
+                'width'               => $width,
+                'height'              => $height,
+                'qr_foreground_color' => $qr_foreground_color,
+                'qr_background_color' => $qr_background_color,
+                'qr_border_color'     => $qr_border_color,
+                'qr_border_width'     => $qr_border_width,
+                'qr_border_radius'    => $qr_border_radius,
             ],
         ]);
     }

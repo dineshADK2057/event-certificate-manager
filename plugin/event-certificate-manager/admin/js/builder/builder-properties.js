@@ -106,6 +106,237 @@
     );
 
     /**
+ * QR width.
+ */
+    $('#ecm_properties_width').on(
+        'input change',
+        function () {
+            const value = Math.max(
+                20,
+                parseFloat($(this).val()) || 20
+            );
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css(
+                'width',
+                value + 'px'
+            );
+
+            updateElementData(
+                element,
+                'width',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+     * QR height.
+     */
+    $('#ecm_properties_height').on(
+        'input change',
+        function () {
+            const value = Math.max(
+                20,
+                parseFloat($(this).val()) || 20
+            );
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css(
+                'height',
+                value + 'px'
+            );
+
+            updateElementData(
+                element,
+                'height',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+ * QR foreground color.
+ */
+    $('#ecm_properties_qr_foreground_color').on(
+        'input change',
+        function () {
+            const value =
+                String($(this).val() || '#000000');
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            /*
+             * While the real QR image is not yet rendered in
+             * the builder, apply this to the QR placeholder.
+             */
+            element
+                .find('.ecm-builder-element-content')
+                .css('color', value);
+
+            updateElementData(
+                element,
+                'qr-foreground-color',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+ * QR background color.
+ */
+    $('#ecm_properties_qr_background_color').on(
+        'input change',
+        function () {
+            const value =
+                String($(this).val() || '#FFFFFF');
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css(
+                'background-color',
+                value
+            );
+
+            updateElementData(
+                element,
+                'qr-background-color',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+ * QR border color.
+ */
+    $('#ecm_properties_qr_border_color').on(
+        'input change',
+        function () {
+            const value =
+                String($(this).val() || '#000000');
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css(
+                'border-color',
+                value
+            );
+
+            updateElementData(
+                element,
+                'qr-border-color',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+ * QR border width.
+ */
+    $('#ecm_properties_qr_border_width').on(
+        'input change',
+        function () {
+            const value = Math.max(
+                0,
+                parseFloat($(this).val()) || 0
+            );
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css({
+                'border-width': value + 'px',
+                'border-style':
+                    value > 0
+                        ? 'solid'
+                        : 'none'
+            });
+
+            updateElementData(
+                element,
+                'qr-border-width',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
+ * QR border radius.
+ */
+    $('#ecm_properties_qr_border_radius').on(
+        'input change',
+        function () {
+            const value = Math.max(
+                0,
+                parseFloat($(this).val()) || 0
+            );
+
+            const element =
+                Builder.getSelectedCanvasElement();
+
+            if (!element.length) {
+                return;
+            }
+
+            element.css(
+                'border-radius',
+                value + 'px'
+            );
+
+            updateElementData(
+                element,
+                'qr-border-radius',
+                value
+            );
+
+            scheduleSave();
+        }
+    );
+
+    /**
      * Font color.
      */
     $('#ecm_properties_font_color').on(
@@ -528,6 +759,123 @@
                         presetColor === selectedColor
                     );
                 });
+        }
+    );
+
+    /**
+ * Add Element modal: switch between Text and QR fields.
+ */
+    $(document).on(
+        'change',
+        '#ecm_element_type',
+        function () {
+            const elementType =
+                String(
+                    $(this).val() || 'text'
+                ).toLowerCase();
+
+            const placeholderSelect =
+                $('#ecm_element_placeholder_key');
+
+            const sourceTypeInput =
+                $('#ecm_element_source_type');
+
+            if (elementType === 'qr') {
+
+                /*
+                 * Hide text-only fields.
+                 */
+                $('#ecm_add_text_element_fields')
+                    .hide();
+
+                /*
+                 * Show QR-specific fields.
+                 */
+                $('#ecm_add_qr_element_fields')
+                    .show();
+
+                /*
+                 * Force QR placeholder.
+                 */
+                placeholderSelect
+                    .val('qr_code');
+
+                /*
+                 * QR is a system-generated value.
+                 */
+                sourceTypeInput
+                    .val('system');
+
+                /*
+                 * Prevent changing the placeholder
+                 * while QR is selected.
+                 */
+                placeholderSelect
+                    .prop('disabled', true);
+
+            } else {
+
+                /*
+                 * Restore text fields.
+                 */
+                $('#ecm_add_text_element_fields')
+                    .show();
+
+                /*
+                 * Hide QR fields.
+                 */
+                $('#ecm_add_qr_element_fields')
+                    .hide();
+
+                /*
+                 * Restore placeholder interaction.
+                 */
+                placeholderSelect
+                    .prop('disabled', false);
+
+                /*
+                 * Restore source type from the
+                 * currently selected placeholder.
+                 */
+                const selectedOption =
+                    placeholderSelect.find(
+                        'option:selected'
+                    );
+
+                const sourceType =
+                    selectedOption.data('source-type') ||
+                    'participant';
+
+                sourceTypeInput
+                    .val(sourceType);
+            }
+        }
+    );
+
+    /**
+    * Re-enable placeholder before form submission
+    * so the QR placeholder value is included in POST data.
+    */
+    $(document).on(
+        'submit',
+        '#ecm-add-element-modal form',
+        function () {
+            $('#ecm_element_placeholder_key')
+                .prop('disabled', false);
+        }
+    );
+
+    /**
+ * Reset Add Element modal to Text mode
+ * whenever it is opened.
+ */
+    $(document).on(
+        'click',
+        '.ecm-open-element-modal',
+        function () {
+            $('#ecm_element_type')
+                .val('text')
+                .trigger('change');
         }
     );
 

@@ -1,0 +1,243 @@
+/**
+ * Event Certificate Manager
+ * Template Builder — Elements
+ *
+ * Handles:
+ * - Canvas elements
+ * - Selection
+ * - Hover
+ * - Dragging
+ * - QR preview container
+ * - Elements sidebar list
+ */
+
+
+/* =========================================================
+ * Builder Element Base
+ * ========================================================= */
+
+.ecm-builder-element,
+.ecm-builder-element-frame {
+    position: absolute;
+
+    z-index: 5;
+
+    min-width: 24px;
+    min-height: 20px;
+
+    box-sizing: border-box;
+
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+
+/**
+ * Main interactive element frame.
+ *
+ * Actual element borders must remain independent from Builder
+ * hover / selection feedback. Selection therefore uses outline.
+ */
+.ecm-builder-element-frame {
+    display: inline-block;
+
+    padding: 4px 6px;
+
+    user-select: none;
+
+    pointer-events: auto;
+
+    cursor: grab;
+
+    touch-action: none;
+
+    transform-origin: center center;
+
+    outline: none;
+}
+
+
+/* =========================================================
+ * Element Content
+ * ========================================================= */
+
+.ecm-builder-element-content {
+    position: relative;
+
+    z-index: 1;
+
+    display: block;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+ * Hover State
+ * ========================================================= */
+
+/**
+ * Hover is temporary, therefore a dashed outline is used.
+ *
+ * Using outline instead of border prevents:
+ * - changing element dimensions
+ * - interfering with QR borders
+ * - affecting alignment calculations
+ */
+.ecm-builder-element-frame:hover:not(.ecm-element-selected) {
+    outline: 1px dashed #2271b1;
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+ * Selected State
+ * ========================================================= */
+
+/**
+ * Selection is persistent, so use a solid outline.
+ *
+ * Do NOT use border here because QR elements have their own
+ * configurable border.
+ */
+.ecm-builder-element-frame.ecm-element-selected {
+    outline: 1px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.ecm-builder-element-frame.ecm-element-selected:hover {
+    outline-style: solid;
+}
+
+
+/* =========================================================
+ * Keyboard Focus
+ * ========================================================= */
+
+.ecm-builder-element-frame:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+ * Dragging
+ * ========================================================= */
+
+.ecm-builder-element-frame.ecm-element-dragging {
+    z-index: 100;
+
+    cursor: grabbing;
+
+    opacity: 0.92;
+}
+
+
+/* =========================================================
+ * QR Element
+ * ========================================================= */
+
+/**
+ * Width and height represent the complete QR container.
+ *
+ * The actual QR content receives a 10px internal inset.
+ */
+.ecm-builder-element-frame[data-element-type="qr"] {
+    box-sizing: border-box;
+
+    overflow: hidden;
+}
+
+.ecm-builder-element-frame[data-element-type="qr"] .ecm-builder-element-content {
+    position: absolute;
+
+    inset: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+ * Elements Sidebar
+ * ========================================================= */
+
+.ecm-elements-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 16px;
+
+    margin: 0;
+}
+
+.ecm-elements-list li {
+    padding: 10px;
+
+    background: #f6f7f7;
+
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+}
+
+.ecm-element-list-item-selected {
+    border-color: #2271b1 !important;
+
+    box-shadow:
+        0 0 0 1px #2271b1;
+}
+
+
+/* =========================================================
+ * Sidebar Element Selection Button
+ * ========================================================= */
+
+.ecm-select-element-from-list {
+    padding: 0;
+
+    background: transparent;
+    border: 0;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.ecm-select-element-from-list strong,
+.ecm-select-element-from-list span {
+    display: block;
+}
+
+.ecm-element-list-actions {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 8px;
+}
+
+
+/* =========================================================
+ * Selected Badge
+ * ========================================================= */
+
+.ecm-selected-element-badge {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 24px;
+
+    padding: 0 8px;
+
+    background: #e7f3ff;
+
+    border-radius: 999px;
+
+    color: #135e96;
+
+    font-size: 12px;
+    font-weight: 600;
+}
